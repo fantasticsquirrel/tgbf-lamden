@@ -1,7 +1,8 @@
 import logging
 
+from telegram import Update
 from tgbf.plugin import TGBFPlugin
-from telegram.ext import MessageHandler, Filters
+from telegram.ext import MessageHandler, Filters, CallbackContext
 from lamdenpy.wallet import Wallet as LamdenWallet
 
 
@@ -18,7 +19,7 @@ class Wallet(TGBFPlugin):
             self.wallet_callback),
             group=0)
 
-    def wallet_callback(self, update, context):
+    def wallet_callback(self, update: Update, context: CallbackContext):
         try:
             user = update.effective_user
 

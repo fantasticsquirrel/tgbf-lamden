@@ -11,6 +11,9 @@ watchgod = "*"
 pynacl = "*"
 requests = "*"
 lamdenpy = "*"
+pkgconfig = "*"
+cython = "*"
+pycapnp = "*"
 
 [dev-packages]
 

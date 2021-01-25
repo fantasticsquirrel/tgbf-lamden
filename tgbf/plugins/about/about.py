@@ -11,7 +11,8 @@ class About(TGBFPlugin):
         self.add_handler(CommandHandler(
             self.name,
             self.about_callback,
-            run_async=True))
+            run_async=True),
+            group=1)
 
     def about_callback(self, update: Update, context: CallbackContext):
         update.message.reply_text(

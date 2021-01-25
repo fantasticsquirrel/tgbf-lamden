@@ -1,0 +1,6 @@
+CREATE TABLE send (
+	from_addr TEXT NOT NULL,
+	to_addr TEXT NOT NULL,
+	amount INTEGER NOT NULL,
+	date_time DATETIME DEFAULT CURRENT_TIMESTAMP
+)

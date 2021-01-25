@@ -566,7 +566,7 @@ class TGBFPlugin:
         plugins in the config file of the current plugin are enabled """
 
         def _dependency(self, update: Update, context: CallbackContext, **kwargs):
-            dependencies = self.config.get("dependencies")
+            dependencies = self.config.get("dependency")
 
             if dependencies and isinstance(dependencies, list):
                 plugin_names = [p.name for p in self.plugins]

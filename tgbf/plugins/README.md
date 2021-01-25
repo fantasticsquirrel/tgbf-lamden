@@ -13,7 +13,7 @@ Plugins will be automatically recognized and added on startup if:
 ## Plugin configuration
 A plugin configuration file can be empty or even not existing. If you provide a config, following keys are recognized automatically:
 
-- `dependencies`: Needs to be a list. It should consist of plugin names that need to be active in order to be able to use the current plugin
+- `dependency`: Needs to be a list. It should consist of plugin names that need to be active in order to be able to use the current plugin
 - `handle`: If the plugin handle should be differnt from the plugin name then provide it here
 - `category`: If you want to list the plugin in the /help command, then provide a category
 - `description`: If you want to list the plugin in the /help command, then provide a description

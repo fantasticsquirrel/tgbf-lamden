@@ -11,7 +11,8 @@ class Help(TGBFPlugin):
         self.add_handler(CommandHandler(
             self.name,
             self.help_callback,
-            run_async=True))
+            run_async=True),
+            group=1)
 
     @TGBFPlugin.send_typing
     def help_callback(self, update: Update, context: CallbackContext):

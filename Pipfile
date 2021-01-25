@@ -8,6 +8,9 @@ python-telegram-bot = "*"
 flask = "*"
 psutil = "*"
 watchgod = "*"
+pynacl = "*"
+requests = "*"
+lamdenpy = "*"
 
 [dev-packages]
 

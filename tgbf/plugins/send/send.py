@@ -2,8 +2,8 @@ import tgbf.emoji as emo
 
 from telegram import Update
 from tgbf.plugin import TGBFPlugin
-from lamdenpy.query import LamdenClient
-from lamdenpy.wallet import Wallet as LamdenWallet
+from tgbf.lamden.wallet import LamdenWallet
+from tgbf.lamden.connect import LamdenConnect
 from telegram.ext import CommandHandler, CallbackContext
 
 
@@ -31,6 +31,18 @@ class Send(TGBFPlugin):
             return
 
         wallet = LamdenWallet(res["data"][0][2])
-        client = LamdenClient("testnet-master-1.lamden.io", wallet)
+        lamden = LamdenConnect(wallet=wallet)
 
-        update.message.reply_text(f"Ping: {client.ping()}")
+        print(lamden.get_nonce())
+        print(lamden.get_balance(wallet.vk.encode().hex()))
+
+        # TODO: Send transaction
+
+        """
+        my_token = client.get_contract('my_token')
+        # Call transfer method
+        my_token.transfer(
+            amount=10,
+            receiver='you'
+        )
+        """

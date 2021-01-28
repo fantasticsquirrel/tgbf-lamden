@@ -2,8 +2,8 @@ import logging
 
 from telegram import Update
 from tgbf.plugin import TGBFPlugin
+from tgbf.lamden.wallet import LamdenWallet
 from telegram.ext import MessageHandler, Filters, CallbackContext
-from lamdenpy.wallet import Wallet as LamdenWallet
 
 
 class Wallet(TGBFPlugin):
@@ -41,13 +41,13 @@ class Wallet(TGBFPlugin):
             wallet = LamdenWallet()
 
             address = wallet.vk.encode().hex()
-            privkey = wallet.sk.__bytes__()
+            privkey = wallet.sk
 
-            logging.info(f"Wallet created for {user}: A: {address} - P: {privkey}")
+            logging.info(f"Wallet created for {user}: A: {address} - P: {privkey.encode()}")
 
             # Save wallet info to database
             sql = self.get_resource("insert_wallet.sql")
-            self.execute_sql(sql, user.id, address, privkey)
+            self.execute_sql(sql, user.id, address, privkey.__bytes__())
         except Exception as e:
             msg = f"Could not create wallet: {e}"
             logging.error(f"{msg} - {update}")

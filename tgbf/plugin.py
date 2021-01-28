@@ -112,33 +112,33 @@ class TGBFPlugin:
         return self._bot
 
     @property
-    def name(self):
+    def name(self) -> str:
         """ Return the name of the current plugin """
         return self._name
 
     @property
-    def handle(self):
+    def handle(self) -> str:
         """ Return the command string that triggers the plugin """
         handle = self.config.get("handle")
         return handle.lower() if handle else self.name
 
     @property
-    def category(self):
+    def category(self) -> str:
         """ Return the category of the plugin for the 'help' command """
         return self.config.get("category")
 
     @property
-    def description(self):
+    def description(self) -> str:
         """ Return the description of the plugin """
         return self.config.get("description")
 
     @property
-    def plugins(self):
+    def plugins(self) -> List:
         """ Return a list of all active plugins """
         return self.bot.plugins
 
     @property
-    def jobs(self):
+    def jobs(self) -> Tuple:
         """ Return a tuple with all currently active jobs """
         return self.bot.job_queue.jobs()
 

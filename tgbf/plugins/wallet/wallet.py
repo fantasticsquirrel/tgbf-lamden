@@ -40,14 +40,11 @@ class Wallet(TGBFPlugin):
             # Create wallet
             wallet = LamdenWallet()
 
-            address = wallet.vk.encode().hex()
-            privkey = wallet.sk
-
-            logging.info(f"Wallet created for {user}: A: {address} - P: {privkey.encode()}")
+            logging.info(f"Wallet created for {user}: A: {wallet.address} - P: {wallet.privkey}")
 
             # Save wallet info to database
             sql = self.get_resource("insert_wallet.sql")
-            self.execute_sql(sql, user.id, address, privkey.__bytes__())
+            self.execute_sql(sql, user.id, wallet.address, wallet.sk.__bytes__())
         except Exception as e:
             msg = f"Could not create wallet: {e}"
             logging.error(f"{msg} - {update}")

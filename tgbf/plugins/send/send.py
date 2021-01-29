@@ -33,9 +33,6 @@ class Send(TGBFPlugin):
         wallet = LamdenWallet(res["data"][0][2])
         lamden = LamdenConnect(wallet=wallet)
 
-        print(lamden.get_nonce())
-        print(lamden.get_balance(wallet.vk.encode().hex()))
-
         # TODO: Send transaction
 
         """

@@ -28,6 +28,9 @@ class LamdenWallet:
         self.sk = nacl.signing.SigningKey(seed=seed)
         self.vk = self.sk.verify_key
 
+        self._address = self.vk.encode().hex().upper()
+        self._privkey = self.sk.encode().hex().upper()
+
     def sign(self, msg: bytes):
         sig = self.sk.sign(msg)
         return sig.signature
@@ -38,3 +41,11 @@ class LamdenWallet:
         except nacl.exceptions.BadSignatureError:
             return False
         return True
+
+    @property
+    def address(self):
+        return self._address
+
+    @property
+    def privkey(self):
+        return self._privkey

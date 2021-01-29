@@ -1,10 +1,11 @@
 {
     "masternodes": {
         "MAIN": [
-            {"https://masternode-01.lamden.io":  null}
+            {"https://masternode-01.lamden.io": null},
+            {"https://masternode-02.lamden.io": null}
         ],
         "TEST": [
-            {"https://testnet-master-1.lamden.io":  null}
+            {"https://testnet-master-1.lamden.io": null}
         ]
     }
 }

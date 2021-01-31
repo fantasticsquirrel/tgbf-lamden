@@ -1,7 +1,7 @@
 import requests
 
 from tgbf.lamden.wallet import LamdenWallet
-#from contracting.client import ContractingClient
+from contracting.client import ContractingClient
 
 
 class Lamden:
@@ -11,7 +11,10 @@ class Lamden:
         self.port = port
         self.wallet = wallet
         self._node_url = None
-        #self.client = ContractingClient()  # TODO: mongodb necessary
+
+        # Make sure mongodb instance is running
+        # https://blog.lamden.io/smart-contracting-with-python-2af233620dca
+        self.client = ContractingClient()
 
     @property
     def node_url(self):

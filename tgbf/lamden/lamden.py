@@ -1,3 +1,4 @@
+import math
 import requests
 
 from tgbf.lamden.wallet import LamdenWallet
@@ -43,12 +44,24 @@ class Lamden:
         return res.json()
 
     def get_balance(self, address, raw=False):
+        address = "673dc19ec0eb56208bb091b2b72020722bb500f2f589e228190dffb2cde2da61"
         res = requests.get(f"{self.node_url}/contracts/currency/balances?key={address}")
+
         if raw:
             return res.json()
-        else:
-            balance = res.json()["value"]
-            return "0" if balance is None else balance["__fixed__"]  # FIXME: No '__fixed__' if on testnet
+
+        data = res.json()["value"]
+
+        if isinstance(data, dict) and "__fixed__" in data:
+            data = data["__fixed__"]
+
+        if data is None:
+            return 0
+
+        data = math.floor(float(data) * 100)/100.0
+        data = int(data) if data.is_integer() else data
+
+        return data
 
     def get_contracts(self):
         res = requests.get(f"{self.node_url}/contracts")

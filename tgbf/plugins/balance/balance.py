@@ -26,6 +26,7 @@ class Balance(TGBFPlugin):
             msg = f"{emo.ERROR} Can't retrieve your wallet"
             update.message.reply_text(msg)
             self.notify(msg)
+            return
 
         wallet = LamdenWallet(res["data"][0][2])
         lamden = LamdenConnect(chain=Chain.TEST, wallet=wallet)  # TODO: Remove TESTNET

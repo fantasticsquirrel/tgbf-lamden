@@ -24,12 +24,15 @@ class LamdenWallet:
     def __init__(self, seed=None):
         if seed is None:
             seed = secrets.token_bytes(32)
+        else:
+            if not isinstance(seed, bytes):
+                seed = bytes.fromhex(seed)
 
         self.sk = nacl.signing.SigningKey(seed=seed)
         self.vk = self.sk.verify_key
 
-        self._address = self.vk.encode().hex().upper()
-        self._privkey = self.sk.encode().hex().upper()
+        self._address = self.vk.encode().hex()
+        self._privkey = self.sk.encode().hex()
 
     def sign(self, msg: bytes):
         sig = self.sk.sign(msg)

@@ -5,14 +5,13 @@ import nacl.signing
 import secrets
 
 
-def raw_sign(signing_key: bytes, message: bytes):
-    sk = nacl.signing.SigningKey(seed=signing_key)
-    sig = sk.sign(message)
-    return sig.signature
+def verify(address: str, message: str, signature: str):
+    address = bytes.fromhex(address)
+    message = message.encode()
+    signature = bytes.fromhex(signature)
 
+    vk = nacl.signing.VerifyKey(address)
 
-def raw_verify(verifying_key: bytes, message: bytes, signature: bytes):
-    vk = nacl.signing.VerifyKey(key=verifying_key)
     try:
         vk.verify(message, signature)
     except nacl.exceptions.BadSignatureError:
@@ -22,32 +21,22 @@ def raw_verify(verifying_key: bytes, message: bytes, signature: bytes):
 
 class LamdenWallet:
     def __init__(self, seed=None):
+        if isinstance(seed, str):
+            seed = bytes.fromhex(seed)
         if seed is None:
             seed = secrets.token_bytes(32)
-        if not isinstance(seed, bytes):
-            seed = bytes.fromhex(seed)
 
         self.sk = nacl.signing.SigningKey(seed=seed)
         self.vk = self.sk.verify_key
 
-        self._address = self.vk.encode().hex()
-        self._privkey = self.sk.encode().hex()
-
-    def sign(self, msg: bytes):
-        sig = self.sk.sign(msg)
-        return sig.signature
-
-    def verify(self, msg: bytes, signature: bytes):
-        try:
-            self.vk.verify(msg, signature)
-        except nacl.exceptions.BadSignatureError:
-            return False
-        return True
+    def sign(self, msg: str):
+        sig = self.sk.sign(msg.encode())
+        return sig.signature.hex()
 
     @property
     def address(self):
-        return self._address
+        return self.vk.encode().hex()
 
     @property
     def privkey(self):
-        return self._privkey
+        return self.sk.encode().hex()

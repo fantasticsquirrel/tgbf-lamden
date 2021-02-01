@@ -32,6 +32,6 @@ class Balance(TGBFPlugin):
         balance = lamden.get_balance(wallet.address, raw=False)
 
         update.message.reply_text(
-            text=f"`{balance}` TAU",
+            text=f"`{balance} TAU`",
             parse_mode=ParseMode.MARKDOWN_V2
         )

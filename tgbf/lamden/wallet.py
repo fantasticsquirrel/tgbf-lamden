@@ -24,9 +24,8 @@ class LamdenWallet:
     def __init__(self, seed=None):
         if seed is None:
             seed = secrets.token_bytes(32)
-        else:
-            if not isinstance(seed, bytes):
-                seed = bytes.fromhex(seed)
+        if not isinstance(seed, bytes):
+            seed = bytes.fromhex(seed)
 
         self.sk = nacl.signing.SigningKey(seed=seed)
         self.vk = self.sk.verify_key

@@ -22,7 +22,7 @@ class Lamden:
         self._node_url = self.host if self.port is None else f"{self.host}:{self.port}"
         return self._node_url
 
-    def get_nonce(self, address, raw=False):
+    def get_nonce(self, address, raw=True):
         res = requests.get(f"{self.node_url}/nonce/{address}")
         return res.json() if raw else res.json()["nonce"]
 
@@ -30,13 +30,13 @@ class Lamden:
         res = requests.get(f"{self.node_url}/latest_block")
         return res.json()
 
-    def get_latest_block_number(self, raw=False):
+    def get_latest_block_number(self, raw=True):
         res = requests.get(f"{self.node_url}/latest_block_num")
         return res.json() if raw else res.json()["latest_block_number"]
 
-    def get_latest_block_hash(self):
-        res = requests.get(f"{self.node_url}/contracts/currency/methods")
-        return res.json()
+    def get_latest_block_hash(self, raw=True):
+        res = requests.get(f"{self.node_url}/latest_block_hash")
+        return res.json() if raw else res.json()["latest_block_hash"]
 
     def get_block_details(self, block_number):
         res = requests.get(f"{self.node_url}/blocks?num={block_number}")
@@ -54,8 +54,8 @@ class Lamden:
         res = requests.get(f"{self.node_url}/contracts")
         return res.json()
 
-    def get_transaction_details(self, hash):
-        res = requests.get(f"{self.node_url}/tx?hash={hash}")
+    def get_transaction_details(self, tx_hash):
+        res = requests.get(f"{self.node_url}/tx?hash={tx_hash}")
         return res.json()
 
     def post_transaction(self):
@@ -71,5 +71,5 @@ class Lamden:
         return res.json()
 
     def get_contract_variables(self):
-        res = requests.get(f"{self.node_url}/contracts/currency/methods")
+        res = requests.get(f"{self.node_url}/contracts/currency/variables")
         return res.json()

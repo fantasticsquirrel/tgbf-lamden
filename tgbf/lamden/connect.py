@@ -3,22 +3,16 @@ import logging
 import requests
 import tgbf.constants as c
 
-from enum import Enum
 from tgbf.config import ConfigManager as Cfg
 from tgbf.lamden.wallet import LamdenWallet
 from tgbf.lamden.lamden import Lamden
 
 
-class Chain(Enum):
-    MAIN = 1
-    TEST = 2
-
-
 class LamdenConnect(Lamden):
 
-    def __init__(self, chain: Chain = Chain.MAIN, wallet: LamdenWallet = None):
+    def __init__(self, wallet: LamdenWallet = None):
         self.cfg = Cfg(os.path.join(c.DIR_CFG, "lamden.json"))
-        self.chain = chain
+        self.chain = self.cfg.get("chain")
 
         host, port = self.connect()
 
@@ -26,7 +20,7 @@ class LamdenConnect(Lamden):
 
     def connect(self):
         for chain, node_list in self.cfg.get("masternodes").items():
-            if chain == self.chain.name:
+            if chain.lower() == self.chain.lower():
                 for node in node_list:
                     for host, port in node.items():
                         try:

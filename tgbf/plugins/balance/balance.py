@@ -2,7 +2,7 @@ import tgbf.emoji as emo
 
 from telegram import Update
 from tgbf.lamden.wallet import LamdenWallet
-from tgbf.lamden.connect import LamdenConnect, Chain
+from tgbf.lamden.connect import LamdenConnect
 from telegram.ext import CommandHandler, CallbackContext
 from telegram import ParseMode
 
@@ -29,7 +29,7 @@ class Balance(TGBFPlugin):
             return
 
         wallet = LamdenWallet(res["data"][0][2])
-        lamden = LamdenConnect(chain=Chain.TEST, wallet=wallet)  # TODO: Remove TESTNET
+        lamden = LamdenConnect(wallet=wallet)
         balance = lamden.get_balance(wallet.address, raw=False)
 
         update.message.reply_text(

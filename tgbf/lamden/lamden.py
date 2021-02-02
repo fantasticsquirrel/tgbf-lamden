@@ -1,8 +1,9 @@
+import time
 import math
+import json
 import requests
 
 from tgbf.lamden.wallet import LamdenWallet
-#from contracting.client import ContractingClient
 
 
 class Lamden:
@@ -12,11 +13,6 @@ class Lamden:
         self.port = port
         self.wallet = wallet
         self._node_url = None
-
-        # Make sure mongodb instance is running or otherwise you get this error:
-        # "Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)"
-        # https://blog.lamden.io/smart-contracting-with-python-2af233620dca
-        #self.client = ContractingClient()
 
     @property
     def node_url(self):
@@ -71,9 +67,45 @@ class Lamden:
         res = requests.get(f"{self.node_url}/tx?hash={tx_hash}")
         return res.json()
 
-    def post_transaction(self):
-        res = requests.post(f"{self.node_url}/")
-        # TODO
+    def post_transaction(self, wallet: LamdenWallet, amount, to, processor: str, stamps: int):
+        def encode(data: str):
+            return json.dumps(data, cls=Encoder, separators=(',', ':'))
+
+        def decode(data):
+            if data is None:
+                return None
+
+            if isinstance(data, bytes):
+                data = data.decode()
+
+            try:
+                return json.loads(data, parse_float=ContractingDecimal, object_hook=as_object)
+            except json.decoder.JSONDecodeError as e:
+                return None
+
+        payload = {
+            'contract': "currency",
+            'function': "transfer",
+            'kwargs': {'amount': amount, 'to': to},
+            'nonce': self.get_nonce(wallet.address),
+            'processor': processor,
+            'sender': wallet.address,
+            'stamps_supplied': stamps,
+        }
+
+        true_payload = encode(decode(encode(payload)))
+
+        metadata = {
+            'signature': wallet.sign(true_payload),
+            'timestamp': int(time.time())
+        }
+
+        tx = {
+            'payload': payload,
+            'metadata': metadata
+        }
+
+        res = requests.post(f"{self.node_url}/{encode(tx)}")
 
     def get_network_constitution(self):
         res = requests.get(f"{self.node_url}/constitution")

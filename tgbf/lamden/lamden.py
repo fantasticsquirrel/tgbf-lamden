@@ -39,7 +39,7 @@ class Lamden:
         res = requests.get(f"{self.node_url}/blocks?num={block_number}")
         return res.json()
 
-    def get_balance(self, address, raw=False):
+    def get_balance(self, address, raw=True):
         res = requests.get(f"{self.node_url}/contracts/currency/balances?key={address}")
 
         if raw:
@@ -49,13 +49,11 @@ class Lamden:
 
         if isinstance(data, dict) and "__fixed__" in data:
             data = data["__fixed__"]
-
         if data is None:
             return 0
 
         data = math.floor(float(data) * 100)/100.0
         data = int(data) if data.is_integer() else data
-
         return data
 
     def get_contracts(self):

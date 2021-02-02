@@ -40,7 +40,6 @@ class Lamden:
         return res.json()
 
     def get_balance(self, address, raw=False):
-        address = "673dc19ec0eb56208bb091b2b72020722bb500f2f589e228190dffb2cde2da61"
         res = requests.get(f"{self.node_url}/contracts/currency/balances?key={address}")
 
         if raw:

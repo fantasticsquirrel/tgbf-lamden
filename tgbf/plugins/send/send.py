@@ -33,13 +33,8 @@ class Send(TGBFPlugin):
         wallet = LamdenWallet(res["data"][0][2])
         lamden = LamdenConnect(wallet=wallet)
 
-        # TODO: Send transaction
-
-        """
-        my_token = client.get_contract('my_token')
-        # Call transfer method
-        my_token.transfer(
-            amount=10,
-            receiver='you'
+        lamden.post_transaction(
+            wallet,
+            10,
+            "ab35acd85344fb391af571d2dc0819e86d92c9d1ad779698850c8aca15390599"
         )
-        """

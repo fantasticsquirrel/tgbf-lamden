@@ -1,9 +1,10 @@
 import time
 import math
-import json
 import requests
 
 from tgbf.lamden.wallet import LamdenWallet
+from contracting.db.encoder import encode, decode
+#from lamden.crypto.canonical import format_dictionary
 
 
 class Lamden:
@@ -64,36 +65,37 @@ class Lamden:
         res = requests.get(f"{self.node_url}/tx?hash={tx_hash}")
         return res.json()
 
-    def post_transaction(self, wallet: LamdenWallet, amount, to, processor: str, stamps: int):
-        def encode(data: str):
-            return json.dumps(data, cls=Encoder, separators=(',', ':'))
+    def post_transaction(self, from_wallet: LamdenWallet, amount: int, to_address: str):
+        def format_dictionary(d: dict) -> dict:
+            for k, v in d.items():
+                assert type(k) == str, 'Non-string key types not allowed.'
+                if type(v) == list:
+                    for i in range(len(v)):
+                        if isinstance(v[i], dict):
+                            v[i] = format_dictionary(v[i])
+                elif isinstance(v, dict):
+                    d[k] = format_dictionary(v)
+            return {k: v for k, v in sorted(d.items())}
 
-        def decode(data):
-            if data is None:
-                return None
-
-            if isinstance(data, bytes):
-                data = data.decode()
-
-            try:
-                return json.loads(data, parse_float=ContractingDecimal, object_hook=as_object)
-            except json.decoder.JSONDecodeError as e:
-                return None
+        nonce = self.get_nonce(from_wallet.address)
 
         payload = {
             'contract': "currency",
             'function': "transfer",
-            'kwargs': {'amount': amount, 'to': to},
-            'nonce': self.get_nonce(wallet.address),
-            'processor': processor,
-            'sender': wallet.address,
-            'stamps_supplied': stamps,
+            'kwargs': {"amount": amount, "to": to_address},
+            'nonce': nonce["nonce"],
+            'processor': nonce["processor"],
+            'sender': nonce["sender"],
+            'stamps_supplied': 5000,  # TODO: What to set here?
         }
+
+        # Sort payload in case kwargs unsorted
+        payload = format_dictionary(payload)
 
         true_payload = encode(decode(encode(payload)))
 
         metadata = {
-            'signature': wallet.sign(true_payload),
+            'signature': from_wallet.sign(true_payload),
             'timestamp': int(time.time())
         }
 
@@ -102,7 +104,14 @@ class Lamden:
             'metadata': metadata
         }
 
-        res = requests.post(f"{self.node_url}/{encode(tx)}")
+        encoded_payload = encode(format_dictionary(tx))
+
+        try:
+            # TODO: Make sure that this is async
+            res = requests.post(f"{self.node_url}/", data=encoded_payload)
+            print(res)
+        except Exception as e:
+            print("ERROR:", e)
 
     def get_network_constitution(self):
         res = requests.get(f"{self.node_url}/constitution")

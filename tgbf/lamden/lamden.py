@@ -109,7 +109,7 @@ class Lamden:
         try:
             # TODO: Make sure that this is async
             res = requests.post(f"{self.node_url}/", data=encoded_payload)
-            print(res)
+            print(res.text)
         except Exception as e:
             print("ERROR:", e)
 

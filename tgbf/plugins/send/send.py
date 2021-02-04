@@ -35,6 +35,6 @@ class Send(TGBFPlugin):
 
         lamden.post_transaction(
             wallet,
-            10,
+            1,
             "ab35acd85344fb391af571d2dc0819e86d92c9d1ad779698850c8aca15390599"
         )

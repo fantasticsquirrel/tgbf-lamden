@@ -19,6 +19,7 @@ def verify(address: str, message: str, signature: str):
     return True
 
 
+# TODO: If i use 'lamden' module, do i still need 'pynacl' as a dependency?
 class LamdenWallet:
     def __init__(self, seed=None):
         if isinstance(seed, str):

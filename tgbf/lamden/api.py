@@ -2,7 +2,7 @@ import time
 import requests
 
 from contracting.db.encoder import encode, decode
-from lamden.crypto.canonical import format_dictionary
+from lamden.crypto.canonical import format_dictionary as fd
 from lamden.crypto.wallet import Wallet
 
 
@@ -65,23 +65,17 @@ class API:
             'stamps_supplied': 100,  # TODO: What to set here?
         }
 
-        payload = format_dictionary(payload)
-
-        metadata = {
-            'signature': from_wallet.sign(encode(payload)),
-            'timestamp': int(time.time())
-        }
-
         tx = {
             'payload': payload,
-            'metadata': metadata
+            'metadata': {
+                'signature': from_wallet.sign(encode(fd(payload))),
+                'timestamp': int(time.time())
+            }
         }
-
-        payload = encode(format_dictionary(tx))
 
         try:
             # TODO: Make sure that this is async
-            res = requests.post(f"{self.node_url}/", data=payload)
+            res = requests.post(f"{self.node_url}/", data=encode(fd(tx)))
             return decode(res.text)  # TODO: Can be None on error
         except Exception as e:
             print("ERROR:", e)  # TODO: Better error handling

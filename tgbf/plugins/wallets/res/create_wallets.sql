@@ -1,4 +1,4 @@
-CREATE TABLE wallet (
+CREATE TABLE wallets (
 	user_id INTEGER NOT NULL PRIMARY KEY,
 	address TEXT NOT NULL,
 	privkey TEXT NOT NULL,

@@ -1,8 +1,8 @@
 import tgbf.emoji as emo
 
 from telegram import Update
-from tgbf.lamden.wallet import LamdenWallet
-from tgbf.lamden.connect import LamdenConnect
+from lamden.crypto.wallet import Wallet
+from tgbf.lamden.connect import Connect
 from telegram.ext import CommandHandler, CallbackContext
 from telegram import ParseMode
 
@@ -19,8 +19,8 @@ class Balance(TGBFPlugin):
             group=1)
 
     def balance_callback(self, update: Update, context: CallbackContext):
-        sql = self.get_resource("select_wallet.sql", plugin="wallet")
-        res = self.execute_sql(sql, update.effective_user.id, plugin="wallet")
+        sql = self.get_resource("select_wallets.sql", plugin="wallets")
+        res = self.execute_sql(sql, update.effective_user.id, plugin="wallets")
 
         if not res["data"]:
             msg = f"{emo.ERROR} Can't retrieve your wallet"
@@ -28,9 +28,11 @@ class Balance(TGBFPlugin):
             self.notify(msg)
             return
 
-        wallet = LamdenWallet(res["data"][0][2])
-        lamden = LamdenConnect(wallet=wallet)
-        balance = lamden.get_balance(wallet.address, raw=False)
+        wallet = Wallet(res["data"][0][2])
+        lamden = Connect(wallet=wallet)
+
+        balance = lamden.get_balance(wallet.verifying_key)
+        balance = balance if balance["value"] else 0
 
         update.message.reply_text(
             text=f"`{balance} TAU`",

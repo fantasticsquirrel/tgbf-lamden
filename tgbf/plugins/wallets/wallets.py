@@ -2,15 +2,15 @@ import logging
 
 from telegram import Update
 from tgbf.plugin import TGBFPlugin
-from tgbf.lamden.wallet import LamdenWallet
+from lamden.crypto.wallet import Wallet
 from telegram.ext import MessageHandler, Filters, CallbackContext
 
 
-class Wallet(TGBFPlugin):
+class Wallets(TGBFPlugin):
 
     def load(self):
-        if not self.table_exists("wallet"):
-            sql = self.get_resource("create_wallet.sql")
+        if not self.table_exists("wallets"):
+            sql = self.get_resource("create_wallets.sql")
             self.execute_sql(sql)
 
         # Capture all executed commands
@@ -30,7 +30,7 @@ class Wallet(TGBFPlugin):
                 return
 
             # Check if user already has a wallet
-            sql = self.get_resource("select_wallet.sql")
+            sql = self.get_resource("select_wallets.sql")
             res = self.execute_sql(sql, user.id)
 
             # User already has wallet
@@ -38,13 +38,16 @@ class Wallet(TGBFPlugin):
                 return
 
             # Create wallet
-            wallet = LamdenWallet()
+            wallet = Wallet()
 
-            # Save wallet info to database
-            sql = self.get_resource("insert_wallet.sql")
-            self.execute_sql(sql, user.id, wallet.address, wallet.privkey)
+            # Save wallet to database
+            self.execute_sql(
+                self.get_resource("insert_wallets.sql"),
+                user.id,
+                wallet.verifying_key,
+                wallet.signing_key)
 
-            logging.info(f"Wallet created for {user}: A: {wallet.address} - P: {wallet.privkey}")
+            logging.info(f"Wallet created for {user}: {wallet.verifying_key} - {wallet.signing_key}")
         except Exception as e:
             msg = f"Could not create wallet: {e}"
             logging.error(f"{msg} - {update}")

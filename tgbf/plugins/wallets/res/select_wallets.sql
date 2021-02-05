@@ -1,3 +1,3 @@
 SELECT *
-FROM wallet
+FROM wallets
 WHERE user_id = ?

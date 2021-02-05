@@ -8,9 +8,9 @@ python-telegram-bot = "*"
 watchgod = "*"
 psutil = "*"
 flask = "*"
-pynacl = "*"
 requests = "*"
 contracting = "*"
+lamden = "*"
 
 [dev-packages]
 

@@ -4,13 +4,13 @@ import requests
 import tgbf.constants as c
 
 from tgbf.config import ConfigManager as Cfg
-from tgbf.lamden.wallet import LamdenWallet
-from tgbf.lamden.lamden import Lamden
+from lamden.crypto.wallet import Wallet
+from tgbf.lamden.api import API
 
 
-class LamdenConnect(Lamden):
+class Connect(API):
 
-    def __init__(self, wallet: LamdenWallet = None):
+    def __init__(self, wallet: Wallet = None):
         self.cfg = Cfg(os.path.join(c.DIR_CFG, "lamden.json"))
         self.chain = self.cfg.get("chain")
 

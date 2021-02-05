@@ -11,6 +11,7 @@ flask = "*"
 requests = "*"
 contracting = "*"
 lamden = "*"
+myqr = "*"
 
 [dev-packages]
 

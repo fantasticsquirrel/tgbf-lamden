@@ -454,10 +454,12 @@ class TGBFPlugin:
                 return True
         return False
 
+    def is_private(self, message: Message):
+        """ Check if message was sent in a private chat or not """
+        return self.bot.updater.bot.get_chat(message.chat_id).type == Chat.PRIVATE
+
     def remove_msg(self, message: Message, after_secs, private=True, public=True):
         """ Remove a Telegram message after a given time """
-
-        is_private = self.bot.updater.bot.get_chat(message.chat_id).type == Chat.PRIVATE
 
         def remove_msg_job(context: CallbackContext):
             param_lst = str(context.job.context).split("_")
@@ -475,7 +477,7 @@ class TGBFPlugin:
                 datetime.utcnow() + timedelta(seconds=after_secs),
                 context=f"{message.chat_id}_{message.message_id}")
 
-        if (is_private and private) or (not is_private and public):
+        if (self.is_private(message) and private) or (not self.is_private(message) and public):
             remove()
 
     def notify(self, some_input):

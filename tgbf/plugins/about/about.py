@@ -14,6 +14,7 @@ class About(TGBFPlugin):
             run_async=True),
             group=1)
 
+    @TGBFPlugin.send_typing
     def about_callback(self, update: Update, context: CallbackContext):
         update.message.reply_text(
             text=self.get_resource(self.INFO_FILE),

@@ -143,6 +143,7 @@ cython_debug/
 .idea
 kill.sh
 /cfg/token.json
+qr_codes/
 log/
 dat/
 bck/

@@ -17,7 +17,6 @@ class Balance(TGBFPlugin):
             run_async=True),
             group=1)
 
-    # TODO: Destinquish between dTAU and TAU and show appropriately
     def balance_callback(self, update: Update, context: CallbackContext):
         sql = self.get_resource("select_wallets.sql", plugin="wallets")
         res = self.execute_sql(sql, update.effective_user.id, plugin="wallets")

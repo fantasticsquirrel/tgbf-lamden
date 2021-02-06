@@ -8,5 +8,9 @@
         "test": [
             {"https://testnet-master-1.lamden.io": null}
         ]
+    },
+    "explorer": {
+        "main": "https://mainnet.lamden.io",
+        "test": "https://explorer.lamden.io"
     }
 }

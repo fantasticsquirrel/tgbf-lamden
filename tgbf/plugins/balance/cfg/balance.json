@@ -1,3 +1,5 @@
 {
+    "category": "Lamden",
+    "description": "Show TAU balance of your wallet",
     "dependency": ["wallets"]
 }

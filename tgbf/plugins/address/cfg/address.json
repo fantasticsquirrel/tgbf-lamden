@@ -1,3 +1,5 @@
 {
+    "category": "Lamden",
+    "description": "Show generated wallet address",
     "dependency": ["wallets"]
 }

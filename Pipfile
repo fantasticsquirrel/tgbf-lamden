@@ -12,6 +12,9 @@ requests = "*"
 contracting = "*"
 lamden = "*"
 myqr = "*"
+plotly = "*"
+pandas = "*"
+pycoingecko = "*"
 
 [dev-packages]
 

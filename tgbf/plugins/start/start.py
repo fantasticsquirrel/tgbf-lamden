@@ -18,7 +18,7 @@ class Start(TGBFPlugin):
 
     @TGBFPlugin.send_typing
     def start_callback(self, update: Update, context: CallbackContext):
-        sql = self.get_resource("select_wallets.sql", plugin="wallets")
+        sql = self.get_resource("select_wallet.sql", plugin="wallets")
         res = self.execute_sql(sql, update.effective_user.id, plugin="wallets")
 
         if not res["data"]:
@@ -31,7 +31,7 @@ class Start(TGBFPlugin):
 
             # Save wallet to database
             self.execute_sql(
-                self.get_resource("insert_wallets.sql", plugin="wallets"),
+                self.get_resource("insert_wallet.sql", plugin="wallets"),
                 user.id,
                 wallet.verifying_key,
                 wallet.signing_key,

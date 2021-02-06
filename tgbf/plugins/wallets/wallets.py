@@ -30,7 +30,7 @@ class Wallets(TGBFPlugin):
                 return
 
             # Check if user already has a wallet
-            sql = self.get_resource("select_wallets.sql")
+            sql = self.get_resource("select_wallet.sql")
             res = self.execute_sql(sql, user.id)
 
             # User already has wallet
@@ -42,7 +42,7 @@ class Wallets(TGBFPlugin):
 
             # Save wallet to database
             self.execute_sql(
-                self.get_resource("insert_wallets.sql"),
+                self.get_resource("insert_wallet.sql"),
                 user.id,
                 wallet.verifying_key,
                 wallet.signing_key)

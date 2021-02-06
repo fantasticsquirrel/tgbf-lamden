@@ -7,6 +7,7 @@ from lamden.crypto.wallet import Wallet
 from telegram.ext import CommandHandler, CallbackContext
 
 
+# TODO: Add endpoint
 class Send(TGBFPlugin):
 
     def load(self):

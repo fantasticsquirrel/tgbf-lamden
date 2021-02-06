@@ -9,6 +9,7 @@ from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
 
+# TODO: Add endpoint
 class Tiptrx(TGBFPlugin):
 
     def load(self):

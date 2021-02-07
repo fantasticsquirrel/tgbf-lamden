@@ -29,7 +29,7 @@ class Address(TGBFPlugin):
 
     @TGBFPlugin.send_typing
     def address_callback(self, update: Update, context: CallbackContext):
-        sql = self.get_resource("select_wallets.sql", plugin="wallets")
+        sql = self.get_resource("select_wallet.sql", plugin="wallets")
         res = self.execute_sql(sql, update.effective_user.id, plugin="wallets")
 
         if not res["data"]:

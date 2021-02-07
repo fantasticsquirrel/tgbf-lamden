@@ -18,7 +18,7 @@ class Balance(TGBFPlugin):
             group=1)
 
     def balance_callback(self, update: Update, context: CallbackContext):
-        sql = self.get_resource("select_wallets.sql", plugin="wallets")
+        sql = self.get_resource("select_wallet.sql", plugin="wallets")
         res = self.execute_sql(sql, update.effective_user.id, plugin="wallets")
 
         if not res["data"]:
@@ -31,7 +31,7 @@ class Balance(TGBFPlugin):
         lamden = Connect(wallet=wallet)
 
         balance = lamden.get_balance(wallet.verifying_key)
-        balance = balance if balance["value"] else 0
+        balance = balance["value"] if "value" in balance else 0
 
         update.message.reply_text(
             text=f"`{balance} TAU`",

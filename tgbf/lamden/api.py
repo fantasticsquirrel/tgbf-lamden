@@ -51,8 +51,8 @@ class API:
         res = requests.get(f"{self.node_url}/tx?hash={tx_hash}")
         return decode(res.text)
 
-    def post_transaction(self, from_wallet: Wallet, amount: int, to_address: str):
-        nonce = self.get_nonce(from_wallet.verifying_key)
+    def post_transaction(self, amount: int, to_address: str):
+        nonce = self.get_nonce(self.wallet.verifying_key)
 
         payload = {
             'contract': "currency",
@@ -67,7 +67,7 @@ class API:
         tx = {
             'payload': payload,
             'metadata': {
-                'signature': from_wallet.sign(encode(fd(payload))),
+                'signature': self.wallet.sign(encode(fd(payload))),
                 'timestamp': int(time.time())
             }
         }

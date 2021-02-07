@@ -1,4 +1,3 @@
 {
-    "description": "Gets executed when user first starts the bot",
-    "dependency": ["wallets"]
+    "description": "Gets executed when user first starts the bot"
 }

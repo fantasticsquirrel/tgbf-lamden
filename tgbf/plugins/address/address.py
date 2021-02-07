@@ -19,27 +19,15 @@ class Address(TGBFPlugin):
         self.add_handler(CommandHandler(
             self.name,
             self.address_callback,
-            run_async=True),
-            group=1)
+            run_async=True))
 
         self.add_handler(CallbackQueryHandler(
             self.privkey_callback,
-            run_async=True),
-            group=1)
+            run_async=True))
 
     @TGBFPlugin.send_typing
     def address_callback(self, update: Update, context: CallbackContext):
-        sql = self.get_resource("select_wallet.sql", plugin="wallets")
-        res = self.execute_sql(sql, update.effective_user.id, plugin="wallets")
-
-        if not res["data"]:
-            msg = f"{emo.ERROR} Can't retrieve your wallet"
-            update.message.reply_text(msg)
-            self.notify(msg)
-            return
-
-        address = res["data"][0][1]
-        privkey = res["data"][0][2]
+        wallet = self.get_wallet(update.effective_user.id)
 
         # Create directory for qr-code images
         qr_dir = os.path.join(self.get_plg_path(), self.QRCODES_DIR)
@@ -53,7 +41,7 @@ class Address(TGBFPlugin):
             logo = os.path.join(self.get_plg_path(), con.DIR_RES, self.LAMDEN_LOGO)
 
             myqr.run(
-                address,
+                wallet.verifying_key,
                 version=1,
                 level='H',
                 picture=logo,
@@ -67,13 +55,13 @@ class Address(TGBFPlugin):
             if self.is_private(update.message):
                 update.message.reply_photo(
                     photo=qr_pic,
-                    caption=f"`{address}`",
+                    caption=f"`{wallet.verifying_key}`",
                     parse_mode=ParseMode.MARKDOWN_V2,
-                    reply_markup=self.privkey_button_callback(privkey))
+                    reply_markup=self.privkey_button_callback(wallet.signing_key))
             else:
                 update.message.reply_photo(
                     photo=qr_pic,
-                    caption=f"`{address}`",
+                    caption=f"`{wallet.verifying_key}`",
                     parse_mode=ParseMode.MARKDOWN_V2)
 
     def privkey_callback(self, update: Update, context: CallbackContext):
@@ -84,7 +72,7 @@ class Address(TGBFPlugin):
             caption=f"*Address*\n`{message.caption}`\n\n*Private Key*\n`{query.data}`",
             parse_mode=ParseMode.MARKDOWN_V2)
 
-        msg = f"{emo.ALERT} DELETE AFTER VIEWING {emo.ALERT}"
+        msg = f"{emo.WARNING} DELETE AFTER VIEWING {emo.WARNING}"
         context.bot.answer_callback_query(query.id, msg)
 
     def privkey_button_callback(self, privkey):

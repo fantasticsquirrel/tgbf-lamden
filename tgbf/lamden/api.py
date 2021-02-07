@@ -51,7 +51,6 @@ class API:
         res = requests.get(f"{self.node_url}/tx?hash={tx_hash}")
         return decode(res.text)
 
-    # TODO: Do not restrict amount to int
     def post_transaction(self, from_wallet: Wallet, amount: int, to_address: str):
         nonce = self.get_nonce(from_wallet.verifying_key)
 

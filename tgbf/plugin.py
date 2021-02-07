@@ -16,6 +16,7 @@ from tgbf.config import ConfigManager
 from tgbf.tgbot import TelegramBot
 from datetime import datetime, timedelta
 from tgbf.web import EndpointAction
+from lamden.crypto.wallet import Wallet
 
 
 class TGBFPlugin:
@@ -37,6 +38,11 @@ class TGBFPlugin:
 
         # All web endpoints for this plugin
         self._endpoints: Dict[str, EndpointAction] = dict()
+
+        # Create global db table for wallets
+        if not self.global_table_exists("wallets"):
+            sql = self.get_global_resource("create_wallets.sql")
+            self.execute_global_sql(sql)
 
     def __enter__(self):
         """ This method gets executed after __init__() but before
@@ -612,3 +618,28 @@ class TGBFPlugin:
         def _threaded(*args, **kwargs):
             return threading.Thread(target=fn, args=args, kwargs=kwargs).start()
         return _threaded
+
+    def get_wallet(self, user_id):
+        """ Return address and privkey for given user_id.
+        If no wallet exists then it will be created. """
+
+        # Check if user already has a wallet
+        sql = self.get_global_resource("select_wallet.sql")
+        res = self.execute_global_sql(sql, user_id)
+
+        # User already has a wallet
+        if res["data"]:
+            return Wallet(res["data"][0][2])
+
+        # Create new wallet
+        wallet = Wallet()
+
+        # Save wallet to database
+        self.execute_global_sql(
+            self.get_global_resource("insert_wallet.sql"),
+            user_id,
+            wallet.verifying_key,
+            wallet.signing_key)
+
+        logging.info(f"Wallet created for {user_id}: {wallet.verifying_key} / {wallet.signing_key}")
+        return wallet

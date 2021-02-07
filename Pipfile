@@ -15,6 +15,7 @@ myqr = "*"
 plotly = "*"
 pandas = "*"
 pycoingecko = "*"
+kaleido = "*"
 
 [dev-packages]
 

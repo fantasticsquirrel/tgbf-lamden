@@ -52,7 +52,9 @@ In order to be able to run the bot you will need to install some dependencies.
 Install all needed Python modules
 
 ```shell
-pip3 install -r requirements.txt
+sudo apt-get install python3.9-dev
+pipenv --python 3.9
+pipenv install
 ```
 
 ### Starting
@@ -65,6 +67,7 @@ chmod +x run.sh
 Then run it to get the bot up with
 
 ```shell
+pipenv shell
 ./run.sh &
 ```
 
@@ -80,8 +83,15 @@ If you want to show a list of available commands as you type, open a chat with T
 
 ```
 about - Show info about bot and dev
+address - Your wallet address
+balance - Your TAU balance
+chart - TAU price & volume chart
 feedback - Send me your feedback
 help - Show all available commands
+price - Current TAU price
+send - <amount> <address>
+stats - Price change, volume & supply
+tip - <amount>
 ```
 
 ## Development
@@ -94,3 +104,4 @@ If you decide to write your own plugin, check out the [Plugin Page](https://gith
 If you'd like to support the project, consider donating to one of these crypto addresses:
 - BCH: `qzken7mgslv0w9t4ycj4uganv66ljccsq5ngcepp6h`
 - XMR: `42eSjjHF63P3LtxcdeC71TT3ZCcGbTtk1aESTvfrz4VqYeKMFP9tbWhjmcUJZE3yVrgDjH8uZhnob9czCtm764cFDWYPe7c`
+- TAU: `ae7d14d6d9b8443f881ba6244727b69b681010e782d4fe482dbfb0b6aca02d5d`

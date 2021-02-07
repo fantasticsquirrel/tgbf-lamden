@@ -1,12 +1,12 @@
 ✨ *Lamden Telegram Bot* ✨
 
-Welcome! I've generated a Lamden wallet for you so that you can receive and send TAU tokens via Telegram - perfect for tipping other users if you like what they are doing.  
+Welcome! I've generated a Lamden wallet for you so that you can receive and send TAU via Telegram - perfect for tipping other users if you like what they are doing.  
 
-You can check your wallet address and receive TAU with /address. To show your balance use the /balance command and to send TAU to another address, use /send. To list all available commands execute /help.
+Here is your address:  
+`{{address}}`  
 
-*Please hold only small amounts of TAU in this wallet since the private key is obviously known to the bot*  
+You can show your wallet address with the /address command and check your balance with the /balance command. To send TAU to another address use the /send command. The /help command will show you all available commands.
 
-Your TAU address is:
-`{{address}}`
+*Please hold only small amounts of TAU in your wallet since the private key is obviously known to the bot*
 
 Cheers 🍻👋

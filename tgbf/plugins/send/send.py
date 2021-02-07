@@ -1,13 +1,14 @@
+import logging
 import tgbf.emoji as emo
 
-from telegram import Update
 from tgbf.plugin import TGBFPlugin
 from tgbf.lamden.connect import Connect
 from lamden.crypto.wallet import Wallet
 from telegram.ext import CommandHandler, CallbackContext
+from telegram import Update, ParseMode
+from tgbf.web import EndpointAction
 
 
-# TODO: Add endpoint
 class Send(TGBFPlugin):
 
     def load(self):
@@ -21,8 +22,47 @@ class Send(TGBFPlugin):
             run_async=True),
             group=1)
 
+        web_pass = self.config.get("web_secret")
+        endpoint = EndpointAction(self.send_endpoint, web_pass)
+        self.add_endpoint(self.name, endpoint)
+
+    def send_endpoint(self):
+        res = self.execute_sql(self.get_resource("select_send.sql"))
+
+        if not res["success"]:
+            return {"ERROR": res["data"]}
+        if not res["data"]:
+            return {"ERROR": "NO DATA"}
+
+        return res["data"]
+
     def send_callback(self, update: Update, context: CallbackContext):
-        sql = self.get_resource("select_wallets.sql", plugin="wallets")
+        if len(context.args) != 2:
+            update.message.reply_text(
+                self.get_usage(),
+                parse_mode=ParseMode.MARKDOWN_V2)
+            return
+
+        amount = context.args[0]
+
+        try:
+            # Check if amount is valid
+            amount = float(amount)
+        except:
+            msg = f"{emo.ERROR} Amount not valid"
+            update.message.reply_text(msg)
+            return
+
+        if not amount.is_integer():
+            msg = f"{emo.ERROR} Amount needs to be a whole number"
+            update.message.reply_text(msg)
+            return
+
+        amount = int(amount)
+
+        to_address = context.args[1]
+
+        sql = self.get_resource("select_wallet.sql", plugin="wallets")
         res = self.execute_sql(sql, update.effective_user.id, plugin="wallets")
 
         if not res["data"]:
@@ -34,10 +74,41 @@ class Send(TGBFPlugin):
         wallet = Wallet(res["data"][0][2])
         lamden = Connect(wallet=wallet)
 
-        result = lamden.post_transaction(
-            wallet,
-            1,
-            "ab35acd85344fb391af571d2dc0819e86d92c9d1ad779698850c8aca15390599"
-        )
+        message = update.message.reply_text(f"{emo.HOURGLASS} Sending TAU...")
 
-        print(result)
+        try:
+            # Send TAU
+            send = lamden.post_transaction(wallet, amount, to_address)
+        except Exception as e:
+            msg = f"Could not send transaction: {e}"
+            message.edit_text(f"{emo.ERROR} {e}")
+            logging.error(msg)
+            self.notify(msg)
+            return
+
+        logging.info(f"Sent {amount} TAU from {wallet.verifying_key} to {to_address}: {send}")
+
+        if "error" in send:
+            msg = f"Transaction replied error: {send['error']}"
+            message.edit_text(f"{emo.ERROR} {send['error']}")
+            logging.error(msg)
+            return
+
+        # Get transaction hash
+        tx_hash = send["hash"]
+
+        # Insert details into database
+        self.execute_sql(
+            self.get_resource("insert_send.sql"),
+            wallet.verifying_key,
+            to_address,
+            amount,
+            tx_hash)
+
+        ex_url = lamden.cfg.get("explorer", lamden.chain)
+
+        message.edit_text(
+            f"{emo.MONEY} Sent `{amount}` TAU\n"
+            f"[View Transaction on Explorer]({ex_url}/transactions/{tx_hash})",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            disable_web_page_preview=True)

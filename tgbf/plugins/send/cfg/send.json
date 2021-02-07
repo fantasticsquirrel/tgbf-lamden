@@ -1,3 +1,6 @@
 {
-    "dependency": ["wallets"]
+    "category": "Lamden",
+    "description": "Send TAU to another address",
+    "dependency": ["wallets"],
+    "web_secret": "test"
 }

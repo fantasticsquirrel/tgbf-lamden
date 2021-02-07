@@ -159,5 +159,5 @@ class Chart(TGBFPlugin):
         fig["layout"]["yaxis2"].update(tickformat=tickformat)
 
         update.message.reply_photo(
-            photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="jpeg"))),
+            photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="png"))),
             quote=False)

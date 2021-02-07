@@ -1,8 +1,7 @@
-import time
 import requests
 
-from contracting.db.encoder import encode, decode
-from lamden.crypto.canonical import format_dictionary as fd
+from contracting.db.encoder import decode
+from lamden.crypto.transaction import build_transaction
 from lamden.crypto.wallet import Wallet
 
 
@@ -54,34 +53,22 @@ class API:
     def post_transaction(self, amount: int, to_address: str):
         nonce = self.get_nonce(self.wallet.verifying_key)
 
-        payload = {
-            'contract': "currency",
-            'function': "transfer",
-            'kwargs': {"amount": amount, "to": to_address},
-            'nonce': nonce["nonce"],
-            'processor': nonce["processor"],
-            'sender': nonce["sender"],
-            'stamps_supplied': 100,  # TODO: What to set here?
-        }
+        tx = build_transaction(
+            wallet=self.wallet,
+            processor=nonce["processor"],
+            stamps=100,
+            nonce=nonce["nonce"],
+            contract="currency",
+            function="transfer",
+            kwargs={"amount": amount, "to": to_address}
+        )
 
-        tx = {
-            'payload': payload,
-            'metadata': {
-                'signature': self.wallet.sign(encode(fd(payload))),
-                'timestamp': int(time.time())
-            }
-        }
-
-        try:
-            # TODO: Make sure that this is async
-            res = requests.post(f"{self.node_url}/", data=encode(fd(tx)))
-            return decode(res.text)  # TODO: Can be None on error
-        except Exception as e:
-            print("ERROR:", e)  # TODO: Better error handling
+        res = requests.post(self.node_url, data=tx)
+        return decode(res.text)
 
     def get_network_constitution(self):
         res = requests.get(f"{self.node_url}/constitution")
-        return res.json()
+        return decode(res.text)
 
     def get_contract_methods(self):
         res = requests.get(f"{self.node_url}/contracts/currency/methods")

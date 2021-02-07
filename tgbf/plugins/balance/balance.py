@@ -17,6 +17,7 @@ class Balance(TGBFPlugin):
             run_async=True),
             group=1)
 
+    @TGBFPlugin.send_typing
     def balance_callback(self, update: Update, context: CallbackContext):
         sql = self.get_resource("select_wallet.sql", plugin="wallets")
         res = self.execute_sql(sql, update.effective_user.id, plugin="wallets")

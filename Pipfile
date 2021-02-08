@@ -11,11 +11,12 @@ flask = "*"
 requests = "*"
 contracting = "*"
 lamden = "*"
-myqr = "*"
 plotly = "*"
 pandas = "*"
 pycoingecko = "*"
 kaleido = "*"
+segno = "*"
+qrcode-artistic = "*"
 
 [dev-packages]
 

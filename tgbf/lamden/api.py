@@ -20,8 +20,12 @@ class API:
         self._node_url = self.host if self.port is None else f"{self.host}:{self.port}"
         return self._node_url
 
-    def is_address_valid(self, address):
-        return True if len(address) == 64 else False
+    def is_address_valid(self, address: str):
+        if not len(address) == 64:
+            return False
+        if not address.isalnum():
+            return False
+        return True
 
     def get_nonce(self, address):
         res = requests.get(f"{self.node_url}/nonce/{address}")

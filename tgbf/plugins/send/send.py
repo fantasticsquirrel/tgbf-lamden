@@ -52,18 +52,18 @@ class Send(TGBFPlugin):
             update.message.reply_text(msg)
             return
 
-        if not amount.is_integer():
-            msg = f"{emo.ERROR} Amount needs to be a whole number"
-            update.message.reply_text(msg)
-            return
+        if amount.is_integer():
+            amount = int(amount)
 
-        amount = int(amount)
-
-        # TODO: How to validate this address?
         to_address = context.args[1]
 
         from_wallet = self.get_wallet(update.effective_user.id)
         lamden = Connect(wallet=from_wallet)
+
+        if not lamden.is_address_valid(to_address):
+            msg = f"{emo.ERROR} Address not valid"
+            update.message.reply_text(msg)
+            return
 
         message = update.message.reply_text(f"{emo.HOURGLASS} Sending TAU...")
 

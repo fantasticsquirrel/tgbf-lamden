@@ -64,12 +64,8 @@ class Tip(TGBFPlugin):
             update.message.reply_text(msg)
             return
 
-        if not amount.is_integer():
-            msg = f"{emo.ERROR} Amount needs to be a whole number"
-            update.message.reply_text(msg)
-            return
-
-        amount = int(amount)
+        if amount.is_integer():
+            amount = int(amount)
 
         from_wallet = self.get_wallet(from_user_id)
         lamden = Connect(wallet=from_wallet)

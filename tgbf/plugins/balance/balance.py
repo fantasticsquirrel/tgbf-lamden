@@ -20,6 +20,7 @@ class Balance(TGBFPlugin):
 
         balance = lamden.get_balance(wallet.verifying_key)
         balance = balance["value"] if "value" in balance else 0
+        balance = balance if balance else 0
 
         update.message.reply_text(
             text=f"`{balance} TAU`",

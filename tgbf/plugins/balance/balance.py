@@ -18,11 +18,13 @@ class Balance(TGBFPlugin):
         wallet = self.get_wallet(update.effective_user.id)
         lamden = Connect(wallet=wallet)
 
-        balance = lamden.get_balance(wallet.verifying_key)
-        balance = balance["value"] if "value" in balance else 0
-        balance = balance if balance else 0
+        b = lamden.get_balance(wallet.verifying_key)
+        b = b["value"] if "value" in b else 0
+        b = str(b) if b else "0"
+
+        b = str(int(b)) if float(b).is_integer() else "{:.2f}".format(float(b))
 
         update.message.reply_text(
-            text=f"`{balance} TAU`",
+            text=f"`{b} TAU`",
             parse_mode=ParseMode.MARKDOWN_V2
         )

@@ -1,3 +1,5 @@
+from typing import Union
+
 import requests
 
 from contracting.db.encoder import decode
@@ -17,6 +19,9 @@ class API:
     def node_url(self):
         self._node_url = self.host if self.port is None else f"{self.host}:{self.port}"
         return self._node_url
+
+    def is_address_valid(self, address):
+        return True if len(address) == 64 else False
 
     def get_nonce(self, address):
         res = requests.get(f"{self.node_url}/nonce/{address}")
@@ -50,7 +55,7 @@ class API:
         res = requests.get(f"{self.node_url}/tx?hash={tx_hash}")
         return decode(res.text)
 
-    def post_transaction(self, amount: int, to_address: str):
+    def post_transaction(self, amount: Union[int, float], to_address: str):
         nonce = self.get_nonce(self.wallet.verifying_key)
 
         tx = build_transaction(

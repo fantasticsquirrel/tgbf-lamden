@@ -27,9 +27,8 @@ class Balance(TGBFPlugin):
 
         b = lamden.get_balance(wallet.verifying_key)
         b = b["value"] if "value" in b else 0
-        b = str(b) if b else "0"
-
-        b = str(int(b)) if float(b).is_integer() else "{:.2f}".format(float(b))
+        b = float(str(b)) if b else float("0")
+        b = str(int(b)) if b.is_integer() else f"{b:.2f}"
 
         message = update.message.reply_text(
             text=f"`TAU: {b}`",

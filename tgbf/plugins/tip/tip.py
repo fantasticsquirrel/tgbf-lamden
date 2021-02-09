@@ -114,7 +114,7 @@ class Tip(TGBFPlugin):
         ex_url = lamden.cfg.get("explorer", lamden.chain)
 
         message.edit_text(
-            f"{emo.MONEY} {esc_mk(to_user)} received `{amount}` TAU\n"
+            f"{emo.MONEY} {esc_mk(to_user, version=2)} received `{amount}` TAU\n"
             f"[View Transaction on Explorer]({ex_url}/transactions/{tx_hash})",
             parse_mode=ParseMode.MARKDOWN_V2,
             disable_web_page_preview=True)
@@ -123,7 +123,7 @@ class Tip(TGBFPlugin):
             # Notify user about tip
             context.bot.send_message(
                 to_user_id,
-                f"You received `{amount}` TAU from {esc_mk(from_user)}\n"
+                f"You received `{amount}` TAU from {esc_mk(from_user, version=2)}\n"
                 f"[View Transaction on Explorer]({ex_url}/transactions/{tx_hash})",
                 parse_mode=ParseMode.MARKDOWN_V2,
                 disable_web_page_preview=True)

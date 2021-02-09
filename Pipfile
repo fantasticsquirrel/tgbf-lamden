@@ -16,7 +16,6 @@ pandas = "*"
 pycoingecko = "*"
 kaleido = "*"
 segno = "*"
-qrcode-artistic = "*"
 
 [dev-packages]
 

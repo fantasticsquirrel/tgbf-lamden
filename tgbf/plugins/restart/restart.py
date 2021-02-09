@@ -12,12 +12,17 @@ from tgbf.plugin import TGBFPlugin
 class Restart(TGBFPlugin):
 
     def load(self):
+        self.add_handler(CommandHandler(
+            self.name,
+            self.restart_callback,
+            run_async=True))
+
         chat_id = self.config.get("chat_id")
         mess_id = self.config.get("message_id")
 
         # If no data saved, don't do anything
         if not mess_id or not chat_id:
-            return self
+            return
 
         try:
             self.bot.updater.bot.edit_message_text(
@@ -29,11 +34,6 @@ class Restart(TGBFPlugin):
         finally:
             self.config.remove("chat_id")
             self.config.remove("message_id")
-
-        self.add_handler(CommandHandler(
-            self.name,
-            self.restart_callback,
-            run_async=True))
 
     @TGBFPlugin.owner
     @TGBFPlugin.private

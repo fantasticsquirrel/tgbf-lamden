@@ -12,9 +12,6 @@ from tgbf.plugin import TGBFPlugin
 
 class Address(TGBFPlugin):
 
-    QRCODES_DIR = "qr_codes"
-    LAMDEN_LOGO = "logo.png"
-
     def load(self):
         self.add_handler(CommandHandler(
             self.name,

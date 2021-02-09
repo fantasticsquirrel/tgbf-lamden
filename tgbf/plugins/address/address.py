@@ -2,6 +2,7 @@ import io
 import segno
 import tgbf.emoji as emo
 import tgbf.utils as utl
+import qrcode_artistic
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
@@ -29,7 +30,20 @@ class Address(TGBFPlugin):
         wallet = self.get_wallet(update.effective_user.id)
 
         buff = io.BytesIO()
-        segno.make_qr(wallet.verifying_key).save(buff, kind="png", border=1, scale=10)
+        if context.args and context.args[0].lower() == "profile":
+            photos = context.bot.getUserProfilePhotos(update.effective_user.id)
+
+            if photos.photos:
+                for photo in photos.photos:
+                    b_out = io.BytesIO()
+                    img = photo[-1].get_file().download(out=b_out)
+                    qr = segno.make_qr(wallet.verifying_key)
+                    qr.to_artistic(background=img, target=buff, border=1, scale=10, kind='png')
+                    break
+            else:
+                segno.make_qr(wallet.verifying_key).save(buff, border=1, scale=10, kind="png")
+        else:
+            segno.make_qr(wallet.verifying_key).save(buff, border=1, scale=10, kind="png")
 
         if self.is_private(update.message):
             update.message.reply_photo(

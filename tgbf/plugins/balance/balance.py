@@ -36,6 +36,10 @@ class Balance(TGBFPlugin):
             parse_mode=ParseMode.MARKDOWN_V2
         )
 
+        # If balance is 0, don't call CoinGecko
+        if b == "0":
+            return
+
         try:
             data = CoinGeckoAPI().get_coin_by_id(self.CGID)
             prices = data["market_data"]["current_price"]

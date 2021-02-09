@@ -21,6 +21,8 @@ class TelegramBot:
     def __init__(self, config: ConfigManager, token):
         self.config = config
 
+        logging.info(f"Starting {con.DESCRIPTION}")
+
         read_timeout = self.config.get("telegram", "read_timeout")
         connect_timeout = self.config.get("telegram", "connect_timeout")
         con_pool_size = self.config.get("telegram", "con_pool_size")
@@ -35,6 +37,7 @@ class TelegramBot:
             self.tgb_kwargs["con_pool_size"] = con_pool_size
 
         try:
+            logging.info("Connecting bot...")
             self.updater = Updater(token, request_kwargs=self.tgb_kwargs, use_context=True)
         except InvalidToken as e:
             logging.error(f"ERROR: Bot token not valid: {e}")
@@ -42,6 +45,7 @@ class TelegramBot:
 
         try:
             # Check if Telegram token is really valid
+            logging.info("Checking bot token...")
             self.updater.bot.get_me()
         except Unauthorized as e:
             logging.error(f"ERROR: Bot token not valid: {e}")
@@ -54,6 +58,7 @@ class TelegramBot:
         #  https://gist.github.com/nguyenkims/ff0c0c52b6a15ddd16832c562f2cae1d
 
         # Init web interface
+        logging.info("Setting up web interface...")
         port = self.config.get("web", "port")
         self.web = FlaskAppWrapper(__name__, port)
 
@@ -63,17 +68,21 @@ class TelegramBot:
         self.web.app.add_url_rule("/", "/", action)
 
         # Load classes from folder 'plugins'
+        logging.info("Loading plugins...")
         self.plugins = list()
         self._load_plugins()
 
         # Handler for file downloads (plugin updates)
+        logging.info("Setting up MessageHandler for plugin updates...")
         mh = MessageHandler(Filters.document, self._update_plugin)
         self.dispatcher.add_handler(mh)
 
         # Handle all Telegram related errors
+        logging.info("Setting up ErrorHandler...")
         self.dispatcher.add_error_handler(self._handle_tg_errors)
 
         # Send message to admin(s)
+        logging.info("Sending messages to admins...")
         for admin in config.get("admin", "ids"):
             try:
                 self.updater.bot.send_message(admin, f"{emo.ROBOT} Bot is up and running!")

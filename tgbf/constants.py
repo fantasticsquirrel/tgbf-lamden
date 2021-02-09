@@ -1,6 +1,6 @@
 import os
 
-DESCRIPTION = "Python Telegram Bot"
+DESCRIPTION = "Python Telegram Bot for Lamden"
 
 # Project folders
 DIR_SRC = os.path.basename(os.path.dirname(__file__))

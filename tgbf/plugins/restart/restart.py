@@ -4,6 +4,8 @@ import time
 import logging
 import tgbf.emoji as emo
 
+from telegram import Update
+from telegram.ext import CommandHandler, CallbackContext
 from tgbf.plugin import TGBFPlugin
 
 
@@ -28,10 +30,15 @@ class Restart(TGBFPlugin):
             self.config.remove("chat_id")
             self.config.remove("message_id")
 
+        self.add_handler(CommandHandler(
+            self.name,
+            self.restart_callback,
+            run_async=True))
+
     @TGBFPlugin.owner
     @TGBFPlugin.private
     @TGBFPlugin.send_typing
-    def execute(self, bot, update, args):
+    def restart_callback(self, update: Update, context: CallbackContext):
         msg = f"{emo.HOURGLASS} Restarting bot..."
         message = update.message.reply_text(msg)
 

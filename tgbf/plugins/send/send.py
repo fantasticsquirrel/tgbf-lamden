@@ -34,6 +34,7 @@ class Send(TGBFPlugin):
 
         return res["data"]
 
+    @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def send_callback(self, update: Update, context: CallbackContext):
         if len(context.args) != 2:

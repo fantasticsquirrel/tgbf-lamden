@@ -20,6 +20,7 @@ class Balance(TGBFPlugin):
             self.balance_callback,
             run_async=True))
 
+    @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def balance_callback(self, update: Update, context: CallbackContext):
         wallet = self.get_wallet(update.effective_user.id)

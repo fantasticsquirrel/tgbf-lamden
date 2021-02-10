@@ -17,6 +17,7 @@ class Feedback(TGBFPlugin):
             self.feedback_callback,
             run_async=True))
 
+    @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def feedback_callback(self, update: Update, context: CallbackContext):
         if not context.args:

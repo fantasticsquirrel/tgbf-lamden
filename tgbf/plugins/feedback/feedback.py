@@ -1,8 +1,8 @@
 import tgbf.emoji as emo
 
-from tgbf.plugin import TGBFPlugin
 from telegram import Update, ParseMode
 from telegram.ext import CallbackContext, CommandHandler
+from tgbf.plugin import TGBFPlugin, Notify
 
 
 class Feedback(TGBFPlugin):
@@ -33,7 +33,7 @@ class Feedback(TGBFPlugin):
             name = user.first_name
 
         feedback = update.message.text.replace(f"/{self.handle} ", "")
-        self.notify(f"Feedback from {name}: {feedback}")
+        self.notify(f"Feedback from {name}: {feedback}", style=Notify.INFO)
 
         sql = self.get_resource("insert_feedback.sql")
         self.execute_sql(sql, user.id, name, user.username, feedback)

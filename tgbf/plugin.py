@@ -3,6 +3,7 @@ import sqlite3
 import logging
 import inspect
 import threading
+from enum import Enum
 
 import tgbf.constants as c
 import tgbf.emoji as emo
@@ -18,6 +19,12 @@ from tgbf.tgbot import TelegramBot
 from datetime import datetime, timedelta
 from tgbf.web import EndpointAction
 from lamden.crypto.wallet import Wallet
+
+
+class Notify(Enum):
+    INFO = 1
+    WARNING = 2
+    ERROR = 3
 
 
 class TGBFPlugin:
@@ -487,7 +494,8 @@ class TGBFPlugin:
         if (self.is_private(message) and private) or (not self.is_private(message) and public):
             remove()
 
-    def notify(self, some_input):
+    # TODO: Test
+    def notify(self, some_input, style: Notify = Notify.ERROR):
         """ All admins in global config will get a message with the given text.
          Primarily used for exceptions but can be used with other inputs too. """
 
@@ -496,8 +504,18 @@ class TGBFPlugin:
 
         if self.global_config.get("admin", "notify_on_error"):
             for admin in self.global_config.get("admin", "ids"):
+                if style == Notify.INFO:
+                    emoji = f"{emo.INFO}"
+                elif style == Notify.WARNING:
+                    emoji = f"{emo.WARNING}"
+                elif style == Notify.ERROR:
+                    emoji = f"{emo.ALERT}"
+                else:
+                    emoji = f"{emo.ALERT}"
+
+                msg = f"{emoji} {some_input}"
+
                 try:
-                    msg = f"{emo.ALERT} Admin Notification {emo.ALERT}\n{some_input}"
                     self.bot.updater.bot.send_message(admin, msg)
                 except Exception as e:
                     error = f"Not possible to notify admin id '{admin}'"

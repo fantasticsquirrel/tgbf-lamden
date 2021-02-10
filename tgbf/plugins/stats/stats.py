@@ -18,6 +18,7 @@ class Stats(TGBFPlugin):
             self.stats_callback,
             run_async=True))
 
+    @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def stats_callback(self, update: Update, context: CallbackContext):
         try:

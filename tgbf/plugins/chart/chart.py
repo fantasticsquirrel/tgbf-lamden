@@ -28,6 +28,7 @@ class Chart(TGBFPlugin):
             self.chart_callback,
             run_async=True))
 
+    @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def chart_callback(self, update: Update, context: CallbackContext):
         base = "btc"  # vs-currency

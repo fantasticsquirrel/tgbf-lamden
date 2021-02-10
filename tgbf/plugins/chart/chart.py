@@ -1,6 +1,7 @@
 import io
 import json
 import plotly
+import logging
 import pandas as pd
 import plotly.io as pio
 import plotly.graph_objs as go
@@ -194,7 +195,10 @@ class Chart(TGBFPlugin):
         try:
             fig = go.Figure(data=[price, volume], layout=layout)
         except Exception as e:
-            return self.notify(e)
+            update.message.reply_text(str(e))
+            logging.error(e)
+            self.notify(e)
+            return
 
         fig["layout"]["yaxis2"].update(tickformat=tickformat)
 

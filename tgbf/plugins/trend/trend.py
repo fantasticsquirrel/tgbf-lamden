@@ -2,23 +2,17 @@ import io
 import logging
 import plotly.io as pio
 import plotly.graph_objs as go
-import tgbf.utils as utl
 import tgbf.emoji as emo
 
-
 from io import BytesIO
+from datetime import datetime
 from tgbf.plugin import TGBFPlugin
 from pytrends.request import TrendReq
 from telegram.ext import CommandHandler, CallbackContext
 from telegram import Update, ParseMode
 
 
-# TODO: Make grid gray color
-# TODO: Center title
-# TODO: Change () to ""
 class Trend(TGBFPlugin):
-
-    DEFAULT_T = "today 5-y"
 
     def load(self):
         self.add_handler(CommandHandler(
@@ -29,39 +23,34 @@ class Trend(TGBFPlugin):
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def trend_callback(self, update: Update, context: CallbackContext):
-        if not context.args:
+        if not context.args or len(context.args) < 2:
             update.message.reply_text(
                 text=f"{self.get_usage()}",
-                parse_mode=ParseMode.MARKDOWN_V2)
+                parse_mode=ParseMode.MARKDOWN)
             return
 
-        tf = str()
-        for arg in context.args:
-            if arg.startswith("t="):
-                tf = arg.replace("t=", "")
-                context.args.remove(arg)
-                break
+        # Time frame
+        tf = context.args[-1]
 
-        if tf:
-            if tf != "all":
-                from datetime import datetime
-                now = datetime.today()
-                date = utl.get_date(now, tf)
+        if tf != "all":
+            now = datetime.today()
+            date = self.get_date(now, tf)
 
-                if not date:
-                    msg = f"{emo.ERROR} Timeframe not formatted correctly"
-                    update.message.reply_text(msg)
-                    return
-                else:
-                    tf = f"{str(date)[:10]} {str(now)[:10]}"
-        else:
-            tf = self.DEFAULT_T
+            if not date:
+                msg = f"{emo.ERROR} Time frame not formatted correctly"
+                update.message.reply_text(msg)
+                return
+            else:
+                tf = f"{str(date)[:10]} {str(now)[:10]}"
+
+        # Remove time frame info from arguments
+        context.args = context.args[:-1]
 
         # Check for brackets and combine keywords
-        args = self._combine_args(context.args)
+        args = self.combine_args(context.args)
 
         if len(args) > 5:
-            msg = f"{emo.ERROR} Not possible to provide more than 5 keywords"
+            msg = f"{emo.ERROR} You can only compare up to five search terms"
             update.message.reply_text(msg)
             return
 
@@ -71,8 +60,9 @@ class Trend(TGBFPlugin):
 
             data = pytrends.interest_over_time()
         except Exception as e:
-            # TODO: Handle error correctly
+            update.message.reply_text(str(e))
             logging.error(e)
+            self.notify(e)
             return
 
         no_data = list()
@@ -89,31 +79,51 @@ class Trend(TGBFPlugin):
             tr_data.append(go.Scatter(x=data.get(kw).index, y=data.get(kw).values, name=kw))
 
         if no_data:
-            msg = f"{emo.ERROR} No data for keyword(s): {', '.join(no_data)}"
+            msg = f"{emo.ERROR} No data for search term(s): {', '.join(no_data)}"
             update.message.reply_text(msg)
 
         if len(args) == len(no_data):
             return
 
         layout = go.Layout(
-            title="Google Trends - Interest Over Time",
+            title=dict(
+                text="Google Trends - Interest Over Time",
+                x=0.5,
+                font=dict(
+                    size=24
+                ),
+            ),
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                xanchor="center",
+                y=1.12,
+                x=0.5
+            ),
+            xaxis=dict(
+                gridcolor="rgb(215, 215, 215)"
+            ),
+            yaxis=dict(
+                title="Search Queries",
+                showticklabels=False,
+                gridcolor="rgb(215, 215, 215)",
+                zerolinecolor="rgb(215, 215, 215)"
+            ),
             paper_bgcolor='rgb(233,233,233)',
             plot_bgcolor='rgb(233,233,233)',
-            yaxis=dict(
-                title="Queries",
-                showticklabels=False),
             showlegend=True)
 
         try:
             fig = go.Figure(data=tr_data, layout=layout)
         except Exception as e:
-            # TODO: Handle error correctly
+            update.message.reply_text(str(e))
             logging.error(e)
+            self.notify(e)
             return
 
         update.message.reply_photo(io.BufferedReader(BytesIO(pio.to_image(fig, format="png"))))
 
-    def _combine_args(self, args):
+    def combine_args(self, args):
         combine = list()
         new_args = list()
         for arg in args:
@@ -129,3 +139,29 @@ class Trend(TGBFPlugin):
                 continue
             new_args.append(arg)
         return new_args
+
+    def get_date(self, from_date, time_span):
+        resolution = time_span.strip()[-1:].lower()
+        time_frame = time_span.strip()[:-1]
+
+        valid = "d,m,y"
+        if resolution not in valid.split(","):
+            return None
+
+        if not time_frame.isnumeric():
+            return None
+
+        time_frame = int(time_frame)
+
+        from datetime import timedelta
+
+        if resolution == "d":
+            t = from_date - timedelta(days=time_frame)
+        elif resolution == "m":
+            t = from_date - timedelta(days=time_frame * 30)
+        elif resolution == "y":
+            t = from_date - timedelta(days=time_frame * 365)
+        else:
+            return None
+
+        return str(t)[:10]

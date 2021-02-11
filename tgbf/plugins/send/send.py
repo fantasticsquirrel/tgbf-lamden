@@ -70,7 +70,7 @@ class Send(TGBFPlugin):
             msg = f"{emo.ERROR} Can't retrieve your wallet"
             update.message.reply_text(msg)
             self.notify(msg)
-            return
+            return  
 
         wallet = Wallet(res["data"][0][2])
         lamden = Connect(wallet=wallet)

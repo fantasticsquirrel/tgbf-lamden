@@ -1,5 +1,6 @@
 {
     "category": "Lamden",
     "description": "Tip a user with some TAU",
-    "web_secret": "test"
+    "web_secret": "test",
+    "confirm_limit": 4
 }

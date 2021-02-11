@@ -1,12 +1,20 @@
 import logging
-import tgbf.emoji as emo
+from enum import Enum
 
-from telegram import ParseMode, Update
-from telegram.ext import CommandHandler, CallbackContext
+import tgbf.emoji as emo
+import tgbf.utils as utl
+
+from telegram import ParseMode, Update, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from telegram.utils.helpers import escape_markdown as esc_mk
 from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 from tgbf.web import EndpointAction
+
+
+class Confirm(Enum):
+    OK = 1
+    NOK = 2
 
 
 class Tip(TGBFPlugin):
@@ -20,6 +28,9 @@ class Tip(TGBFPlugin):
             self.name,
             self.tip_callback,
             run_async=True))
+
+        self.add_handler(CallbackQueryHandler(
+            self.confirm_callback))
 
         web_pass = self.config.get("web_secret")
         endpoint = EndpointAction(self.tip_endpoint, web_pass)
@@ -53,8 +64,6 @@ class Tip(TGBFPlugin):
             return
 
         amount = context.args[0]
-        to_user_id = reply.from_user.id
-        from_user_id = update.effective_user.id
 
         try:
             # Check if amount is valid
@@ -67,13 +76,79 @@ class Tip(TGBFPlugin):
         if amount.is_integer():
             amount = int(amount)
 
+        context.user_data["update"] = update
+        context.user_data["args"] = context.args
+
+        limit = self.config.get("confirm_limit")
+
+        if limit and float(amount) > float(limit):
+            update.message.reply_text(
+                f"{emo.HOURGLASS} Sending `{amount}` {esc_mk('TAU...', version=2)}",
+                parse_mode=ParseMode.MARKDOWN_V2,
+                reply_markup=self.button_callback())
+            return
+
+        message = update.message.reply_text(
+            f"{emo.HOURGLASS} Sending `{amount}` {esc_mk('TAU...', version=2)}",
+            parse_mode=ParseMode.MARKDOWN_V2)
+
+        context.user_data["message"] = message
+
+        self.send_transaction(context)
+
+    def confirm_callback(self, update: Update, context: CallbackContext):
+        query = update.callback_query
+        message = query.message
+        data = query.data
+
+        if "update" not in context.user_data:
+            context.bot.answer_callback_query(query.id, f"{emo.STOP} Wrong user")
+            return
+
+        original_user = context.user_data["update"].effective_user.id
+        current_user = update.effective_user.id
+
+        if original_user != current_user:
+            print("WRONG USER!")
+            return
+
+        if data == Confirm.NOK.name:
+            message.edit_text(f"{emo.STOP} Canceled by user")
+            context.bot.answer_callback_query(query.id, f"{emo.STOP} Canceled")
+        else:
+            context.user_data["message"] = message
+            context.bot.answer_callback_query(query.id, f"{emo.DONE} Confirmed")
+            self.send_transaction(context)
+
+    def button_callback(self):
+        buttons = [
+            InlineKeyboardButton("Confirm", callback_data=Confirm.OK.name),
+            InlineKeyboardButton("Cancel", callback_data=Confirm.NOK.name)
+        ]
+
+        menu = utl.build_menu(buttons, n_cols=2)
+        return InlineKeyboardMarkup(menu, resize_keyboard=True)
+
+    def send_transaction(self, context: CallbackContext):
+        message = context.user_data["message"]
+        update = context.user_data["update"]
+        args = context.user_data["args"]
+
+        reply = update.message.reply_to_message
+
+        to_user_id = reply.from_user.id
+        from_user_id = update.effective_user.id
+
         from_wallet = self.get_wallet(from_user_id)
         lamden = Connect(wallet=from_wallet)
 
         # Get address to which we want to tip
         to_address = self.get_wallet(to_user_id).verifying_key
 
-        message = update.message.reply_text(f"{emo.HOURGLASS} Sending TAU...")
+        amount = float(args[0])
+
+        if amount.is_integer():
+            amount = int(amount)
 
         try:
             # Send TAU
@@ -130,3 +205,4 @@ class Tip(TGBFPlugin):
             logging.info(f"User {to_user_id} notified about tip of {amount} TAU")
         except Exception as e:
             logging.info(f"User {to_user_id} could not be notified about tip: {e} - {update}")
+

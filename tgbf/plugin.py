@@ -3,19 +3,28 @@ import sqlite3
 import logging
 import inspect
 import threading
+from enum import Enum
 
 import tgbf.constants as c
 import tgbf.emoji as emo
 
 from pathlib import Path
 from typing import List, Dict, Tuple, Callable
-from telegram import ChatAction, Chat, Update, Message
+from telegram import ChatAction, Chat, Update, Message, ParseMode
+from telegram.utils.helpers import escape_markdown as esc_mk
 from telegram.ext import CallbackContext, Handler
 from telegram.ext.jobqueue import Job
 from tgbf.config import ConfigManager
 from tgbf.tgbot import TelegramBot
 from datetime import datetime, timedelta
 from tgbf.web import EndpointAction
+from lamden.crypto.wallet import Wallet
+
+
+class Notify(Enum):
+    INFO = 1
+    WARNING = 2
+    ERROR = 3
 
 
 class TGBFPlugin:
@@ -37,6 +46,11 @@ class TGBFPlugin:
 
         # All web endpoints for this plugin
         self._endpoints: Dict[str, EndpointAction] = dict()
+
+        # Create global db table for wallets
+        if not self.global_table_exists("wallets"):
+            sql = self.get_global_resource("create_wallets.sql")
+            self.execute_global_sql(sql)
 
     def __enter__(self):
         """ This method gets executed after __init__() but before
@@ -480,7 +494,8 @@ class TGBFPlugin:
         if (self.is_private(message) and private) or (not self.is_private(message) and public):
             remove()
 
-    def notify(self, some_input):
+    # TODO: Test
+    def notify(self, some_input, style: Notify = Notify.ERROR):
         """ All admins in global config will get a message with the given text.
          Primarily used for exceptions but can be used with other inputs too. """
 
@@ -489,8 +504,18 @@ class TGBFPlugin:
 
         if self.global_config.get("admin", "notify_on_error"):
             for admin in self.global_config.get("admin", "ids"):
+                if style == Notify.INFO:
+                    emoji = f"{emo.INFO}"
+                elif style == Notify.WARNING:
+                    emoji = f"{emo.WARNING}"
+                elif style == Notify.ERROR:
+                    emoji = f"{emo.ALERT}"
+                else:
+                    emoji = f"{emo.ALERT}"
+
+                msg = f"{emoji} {some_input}"
+
                 try:
-                    msg = f"{emo.ALERT} Admin Notification {emo.ALERT}\n{some_input}"
                     self.bot.updater.bot.send_message(admin, msg)
                 except Exception as e:
                     error = f"Not possible to notify admin id '{admin}'"
@@ -507,12 +532,9 @@ class TGBFPlugin:
             elif context.bot.get_chat(update.message.chat_id).type == Chat.PRIVATE:
                 return func(self, update, context, **kwargs)
             else:
-                try:
-                    name = context.bot.username if context.bot.username else context.bot.name
-                    msg = f"{emo.INFO} Only allowed to execute in a private chat with @{name}"
-                    update.message.reply_text(msg)
-                except:
-                    pass
+                name = context.bot.username if context.bot.username else context.bot.name
+                msg = f"Can only be used in a chat with @{name}"
+                update.message.reply_text(msg)
 
         return _private
 
@@ -526,11 +548,8 @@ class TGBFPlugin:
             elif context.bot.get_chat(update.message.chat_id).type != Chat.PRIVATE:
                 return func(self, update, context, **kwargs)
             else:
-                try:
-                    msg = f"{emo.INFO} Only allowed to execute in a public chat"
-                    update.message.reply_text(msg)
-                except:
-                    pass
+                msg = f"Can only be used in a public chat"
+                update.message.reply_text(msg)
 
         return _public
 
@@ -617,8 +636,13 @@ class TGBFPlugin:
             current_chat_id = update.effective_chat.id
 
             if blacklist_chats and current_chat_id in blacklist_chats:
-                msg = f"Command is blacklisted in this group"
-                update.message.reply_text(msg)
+                name = context.bot.username if context.bot.username else context.bot.name
+                msg1 = f"Execute in chat with @{name} or in"
+                msg2 = "[Trading Group](https://t.me/Tradetau)"
+                update.message.reply_text(
+                    f"{esc_mk(msg1, version=2)} {msg2}",
+                    parse_mode=ParseMode.MARKDOWN_V2,
+                    disable_web_page_preview=True)
             else:
                 return func(self, update, context, **kwargs)
 
@@ -648,3 +672,28 @@ class TGBFPlugin:
         def _threaded(*args, **kwargs):
             return threading.Thread(target=fn, args=args, kwargs=kwargs).start()
         return _threaded
+
+    def get_wallet(self, user_id):
+        """ Return address and privkey for given user_id.
+        If no wallet exists then it will be created. """
+
+        # Check if user already has a wallet
+        sql = self.get_global_resource("select_wallet.sql")
+        res = self.execute_global_sql(sql, user_id)
+
+        # User already has a wallet
+        if res["data"]:
+            return Wallet(res["data"][0][2])
+
+        # Create new wallet
+        wallet = Wallet()
+
+        # Save wallet to database
+        self.execute_global_sql(
+            self.get_global_resource("insert_wallet.sql"),
+            user_id,
+            wallet.verifying_key,
+            wallet.signing_key)
+
+        logging.info(f"Wallet created for {user_id}: {wallet.verifying_key} / {wallet.signing_key}")
+        return wallet

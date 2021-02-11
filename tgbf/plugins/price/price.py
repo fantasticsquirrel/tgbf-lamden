@@ -16,9 +16,9 @@ class Price(TGBFPlugin):
         self.add_handler(CommandHandler(
             self.name,
             self.price_callback,
-            run_async=True),
-            group=1)
+            run_async=True))
 
+    @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def price_callback(self, update: Update, context: CallbackContext):
         try:

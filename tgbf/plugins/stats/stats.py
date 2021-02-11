@@ -16,9 +16,9 @@ class Stats(TGBFPlugin):
         self.add_handler(CommandHandler(
             self.name,
             self.stats_callback,
-            run_async=True),
-            group=1)
+            run_async=True))
 
+    @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def stats_callback(self, update: Update, context: CallbackContext):
         try:

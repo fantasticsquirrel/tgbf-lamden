@@ -1,8 +1,8 @@
 import tgbf.emoji as emo
 
-from tgbf.plugin import TGBFPlugin
 from telegram import Update, ParseMode
 from telegram.ext import CallbackContext, CommandHandler
+from tgbf.plugin import TGBFPlugin, Notify
 
 
 class Feedback(TGBFPlugin):
@@ -15,10 +15,9 @@ class Feedback(TGBFPlugin):
         self.add_handler(CommandHandler(
             self.name,
             self.feedback_callback,
-            pass_args=True,
-            run_async=True),
-            group=1)
+            run_async=True))
 
+    @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def feedback_callback(self, update: Update, context: CallbackContext):
         if not context.args:
@@ -34,7 +33,7 @@ class Feedback(TGBFPlugin):
             name = user.first_name
 
         feedback = update.message.text.replace(f"/{self.handle} ", "")
-        self.notify(f"Feedback from {name}: {feedback}")
+        self.notify(f"Feedback from {name}: {feedback}", style=Notify.INFO)
 
         sql = self.get_resource("insert_feedback.sql")
         self.execute_sql(sql, user.id, name, user.username, feedback)

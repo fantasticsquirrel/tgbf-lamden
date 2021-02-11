@@ -1,9 +1,10 @@
 import io
+import json
 import plotly
 import pandas as pd
 import plotly.io as pio
 import plotly.graph_objs as go
-
+import tgbf.utils as utl
 import tgbf.emoji as emo
 
 from io import BytesIO
@@ -16,8 +17,8 @@ from tgbf.plugin import TGBFPlugin
 
 class Chart(TGBFPlugin):
 
+    # CoinGecko ID
     CGID = "lamden"
-    BASE = "btc"
 
     def load(self):
         plotly.io.orca.ensure_server()
@@ -25,31 +26,69 @@ class Chart(TGBFPlugin):
         self.add_handler(CommandHandler(
             self.name,
             self.chart_callback,
-            run_async=True),
-            group=1)
+            run_async=True))
 
+    @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def chart_callback(self, update: Update, context: CallbackContext):
+        base = "btc"  # vs-currency
+        time = 3      # days
+
         if context.args:
-            if len(context.args) > 1:
+            if len(context.args) > 2:
                 update.message.reply_text(
-                    text=self.get_usage(),
-                    parse_mode=ParseMode.MARKDOWN)
+                    self.get_usage(),
+                    parse_mode=ParseMode.MARKDOWN_V2)
                 return
-            if not context.args[0].isnumeric():
+            if context.args[0].lower() == "usage":
                 update.message.reply_text(
-                    text=f"{emo.ERROR} The provided argument has to be a number (days)",
-                    parse_mode=ParseMode.MARKDOWN)
+                    self.get_usage(),
+                    parse_mode=ParseMode.MARKDOWN_V2)
                 return
-            time_frame = int(context.args[0])  # Days
-        else:
-            time_frame = 3  # Days
+
+            if len(context.args) == 2:
+                # Check if second argument is positive integer (timeframe in days)
+                try:
+                    if int(context.args[1]) < 1:
+                        raise ValueError()
+                except:
+                    update.message.reply_text(
+                        f"{emo.ERROR} First argument needs to be ticker symbol and "
+                        f"second argument needs to be positive whole number (days)")
+                    return
+
+                base = context.args[0].lower()
+                time = int(context.args[1])
+
+            elif len(context.args) == 1:
+                # Check if argument is a number
+                if utl.is_numeric(context.args[0]):
+                    # Check if argument is positive integer (timeframe in days)
+                    try:
+                        if int(context.args[0]) < 1:
+                            raise ValueError()
+
+                        time = context.args[0]
+                    except:
+                        update.message.reply_text(
+                            f"{emo.ERROR} Argument needs to be "
+                            f"positive whole number (days)")
+                        return
+                else:
+                    base = context.args[0].lower()
 
         try:
             info = CoinGeckoAPI().get_coin_by_id(self.CGID)
-            market = CoinGeckoAPI().get_coin_market_chart_by_id(self.CGID, self.BASE, time_frame)
+            market = CoinGeckoAPI().get_coin_market_chart_by_id(self.CGID, base, time)
         except Exception as e:
-            return self.notify(e)
+            try:
+                error = json.loads(str(e).replace("'", '"'))
+                if "error" in error:
+                    error = error["error"]
+                raise ValueError(error)
+            except Exception as e:
+                update.message.reply_text(f"{emo.ERROR} {str(e).capitalize()}")
+                return
 
         # Volume
         df_volume = DataFrame(market["total_volumes"], columns=["DateTime", "Volume"])
@@ -123,7 +162,7 @@ class Chart(TGBFPlugin):
                 ticksuffix=""
             ),
             title=dict(
-                text=f"{info['symbol'].upper()}/{self.BASE.upper()}",
+                text=f"{info['symbol'].upper()}/{base.upper()}",
                 x=0.5,
                 font=dict(
                     size=24
@@ -160,5 +199,5 @@ class Chart(TGBFPlugin):
         fig["layout"]["yaxis2"].update(tickformat=tickformat)
 
         update.message.reply_photo(
-            photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="jpeg"))),
+            photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="png"))),
             quote=False)

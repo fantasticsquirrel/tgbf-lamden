@@ -18,7 +18,6 @@ class Backup(TGBFPlugin):
         self.add_handler(CommandHandler(
             self.name,
             self.backup_callback,
-            pass_args=True,
             run_async=True))
 
     @TGBFPlugin.owner

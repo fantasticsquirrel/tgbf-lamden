@@ -1,7 +1,8 @@
-import tgbf.emoji as emo
+import logging
+import tgbf.utils as utl
 
 from telegram import Update
-from lamden.crypto.wallet import Wallet
+from pycoingecko import CoinGeckoAPI
 from tgbf.lamden.connect import Connect
 from telegram.ext import CommandHandler, CallbackContext
 from telegram import ParseMode
@@ -10,31 +11,53 @@ from tgbf.plugin import TGBFPlugin
 
 class Balance(TGBFPlugin):
 
+    CGID = "lamden"
+    VS_CUR = "usd,eur"
+
     def load(self):
         self.add_handler(CommandHandler(
             self.name,
             self.balance_callback,
-            run_async=True),
-            group=1)
+            run_async=True))
 
+    @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def balance_callback(self, update: Update, context: CallbackContext):
-        sql = self.get_resource("select_wallet.sql", plugin="wallets")
-        res = self.execute_sql(sql, update.effective_user.id, plugin="wallets")
-
-        if not res["data"]:
-            msg = f"{emo.ERROR} Can't retrieve your wallet"
-            update.message.reply_text(msg)
-            self.notify(msg)
-            return
-
-        wallet = Wallet(res["data"][0][2])
+        wallet = self.get_wallet(update.effective_user.id)
         lamden = Connect(wallet=wallet)
 
-        balance = lamden.get_balance(wallet.verifying_key)
-        balance = balance["value"] if "value" in balance else 0
+        b = lamden.get_balance(wallet.verifying_key)
+        b = b["value"] if "value" in b else 0
+        b = float(str(b)) if b else float("0")
+        b = str(int(b)) if b.is_integer() else f"{b:.2f}"
 
-        update.message.reply_text(
-            text=f"`{balance} TAU`",
+        message = update.message.reply_text(
+            text=f"`TAU: {b}`",
             parse_mode=ParseMode.MARKDOWN_V2
         )
+
+        # If balance is 0, don't call CoinGecko
+        if b == "0":
+            return
+
+        try:
+            data = CoinGeckoAPI().get_coin_by_id(self.CGID)
+            prices = data["market_data"]["current_price"]
+
+            value = str()
+
+            for c in self.VS_CUR.split(","):
+                if c in prices:
+                    price = utl.format(prices[c] * float(b), decimals=2)
+                    value += f"{c.upper()}: {price}\n"
+
+            final_msg = f"`" \
+                        f"TAU: {b}\n" \
+                        f"{value}" \
+                        f"`"
+
+            message.edit_text(
+                text=final_msg,
+                parse_mode=ParseMode.MARKDOWN_V2)
+        except Exception as e:
+            logging.warning(f"Could not calculate value for user balance: {e}")

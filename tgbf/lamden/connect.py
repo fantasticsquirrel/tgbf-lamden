@@ -15,7 +15,6 @@ class Connect(API):
         self.chain = self.cfg.get("chain")
 
         host, port = self.connect()
-
         super().__init__(host=host, port=port, wallet=wallet)
 
     def connect(self):
@@ -28,7 +27,7 @@ class Connect(API):
                             return host, port
                         except:
                             msg = f"Can not connect to host '{host}' and port '{port}'"
-                            logging.info(msg)
+                            logging.warning(msg)
 
         raise ConnectionError("Can not connect to network")
 

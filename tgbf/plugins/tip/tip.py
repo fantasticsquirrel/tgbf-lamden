@@ -2,7 +2,6 @@ import logging
 import tgbf.emoji as emo
 
 from telegram import ParseMode, Update
-from lamden.crypto.wallet import Wallet
 from telegram.ext import CommandHandler, CallbackContext
 from telegram.utils.helpers import escape_markdown as esc_mk
 from tgbf.lamden.connect import Connect
@@ -20,8 +19,7 @@ class Tip(TGBFPlugin):
         self.add_handler(CommandHandler(
             self.name,
             self.tip_callback,
-            run_async=True),
-            group=1)
+            run_async=True))
 
         web_pass = self.config.get("web_secret")
         endpoint = EndpointAction(self.tip_endpoint, web_pass)
@@ -66,49 +64,20 @@ class Tip(TGBFPlugin):
             update.message.reply_text(msg)
             return
 
-        if not amount.is_integer():
-            msg = f"{emo.ERROR} Amount needs to be a whole number"
-            update.message.reply_text(msg)
-            return
+        if amount.is_integer():
+            amount = int(amount)
 
-        amount = int(amount)
-
-        # Get wallet from which we want to tip
-        sql = self.get_resource("select_wallet.sql", plugin="wallets")
-        res = self.execute_sql(sql, from_user_id, plugin="wallets")
-
-        if not res["data"]:
-            msg = f"{emo.ERROR} Can't retrieve your wallet"
-            update.message.reply_text(f"{msg} - {update}")
-            self.notify(msg)
-            return
-
-        from_wallet = Wallet(res["data"][0][2])
+        from_wallet = self.get_wallet(from_user_id)
         lamden = Connect(wallet=from_wallet)
 
-        # Get wallet to which we want to tip
-        res = self.execute_sql(sql, to_user_id, plugin="wallets")
-
-        if res["data"]:
-            to_address = res["data"][0][1]
-        else:
-            to_wallet = Wallet()
-
-            # Save wallet to database
-            self.execute_sql(
-                self.get_resource("insert_wallet.sql", plugin="wallets"),
-                to_user_id,
-                to_wallet.verifying_key,
-                to_wallet.signing_key,
-                plugin="wallets")
-
-            to_address = to_wallet.verifying_key
+        # Get address to which we want to tip
+        to_address = self.get_wallet(to_user_id).verifying_key
 
         message = update.message.reply_text(f"{emo.HOURGLASS} Sending TAU...")
 
         try:
             # Send TAU
-            tip = lamden.post_transaction(from_wallet, amount, to_address)
+            tip = lamden.post_transaction(amount, to_address)
         except Exception as e:
             msg = f"Could not send transaction: {e}"
             message.edit_text(f"{emo.ERROR} {e}")
@@ -145,7 +114,7 @@ class Tip(TGBFPlugin):
         ex_url = lamden.cfg.get("explorer", lamden.chain)
 
         message.edit_text(
-            f"{emo.MONEY} {esc_mk(to_user)} received `{amount}` TAU\n"
+            f"{emo.MONEY} {esc_mk(to_user, version=2)} received `{amount}` TAU\n"
             f"[View Transaction on Explorer]({ex_url}/transactions/{tx_hash})",
             parse_mode=ParseMode.MARKDOWN_V2,
             disable_web_page_preview=True)
@@ -154,7 +123,7 @@ class Tip(TGBFPlugin):
             # Notify user about tip
             context.bot.send_message(
                 to_user_id,
-                f"You received `{amount}` TAU from {esc_mk(from_user)}\n"
+                f"You received `{amount}` TAU from {esc_mk(from_user, version=2)}\n"
                 f"[View Transaction on Explorer]({ex_url}/transactions/{tx_hash})",
                 parse_mode=ParseMode.MARKDOWN_V2,
                 disable_web_page_preview=True)

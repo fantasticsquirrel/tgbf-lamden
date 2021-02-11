@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from tgbf.plugin import TGBFPlugin
-
 from telegram import Update
 from telegram.ext import CallbackContext, CommandHandler
 
@@ -11,8 +10,7 @@ class Help(TGBFPlugin):
         self.add_handler(CommandHandler(
             self.name,
             self.help_callback,
-            run_async=True),
-            group=1)
+            run_async=True))
 
     @TGBFPlugin.send_typing
     def help_callback(self, update: Update, context: CallbackContext):

@@ -1,3 +1,31 @@
+# TODO: Rename and rework
+def get_date(from_date, time_span):
+    resolution = time_span.strip()[-1:].lower()
+    time_frame = time_span.strip()[:-1]
+
+    valid = "d,m,y"
+    if resolution not in valid.split(","):
+        return None
+
+    if not time_frame.isnumeric():
+        return None
+
+    time_frame = int(time_frame)
+
+    from datetime import timedelta
+
+    if resolution == "d":
+        t = from_date - timedelta(days=time_frame)
+    elif resolution == "m":
+        t = from_date - timedelta(days=time_frame * 30)
+    elif resolution == "y":
+        t = from_date - timedelta(days=time_frame * 365)
+    else:
+        return None
+
+    return str(t)[:10]
+
+
 def is_numeric(string):
     """ Also accepts '.' in the string. Function 'isnumeric()' doesn't """
     try:

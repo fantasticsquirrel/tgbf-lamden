@@ -1,6 +1,5 @@
 {
     "category": "Lamden",
     "description": "Tip a user with some TAU",
-    "dependency": ["wallets"],
     "web_secret": "test"
 }

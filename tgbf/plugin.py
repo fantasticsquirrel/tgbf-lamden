@@ -494,7 +494,6 @@ class TGBFPlugin:
         if (self.is_private(message) and private) or (not self.is_private(message) and public):
             remove()
 
-    # TODO: Test
     def notify(self, some_input, style: Notify = Notify.ERROR):
         """ All admins in global config will get a message with the given text.
          Primarily used for exceptions but can be used with other inputs too. """

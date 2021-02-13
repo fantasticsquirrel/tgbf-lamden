@@ -17,6 +17,7 @@ pycoingecko = "*"
 kaleido = "*"
 segno = "*"
 qrcode-artistic = "*"
+pytrends = "*"
 
 [dev-packages]
 

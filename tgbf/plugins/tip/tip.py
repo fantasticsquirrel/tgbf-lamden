@@ -38,7 +38,7 @@ class Tip(TGBFPlugin):
     @TGBFPlugin.public
     @TGBFPlugin.send_typing
     def tip_callback(self, update: Update, context: CallbackContext):
-        if len(context.args) != 1:
+        if len(context.args) < 1:
             update.message.reply_text(
                 self.get_usage(),
                 parse_mode=ParseMode.MARKDOWN_V2)
@@ -53,6 +53,13 @@ class Tip(TGBFPlugin):
             return
 
         amount = context.args[0]
+
+        # TODO: Test
+        usr_msg = str()
+        if len(context.args) > 1:
+            usr_msg = f"Message: {' '.join(context.args[1:])}"
+            usr_msg = esc_mk(usr_msg, version=2)
+
         to_user_id = reply.from_user.id
         from_user_id = update.effective_user.id
 
@@ -124,7 +131,7 @@ class Tip(TGBFPlugin):
             context.bot.send_message(
                 to_user_id,
                 f"You received `{amount}` TAU from {esc_mk(from_user, version=2)}\n"
-                f"[View Transaction on Explorer]({ex_url}/transactions/{tx_hash})",
+                f"[View Transaction on Explorer]({ex_url}/transactions/{tx_hash})\n\n{usr_msg}",
                 parse_mode=ParseMode.MARKDOWN_V2,
                 disable_web_page_preview=True)
             logging.info(f"User {to_user_id} notified about tip of {amount} TAU")

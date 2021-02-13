@@ -54,7 +54,6 @@ class Tip(TGBFPlugin):
 
         amount = context.args[0]
 
-        # TODO: Test
         usr_msg = str()
         if len(context.args) > 1:
             usr_msg = f"Message: {' '.join(context.args[1:])}"

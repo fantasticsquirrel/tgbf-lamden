@@ -59,18 +59,21 @@ class API:
         res = requests.get(f"{self.node_url}/tx?hash={tx_hash}")
         return decode(res.text)
 
-    def post_transaction(self, amount: Union[int, float], to_address: str):
+    def send(self, amount: Union[int, float], to_address: str):
+        kwargs = {"amount": amount, "to": to_address}
+        return self.post_transaction(100, "currency", "transfer", kwargs)
+
+    def post_transaction(self, stamps: int, contract: str, function: str, kwargs: dict):
         nonce = self.get_nonce(self.wallet.verifying_key)
 
         tx = build_transaction(
             wallet=self.wallet,
             processor=nonce["processor"],
-            stamps=100,
+            stamps=stamps,
             nonce=nonce["nonce"],
-            contract="currency",
-            function="transfer",
-            kwargs={"amount": amount, "to": to_address}
-        )
+            contract=contract,
+            function=function,
+            kwargs=kwargs)
 
         res = requests.post(self.node_url, data=tx)
         return decode(res.text)
@@ -85,4 +88,15 @@ class API:
 
     def get_contract_variables(self):
         res = requests.get(f"{self.node_url}/contracts/currency/variables")
+        return decode(res.text)
+
+    def approve_amount(self, contract_name, amount: float = 100000000):
+        kwargs = {"amount": float(amount), "to": contract_name}
+        return self.post_transaction(500, "currency", "approve", kwargs)
+
+    def get_approved_amount(self, contract_name):
+        #data = {"key": f"{self.wallet.verifying_key}:{contract_name}"}
+        #res = requests.get(f"{self.node_url}/contracts/currency/balances", data=data)
+
+        res = requests.get(f"{self.node_url}/contracts/currency/balances?key = {self.wallet.verifying_key}:{contract_name}")
         return decode(res.text)

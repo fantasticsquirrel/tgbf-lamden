@@ -1,0 +1,6 @@
+CREATE TABLE active (
+    group_id INTEGER NUT NULL,
+    user_id INTEGER NOT NULL,
+    user_name TEXT NOT NULL,
+	date_time DATETIME DEFAULT CURRENT_TIMESTAMP
+)

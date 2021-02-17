@@ -191,6 +191,7 @@ class TelegramBot:
                 for folder in folders:
                     if folder.startswith("_"):
                         continue
+                    logging.info(f"Plugin '{folder}' loading...")
                     self.enable_plugin(f"{folder}.py")
                 break
         except Exception as e:

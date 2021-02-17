@@ -1,7 +1,6 @@
-from typing import Union
-
 import requests
 
+from typing import Union
 from contracting.db.encoder import decode
 from lamden.crypto.transaction import build_transaction
 from lamden.crypto.wallet import Wallet

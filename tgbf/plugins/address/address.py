@@ -27,31 +27,31 @@ class Address(TGBFPlugin):
     def address_callback(self, update: Update, context: CallbackContext):
         wallet = self.get_wallet(update.effective_user.id)
 
-        bio = io.BytesIO()
+        b_out = io.BytesIO()
         if context.args and context.args[0].lower() == "profile":
             photos = context.bot.getUserProfilePhotos(update.effective_user.id)
 
             if photos.photos:
                 for photo in photos.photos:
-                    out = io.BytesIO()
-                    img = photo[-1].get_file().download(out=out)
+                    b_in = io.BytesIO()
+                    b_out = io.BytesIO()
                     qr = segno.make_qr(wallet.verifying_key)
-                    qr.to_artistic(background=img, target=bio, border=1, scale=10, kind='png')
+                    qr.to_artistic(background=b_in, target=b_out, border=1, scale=10, kind='png')
                     break
             else:
-                segno.make_qr(wallet.verifying_key).save(bio, border=1, scale=10, kind="png")
+                segno.make_qr(wallet.verifying_key).save(b_out, border=1, scale=10, kind="png")
         else:
-            segno.make_qr(wallet.verifying_key).save(bio, border=1, scale=10, kind="png")
+            segno.make_qr(wallet.verifying_key).save(b_out, border=1, scale=10, kind="png")
 
         if self.is_private(update.message):
             update.message.reply_photo(
-                photo=bio.getvalue(),
+                photo=b_out.getvalue(),
                 caption=f"`{wallet.verifying_key}`",
                 parse_mode=ParseMode.MARKDOWN_V2,
                 reply_markup=self.privkey_button_callback(wallet.signing_key))
         else:
             update.message.reply_photo(
-                photo=bio.getvalue(),
+                photo=b_out.getvalue(),
                 caption=f"`{wallet.verifying_key}`",
                 parse_mode=ParseMode.MARKDOWN_V2)
 

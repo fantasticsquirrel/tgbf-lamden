@@ -83,7 +83,7 @@ class Tip(TGBFPlugin):
 
         try:
             # Send TAU
-            tip = lamden.post_transaction(amount, to_address)
+            tip = lamden.send(amount, to_address)
         except Exception as e:
             msg = f"Could not send transaction: {e}"
             message.edit_text(f"{emo.ERROR} {e}")

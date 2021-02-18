@@ -1,3 +1,4 @@
+import logging
 import tgbf.emoji as emo
 
 from telegram import Update, ParseMode
@@ -14,6 +15,7 @@ class Dice(TGBFPlugin):
             self.dice_callback,
             run_async=True))
 
+    @TGBFPlugin.send_typing
     def dice_callback(self, update: Update, context: CallbackContext):
         if len(context.args) != 2:
             update.message.reply_text(
@@ -28,14 +30,21 @@ class Dice(TGBFPlugin):
         wallet = self.get_wallet(update.effective_user.id)
         lamden = Connect(wallet)
 
-        roll = lamden.post_transaction(500, "con_dice", "roll", {})
+        contract = self.config.get("contract")
+        function = self.config.get("function")
 
+        roll = lamden.post_transaction(500, contract, function, {})
+        logging.info(f"Dice rolled: {roll}")
+
+        # TODO: Rework
         success, result = lamden.tx_succeeded(roll["hash"])
 
         if not success:
-            update.message.reply_text(f"{emo.ERROR} {result}")
-            return
+            try:
+                int(result)
+            except:
+                update.message.reply_text(f"{emo.ERROR} {result}")
+                return
 
         # TODO: Show link to transaction
-        result = result["result"]
         update.message.reply_text(f"Result: {result}")

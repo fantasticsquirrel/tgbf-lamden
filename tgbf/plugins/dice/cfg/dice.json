@@ -1,4 +1,6 @@
 {
     "category": "Lamden",
-    "description": "Returns random number between 1 and 6"
+    "description": "Returns random number between 1 and 6",
+    "contract": "con_dice",
+    "function": "roll"
 }

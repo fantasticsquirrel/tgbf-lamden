@@ -30,7 +30,7 @@ class Dice(TGBFPlugin):
 
         roll = lamden.post_transaction(500, "con_dice", "roll", {})
 
-        success, result = lamden.tx_successful(roll["hash"])
+        success, result = lamden.tx_succeeded(roll["hash"])
 
         if not success:
             update.message.reply_text(f"{emo.ERROR} {result}")

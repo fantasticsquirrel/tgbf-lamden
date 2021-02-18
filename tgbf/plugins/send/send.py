@@ -40,7 +40,7 @@ class Send(TGBFPlugin):
         if len(context.args) != 2:
             update.message.reply_text(
                 self.get_usage(),
-                parse_mode=ParseMode.MARKDOWN_V2)
+                parse_mode=ParseMode.MARKDOWN)
             return
 
         amount = context.args[0]

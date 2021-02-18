@@ -82,10 +82,10 @@ class API:
                 if tx["error"] == "Transaction not found.":
                     continue
                 else:
-                    return False, tx["error"]
+                    return False, tx
             else:
-                return True, "Transaction successful"
-        return False, "Timeout reached"
+                return True, tx
+        return False, {"error": "Timeout reached"}
 
     def send(self, amount: Union[int, float], to_address: str):
         """ Send TAU to given address by triggering 'currency' smart contract """

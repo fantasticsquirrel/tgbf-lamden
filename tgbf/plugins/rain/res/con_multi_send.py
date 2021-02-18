@@ -1,3 +1,5 @@
+import currency
+
 @export
 def send(addresses: list, amount: float):
     for address in addresses:

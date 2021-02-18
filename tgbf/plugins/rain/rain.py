@@ -2,6 +2,7 @@ import logging
 import tgbf.emoji as emo
 
 from telegram import Update, ParseMode
+from telegram.utils.helpers import escape_markdown as esc_mk
 from telegram.ext import CommandHandler, CallbackContext
 from datetime import datetime, timedelta
 from tgbf.lamden.connect import Connect
@@ -26,7 +27,7 @@ class Rain(TGBFPlugin):
         if not context.args or len(context.args) > 2:
             update.message.reply_text(
                 self.get_usage(),
-                parse_mode=ParseMode.MARKDOWN_V2)
+                parse_mode=ParseMode.MARKDOWN)
             return
 
         # Read arguments 'amount' and 'time frame'
@@ -45,7 +46,7 @@ class Rain(TGBFPlugin):
             update.message.reply_text(msg)
             return
 
-        # Check if timeframe is valid and includes time unit
+        # Check if time unit is included and valid
         if not time_frame.lower().endswith(("m", "h")):
             msg = f"{emo.ERROR} Allowed time units are `m` (minute) and `h` (hour)"
             update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
@@ -85,76 +86,101 @@ class Rain(TGBFPlugin):
         # Users to airdrop to without own user
         user_data = [u for u in res["data"] if u[0] != update.effective_user.id]
 
-        # Number of users that will receive the airdrop
-        user_count = len(user_data)
-
-        # Amount of TAU to airdrop to one user
-        amount_single = float(f"{(amount_total / user_count):.2f}")
-
-        from_user = update.message.from_user
-        from_username = "@" + from_user.username if from_user.username else from_user.first_name
+        if len(user_data) < 1:
+            msg = f"{emo.ERROR} No users found for given time frame"
+            logging.error(f"{msg} - {update}")
+            update.message.reply_text(msg)
+            return
 
         msg = f"{emo.RAIN} Initiating rain clouds..."
         message = update.message.reply_text(msg)
 
-        msg = f"Rained {amount_single} TAU each to following users:\n"
+        # Amount of TAU to airdrop to one user
+        amount_single = float(f"{(amount_total / len(user_data)):.2f}")
+
+        from_user = update.message.from_user
+        from_username = "@" + from_user.username if from_user.username else from_user.first_name
+
+        if amount_single.is_integer():
+            amount_single = int(amount_single)
+
+        msg = f"Rained `{amount_single}` TAU each to following users:\n"
         suffix = ", "
+
+        # List of addresses that will get the airdrop
+        addresses = list()
 
         for user in user_data:
             to_user_id = user[0]
             to_username = user[1]
 
-            # TODO: Is that needed? We already exclude initiator from
-            if from_username == to_username:
-                continue
+            address = self.get_wallet(to_user_id).verifying_key
 
-            msg += to_username + suffix
+            # Add address to list of addresses to rain on
+            addresses.append(address)
+            # Add username to output message
+            msg += esc_mk(to_username + suffix, version=2)
+
+            logging.info(
+                f"User {to_username} ({to_user_id}) will be "
+                f"rained on with {amount_single} TAU to wallet {address}")
+
+        # Remove last suffix
+        msg = msg[:-len(suffix)]
 
         wallet = self.get_wallet(update.effective_user.id)
-        api = Connect(wallet)
+        lamden = Connect(wallet)
+
+        contract = self.config.get("contract")
+        function = self.config.get("function")
 
         try:
-            # TODO: Check if tx was successful
-            res = api.post_transaction(500, "con_multi_send5", "send", kwargs)
+            approved = lamden.get_approved_amount(contract)
+            approved = approved["value"] if "value" in approved else 0
+            approved = approved if approved is not None else 0
+
+            if amount_single > float(approved):
+                lamden.approve_contract(contract)
+
+            res = lamden.post_transaction(
+                500,
+                contract,
+                function,
+                {"addresses": addresses, "amount": amount_single})
+
+            logging.info(f"Rained {amount_total} TAU from {from_username} on {len(user_data)} users: {res}")
         except Exception as e:
-            msg = f"Could not execute smart contract: {e}"
+            msg = f"Error on posting transaction: {e}"
             message.edit_text(f"{emo.ERROR} {e}")
             logging.error(msg)
             self.notify(msg)
             return
 
-        # Insert details into database
+        if "error" in res:
+            msg = f"Transaction replied error: {res['error']}"
+            message.edit_text(f"{emo.ERROR} {res['error']}")
+            logging.error(msg)
+            return
+
+        # Get transaction hash
+        tx_hash = res["hash"]
+
+        success, result = lamden.tx_successful(tx_hash)
+
+        if not success:
+            message.edit_text(f"{emo.ERROR} {result}")
+            return
+
+        url = lamden.cfg.get("explorer", lamden.chain)
+        link = f"[View Transaction on Explorer]({url}/transactions/{tx_hash})"
+
+        msg = f"{msg}\n\n{link}"
+        message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+
         sql = self.get_resource("insert_rain.sql")
-        self.execute_sql(sql, from_user.id, to_user_id, T2X.to_atom(amount_single), txid)
 
-        msg = msg[:-len(suffix)]
-        message.edit_text(msg)
+        for user in user_data:
+            to_user_id = user[0]
 
-
-
-        """
-        client = ContractingClient()
-        con_multi_send = client.get_contract("con_multi_send5")
-
-        addresses = [
-                "a8267cf0ba6aaa62596133276a610731a2bea37a43cf5b15a6bc3f6b67b3975d",
-                "2a61771c19cd8bd01c629d91c9a45d547249eec5dd80905bc8e929706dd47fdb"
-            ]
-
-        con_multi_send.send(addresses=addresses, amount=float(10))
-        """
-
-        approved = api.get_approved_amount("con_multi_send5")
-        approved = approved["value"] if "value" in approved else 0
-        approved = approved if approved is not None else 0
-
-        if amount_single > approved:
-            api.approve_amount("con_multi_send5")
-
-        kwargs = {
-            "addresses": [
-                "a8267cf0ba6aaa62596133276a610731a2bea37a43cf5b15a6bc3f6b67b3975d",
-                "2a61771c19cd8bd01c629d91c9a45d547249eec5dd80905bc8e929706dd47fdb"
-            ],
-            "amount": float(10)
-        }
+            # Insert details into database
+            self.execute_sql(sql, from_user.id, to_user_id, amount_single, tx_hash)

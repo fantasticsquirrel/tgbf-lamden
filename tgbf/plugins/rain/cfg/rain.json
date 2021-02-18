@@ -1,4 +1,6 @@
 {
     "category": "Lamden",
-    "description": "Rain TAU on last active users"
+    "description": "Rain TAU on last active users",
+    "contract": "con_multi_send",
+    "function": "send"
 }

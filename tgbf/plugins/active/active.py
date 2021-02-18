@@ -16,8 +16,8 @@ class Active(TGBFPlugin):
 
         # Receive all messages from group and save user_id, user_name and date_time
         self.bot.dispatcher.add_handler(
-            MessageHandler(Filters.all & (~Filters.command), self.save),
-            group=0)  # TODO: Do i need a group here?
+            MessageHandler(Filters.all, self.save),
+            group=1)
 
     def save(self, update: Update, context: CallbackContext):
         try:

@@ -71,7 +71,7 @@ class API:
         res = requests.get(f"{self.node_url}/tx?hash={tx_hash}")
         return decode(res.text)
 
-    def tx_successful(self, tx_hash, check_period=0.5, timeout=5):
+    def tx_succeeded(self, tx_hash, check_period=0.5, timeout=5):
         end = int(time.time()) + timeout
 
         while int(time.time()) < end:
@@ -82,10 +82,12 @@ class API:
                 if tx["error"] == "Transaction not found.":
                     continue
                 else:
-                    return False, tx
-            else:
+                    return False, tx["error"]
+            if tx["result"] is None:
                 return True, tx
-        return False, {"error": "Timeout reached"}
+            else:
+                return False, tx["result"]
+        return False, "Timeout reached"
 
     def send(self, amount: Union[int, float], to_address: str):
         """ Send TAU to given address by triggering 'currency' smart contract """

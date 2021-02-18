@@ -175,6 +175,7 @@ class Rain(TGBFPlugin):
 
         if not success:
             message.edit_text(f"{emo.ERROR} {result}")
+            logging.error(f"Transaction not successful: {result}")
             return
 
         url = lamden.cfg.get("explorer", lamden.chain)

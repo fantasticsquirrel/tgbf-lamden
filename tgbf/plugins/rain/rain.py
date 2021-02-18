@@ -168,7 +168,7 @@ class Rain(TGBFPlugin):
         success, result = lamden.tx_successful(tx_hash)
 
         if not success:
-            message.edit_text(f"{emo.ERROR} {result}")
+            message.edit_text(f"{emo.ERROR} {result['error']}")
             return
 
         url = lamden.cfg.get("explorer", lamden.chain)

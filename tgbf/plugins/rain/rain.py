@@ -49,15 +49,15 @@ class Rain(TGBFPlugin):
         # Check if time unit is included and valid
         if not time_frame.lower().endswith(("m", "h")):
             msg = f"{emo.ERROR} Allowed time units are `m` (minute) and `h` (hour)"
-            update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+            update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN)
             return
 
-        time_frame = time_frame[:-1]
-        time_unit = time_frame[-1:].lower()
+        t_frame = time_frame[:-1]
+        t_unit = time_frame[-1:].lower()
 
         try:
             # Check if timeframe is valid
-            time_frame = float(time_frame)
+            t_frame = float(t_frame)
         except:
             msg = f"{emo.ERROR} Time frame not valid"
             logging.error(f"{msg} - {update}")
@@ -65,10 +65,16 @@ class Rain(TGBFPlugin):
             return
 
         # Determine last valid date time for the airdrop
-        if time_unit == "m":
-            last_time = datetime.utcnow() - timedelta(minutes=time_frame)
+        if t_unit == "m":
+            last_time = datetime.utcnow() - timedelta(minutes=t_frame)
+        elif t_unit == "h":
+            last_time = datetime.utcnow() - timedelta(hours=t_frame)
         else:
-            last_time = datetime.utcnow() - timedelta(hours=time_frame)
+            msg = f"{emo.ERROR} Unsupported time unit detected!"
+            logging.error(f"{msg} - {update}")
+            update.message.reply_text(msg)
+            self.notify(msg)
+            return
 
         chat_id = update.effective_chat.id
 
@@ -165,10 +171,10 @@ class Rain(TGBFPlugin):
         # Get transaction hash
         tx_hash = res["hash"]
 
-        success, result = lamden.tx_successful(tx_hash)
+        success, result = lamden.tx_succeeded(tx_hash)
 
         if not success:
-            message.edit_text(f"{emo.ERROR} {result['error']}")
+            message.edit_text(f"{emo.ERROR} {result}")
             return
 
         url = lamden.cfg.get("explorer", lamden.chain)

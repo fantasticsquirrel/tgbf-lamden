@@ -532,7 +532,7 @@ class TGBFPlugin:
                 return func(self, update, context, **kwargs)
             else:
                 name = context.bot.username if context.bot.username else context.bot.name
-                msg = f"Can only be used in a chat with @{name}"
+                msg = f"{emo.ERROR} Can only be used in a chat with @{name}"
                 update.message.reply_text(msg)
 
         return _private
@@ -547,7 +547,7 @@ class TGBFPlugin:
             elif context.bot.get_chat(update.message.chat_id).type != Chat.PRIVATE:
                 return func(self, update, context, **kwargs)
             else:
-                msg = f"Can only be used in a public chat"
+                msg = f"{emo.ERROR} Can only be used in a public chat"
                 update.message.reply_text(msg)
 
         return _public

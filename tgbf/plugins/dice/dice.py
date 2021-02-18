@@ -1,7 +1,7 @@
-from contracting.client import ContractingClient
-from telegram import Update
-from telegram.ext import CommandHandler, CallbackContext
+import tgbf.emoji as emo
 
+from telegram import Update, ParseMode
+from telegram.ext import CommandHandler, CallbackContext
 from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
@@ -15,23 +15,27 @@ class Dice(TGBFPlugin):
             run_async=True))
 
     def dice_callback(self, update: Update, context: CallbackContext):
+        if len(context.args) != 2:
+            update.message.reply_text(
+                self.get_usage(),
+                parse_mode=ParseMode.MARKDOWN)
+            return
+
+        # TODO: Add validations
+        amount = context.args[0]
+        number = context.args[1]
+
         wallet = self.get_wallet(update.effective_user.id)
+        lamden = Connect(wallet)
 
-        def dice():
-            random.seed()
+        roll = lamden.post_transaction(500, "con_dice", "roll", {})
 
-            @export
-            def roll():
-                return random.randint(1, 6)
+        success, result = lamden.tx_successful(roll["hash"])
 
-        client = ContractingClient()
+        if not success:
+            update.message.reply_text(f"{emo.ERROR} {result}")
+            return
 
-        client.submit(dice)
-
-        dice = client.get_contract("con_dice")
-        result = dice.roll()
-        print(result)
-
-        api = Connect(wallet)
-        res = api.post_transaction(500, "con_dice", "roll", {})
-        print("dice", res)
+        # TODO: Show link to transaction
+        result = result["result"]
+        update.message.reply_text(f"Result: {result}")

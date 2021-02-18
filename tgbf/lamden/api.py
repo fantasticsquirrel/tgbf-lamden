@@ -83,7 +83,7 @@ class API:
                     continue
                 else:
                     return False, tx["error"]
-            if tx["result"] is None:
+            if tx["result"] == "None":
                 return True, tx
             else:
                 return False, tx["result"]

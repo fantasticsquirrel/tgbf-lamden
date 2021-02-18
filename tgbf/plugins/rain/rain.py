@@ -191,3 +191,14 @@ class Rain(TGBFPlugin):
 
             # Insert details into database
             self.execute_sql(sql, from_user.id, to_user_id, amount_single, tx_hash)
+
+            try:
+                # Notify user about tip
+                context.bot.send_message(
+                    to_user_id,
+                    f"You received `{amount_single}` TAU from {esc_mk(from_username, version=2)}\n{link}",
+                    parse_mode=ParseMode.MARKDOWN_V2,
+                    disable_web_page_preview=True)
+                logging.info(f"User {to_user_id} notified about rain of {amount_single} TAU")
+            except Exception as e:
+                logging.info(f"User {to_user_id} could not be notified about rain: {e} - {update}")

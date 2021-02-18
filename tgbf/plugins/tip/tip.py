@@ -41,7 +41,7 @@ class Tip(TGBFPlugin):
         if len(context.args) < 1:
             update.message.reply_text(
                 self.get_usage(),
-                parse_mode=ParseMode.MARKDOWN_V2)
+                parse_mode=ParseMode.MARKDOWN)
             return
 
         reply = update.message.reply_to_message

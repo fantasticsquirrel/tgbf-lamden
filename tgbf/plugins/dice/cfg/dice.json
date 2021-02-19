@@ -2,5 +2,9 @@
     "category": "Lamden",
     "description": "Returns random number between 1 and 6",
     "contract": "con_dice",
-    "function": "roll"
+    "function": "roll",
+    "whitelist": [-1001154540877],
+    "whitelist_msg": "Command only allowed in [Lamden (TAU) Gambling](https://t.me/bet_tau)",
+    "min_amount": 10,
+    "max_amount": 1000
 }

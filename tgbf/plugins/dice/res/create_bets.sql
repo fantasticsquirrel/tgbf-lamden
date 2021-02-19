@@ -1,0 +1,7 @@
+CREATE TABLE bets (
+    user_id TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    bet TEXT NOT NULL,
+    tx_hash TEXT NOT NULL,
+	date_time DATETIME DEFAULT CURRENT_TIMESTAMP
+)

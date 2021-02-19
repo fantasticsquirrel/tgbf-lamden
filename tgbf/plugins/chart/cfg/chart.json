@@ -1,5 +1,6 @@
 {
     "category": "Lamden",
     "description": "Global price and volume chart",
-    "blacklist": []
+    "blacklist": [],
+    "blacklist_msg": "Execute in chat with @{{name}} or in [Trading Group](https://t.me/Tradetau)"
 }

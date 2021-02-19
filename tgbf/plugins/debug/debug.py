@@ -26,10 +26,10 @@ class Debug(TGBFPlugin):
         vi = sys.version_info
         v = f"{vi.major}.{vi.minor}.{vi.micro}"
 
-        msg = f"{emo.INFO} PID: {os.getpid()}\n" \
-              f"{emo.INFO} Open files: {len(open_files)}\n" \
-              f"{emo.INFO} Python: {v}\n" \
-              f"{emo.INFO} IP: {utl.get_external_ip()}"
+        msg = f"PID: {os.getpid()}\n" \
+              f"Open files: {len(open_files)}\n" \
+              f"Python: {v}\n" \
+              f"IP: {utl.get_external_ip()}"
 
         chat_info = update.effective_chat
 

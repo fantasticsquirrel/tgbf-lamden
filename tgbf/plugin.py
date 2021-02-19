@@ -632,15 +632,15 @@ class TGBFPlugin:
 
         def _blacklist(self, update: Update, context: CallbackContext, **kwargs):
             blacklist_chats = self.config.get("blacklist")
-            current_chat_id = update.effective_chat.id
 
+            current_chat_id = update.effective_chat.id
             if blacklist_chats and current_chat_id in blacklist_chats:
                 name = context.bot.username if context.bot.username else context.bot.name
-                msg1 = f"Execute in chat with @{name} or in"
-                msg2 = "[Trading Group](https://t.me/Tradetau)"
+                msg = self.config.get("blacklist_msg").replace("{{name}}", esc_mk(name))
+
                 update.message.reply_text(
-                    f"{esc_mk(msg1, version=2)} {msg2}",
-                    parse_mode=ParseMode.MARKDOWN_V2,
+                    msg,
+                    parse_mode=ParseMode.MARKDOWN,
                     disable_web_page_preview=True)
             else:
                 return func(self, update, context, **kwargs)
@@ -654,14 +654,19 @@ class TGBFPlugin:
          in the plugins config file then the command will be executed. """
 
         def _whitelist(self, update: Update, context: CallbackContext, **kwargs):
-            whitelist_chats = self.config.get("blacklist")
-            current_chat_id = update.effective_chat.id
+            whitelist_chats = self.config.get("whitelist")
 
+            current_chat_id = update.effective_chat.id
             if whitelist_chats and current_chat_id in whitelist_chats:
                 return func(self, update, context, **kwargs)
             else:
-                msg = f"Group not whitelisted for this command"
-                update.message.reply_text(msg)
+                name = context.bot.username if context.bot.username else context.bot.name
+                msg = self.config.get("whitelist_msg").replace("{{name}}", esc_mk(name))
+
+                update.message.reply_text(
+                    msg,
+                    parse_mode=ParseMode.MARKDOWN,
+                    disable_web_page_preview=True)
 
         return _whitelist
 

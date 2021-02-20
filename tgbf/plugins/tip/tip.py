@@ -70,6 +70,12 @@ class Tip(TGBFPlugin):
             update.message.reply_text(msg)
             return
 
+        # Check if amount is negative
+        if amount < 0:
+            msg = f"{emo.ERROR} Amount not valid"
+            update.message.reply_text(msg)
+            return
+
         if amount.is_integer():
             amount = int(amount)
 

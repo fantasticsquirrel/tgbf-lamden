@@ -89,7 +89,7 @@ class Rain(TGBFPlugin):
             self.notify(msg)
             return
 
-        # Users to airdrop to without own user
+        # Exclude own user from users to airdrop on
         user_data = [u for u in res["data"] if u[0] != update.effective_user.id]
 
         if len(user_data) < 1:

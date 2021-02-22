@@ -85,7 +85,7 @@ class TGBF:
         logger.setLevel(self.args.loglevel)
 
         log_file = os.path.join(con.DIR_LOG, con.FILE_LOG)
-        log_format = "[%(asctime)s %(levelname)s %(filename)s:%(lineno)s %(funcName)s()] %(message)s"
+        log_format = "%(asctime)s %(levelname)s %(filename)s:%(lineno)s %(funcName)s() --> %(message)s"
 
         # Log to console
         console_log = logging.StreamHandler()

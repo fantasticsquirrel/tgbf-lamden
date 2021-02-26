@@ -45,19 +45,73 @@ class Dice(TGBFPlugin):
             update.message.reply_text(msg)
             return
 
+        # Convert to Integer if possible
+        if amount.is_integer():
+            amount = int(amount)
+
         try:
+            # Validate dice number
             number = int(number)
             if number < 1 or number > 6:
                 raise ValueError()
         except:
             # Validate number of points to bet on
             msg = f"{emo.ERROR} Number of points not valid. " \
-                  f"Provide a whole number between 1 and 6 (second argument)"
+                  f"Provide a whole number between 1 and 6 (as second argument)"
             update.message.reply_text(msg)
             return
 
-        wallet = self.get_wallet(update.effective_user.id)
+        bet_msg = f"You bet `{amount}` TAU to roll a `{number}`"
+        message = update.message.reply_text(bet_msg, parse_mode=ParseMode.MARKDOWN_V2)
+
+        logging.info(bet_msg, update)
+
+        user_id = update.effective_user.id
+
+        wallet = self.get_wallet(user_id)
         lamden = Connect(wallet)
+
+        try:
+            # Send the bet amount to bot wallet
+            send = lamden.send(amount, self.bot_wallet.verifying_key)
+        except Exception as e:
+            msg = f"Could not send transaction: {e}"
+            message.edit_text(f"{bet_msg}/n/n{emo.ERROR} {e}")
+            logging.error(msg)
+            self.notify(msg)
+            return
+
+        logging.info(f"Sent {amount} TAU to bot wallet: {send}")
+
+        if "error" in send:
+            msg = f"Transaction replied error: {send['error']}"
+            message.edit_text(f"{bet_msg}/n/n{emo.ERROR} {send['error']}")
+            logging.error(msg)
+            return
+
+        # Get transaction hash
+        tx_hash = send["hash"]
+
+        # Insert details into database
+        self.execute_sql(
+            self.get_resource("insert_bet.sql"),
+            user_id,
+            amount,
+            number,
+            tx_hash)
+
+        success, result = lamden.tx_succeeded(tx_hash)
+
+        if not success:
+            message.edit_text(f"{bet_msg}/n/n{emo.ERROR} {result}")
+            logging.error(f"Transaction not successful: {result}")
+            return
+
+        url = lamden.cfg.get("explorer", lamden.chain)
+        link = f"[Amount sent]({url}/transactions/{tx_hash})"
+
+        bet_msg = f"{bet_msg}\n\n{link}"
+        message.edit_text(bet_msg, parse_mode=ParseMode.MARKDOWN_V2)
 
         contract = self.config.get("contract")
         function = self.config.get("function")
@@ -72,8 +126,15 @@ class Dice(TGBFPlugin):
             try:
                 int(result)
             except:
-                update.message.reply_text(f"{emo.ERROR} {result}")
+                bet_msg = f"{bet_msg}/n/n{emo.ERROR} {result}"
+                update.message.reply_text(bet_msg, parse_mode=ParseMode.MARKDOWN_V2)
                 return
 
-        # TODO: Show link to transaction
-        update.message.reply_text(f"Result: {result}")
+        # User WON!
+        if int(result) == int(number):
+            bet_msg = f"{bet_msg}\n\nYou rolled a {result} and WON!! {emo.MONEY}"
+        # User LOST!
+        else:
+            bet_msg = f"{bet_msg}\n\nYou rolled a {result}\nMore luck next time! {emo.MONEY}"
+
+        message.edit_text(bet_msg, parse_mode=ParseMode.MARKDOWN_V2)

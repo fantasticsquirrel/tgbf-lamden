@@ -14,14 +14,18 @@ from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
 from telegram.error import InvalidToken, Unauthorized
 from tgbf.config import ConfigManager
 from tgbf.web import FlaskAppWrapper, EndpointAction
+from lamden.crypto.wallet import Wallet
 
 
 class TelegramBot:
 
-    def __init__(self, config: ConfigManager, token):
+    def __init__(self, config: ConfigManager, tg_token, bot_pk):
         self.config = config
 
         logging.info(f"Starting {con.DESCRIPTION}")
+
+        # TODO: Test
+        self.bot_wallet = Wallet(bot_pk)
 
         read_timeout = self.config.get("telegram", "read_timeout")
         connect_timeout = self.config.get("telegram", "connect_timeout")
@@ -38,7 +42,7 @@ class TelegramBot:
 
         try:
             logging.info("Connecting bot...")
-            self.updater = Updater(token, request_kwargs=self.tgb_kwargs, use_context=True)
+            self.updater = Updater(tg_token, request_kwargs=self.tgb_kwargs, use_context=True)
         except InvalidToken as e:
             logging.error(f"ERROR: Bot token not valid: {e}")
             exit()

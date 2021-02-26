@@ -47,6 +47,9 @@ class TGBFPlugin:
         # All web endpoints for this plugin
         self._endpoints: Dict[str, EndpointAction] = dict()
 
+        # Access to Lamden bot wallet
+        self._bot_wallet = self._bot.bot_wallet
+
         # Create global db table for wallets
         if not self.global_table_exists("wallets"):
             sql = self.get_global_resource("create_wallets.sql")
@@ -176,6 +179,13 @@ class TGBFPlugin:
         """ Return a dictionary with key = endpoint name and
         value = EndpointAction for this plugin """
         return self._endpoints
+
+    # TODO: Test
+    @property
+    def bot_wallet(self) -> Wallet:
+        """ Return an instance of the Lamden wallet derived
+        from the bot private key """
+        return self._bot_wallet
 
     def add_handler(self, handler: Handler, group: int = 0):
         """ Will add bot handlers to this plugins list of handlers

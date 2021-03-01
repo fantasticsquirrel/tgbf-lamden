@@ -137,7 +137,8 @@ class TGBF:
         try:
             if os.path.isfile(token_path):
                 with open(token_path, "r", encoding="utf8") as file:
-                    return json.load(file)["telegram"], json.load(file)["bot-pk"]
+                    json_content = json.load(file)
+                    return json_content["telegram"], json_content["bot-pk"]
             else:
                 exit(f"ERROR: No token file '{con.FILE_TKN}' found at '{token_path}'")
         except KeyError as e:

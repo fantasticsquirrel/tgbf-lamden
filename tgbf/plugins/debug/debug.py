@@ -2,7 +2,6 @@ import os
 import sys
 import psutil
 import logging
-import tgbf.emoji as emo
 import tgbf.utils as utl
 
 from tgbf.plugin import TGBFPlugin

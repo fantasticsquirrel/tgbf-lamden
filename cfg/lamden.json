@@ -1,15 +1,15 @@
 {
     "chain": "test",
-    "masternodes": {
-        "main": [
+    "main": {
+        "masternodes": [
             {"https://masternode-01.lamden.io": null}
         ],
-        "test": [
-            {"https://testnet-master-1.lamden.io": null}
-        ]
+        "explorer": {"https://mainnet.lamden.io": null}
     },
-    "explorer": {
-        "main": "https://mainnet.lamden.io",
-        "test": "https://explorer.lamden.io"
+    "test": {
+        "masternodes": [
+            {"https://testnet-master-1.lamden.io": null}
+        ],
+        "explorer": {"https://explorer.lamden.io": null}
     }
 }

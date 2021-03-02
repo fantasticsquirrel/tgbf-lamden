@@ -9,17 +9,41 @@ from lamden.crypto.wallet import Wallet
 
 class API:
 
-    def __init__(self, host: str = None, port: int = None, wallet: Wallet = None):
-        self.host = host
-        self.port = port
+    def __init__(
+            self,
+            node_host: str = None,
+            node_port: int = None,
+            wallet: Wallet = None,
+            explorer_host: str = None,
+            explorer_port: int = None):
+
+        self.node_host = node_host
+        self.node_port = node_port
         self.wallet = wallet
+        self.explorer_host = explorer_host
+        self.explorer_port = explorer_port
         self._node_url = None
+        self._explorer_url = None
 
     @property
     def node_url(self):
         """ Get currently set node URL """
-        self._node_url = self.host if self.port is None else f"{self.host}:{self.port}"
+        if self.node_port:
+            self._node_url = f"{self.node_host}:{self.node_port}"
+        else:
+            self._node_url = self.node_host
+
         return self._node_url
+
+    @property
+    def explorer_url(self):
+        """ Get currently set block explorer URL """
+        if self.explorer_port:
+            self._explorer_url = f"{self.explorer_host}:{self.explorer_port}"
+        else:
+            self._explorer_url = self.explorer_host
+
+        return self._explorer_url
 
     def is_address_valid(self, address: str):
         """ Check if the given address is valid """
@@ -30,6 +54,8 @@ class API:
         except:
             return False
         return True
+
+    # ---- Masternode API ----
 
     def get_nonce(self, address):
         """ Get nonce to use for next transaction """
@@ -83,7 +109,7 @@ class API:
                     continue
                 else:
                     return False, tx["error"]
-            if tx["result"] == "None":
+            if tx["status"] == 0:
                 return True, tx
             else:
                 return False, tx["result"]
@@ -134,4 +160,11 @@ class API:
         """ Get amount of TAU that is approved to be spent by smart contract """
         key = f"{self.wallet.verifying_key}:{contract_name}"
         res = requests.get(f"{self.node_url}/contracts/currency/balances?key={key}")
+        return decode(res.text)
+
+    # ---- Block Explorer API ----
+
+    def get_top_wallets(self):
+        """ Get top 20 wallets by amount of TAU """
+        res = requests.get(f"{self.explorer_url}/api/states/topwallets")
         return decode(res.text)

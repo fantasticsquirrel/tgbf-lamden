@@ -123,7 +123,7 @@ class Tip(TGBFPlugin):
         else:
             from_user = update.effective_user.first_name
 
-        ex_url = lamden.cfg.get("explorer", lamden.chain)
+        ex_url = lamden.explorer_url
 
         message.edit_text(
             f"{emo.MONEY} {esc_mk(to_user, version=2)} received `{amount}` TAU\n"

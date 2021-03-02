@@ -64,7 +64,7 @@ class Dice(TGBFPlugin):
         bet_msg = f"You bet `{amount}` TAU to roll a `{number}`"
         message = update.message.reply_text(bet_msg, parse_mode=ParseMode.MARKDOWN_V2)
 
-        logging.info(bet_msg, update)
+        logging.info(f"{bet_msg} - {update}")
 
         user_id = update.effective_user.id
 
@@ -107,7 +107,7 @@ class Dice(TGBFPlugin):
             logging.error(f"Transaction not successful: {result}")
             return
 
-        url = lamden.cfg.get("explorer", lamden.chain)
+        url = lamden.explorer_url
         link = f"[Amount sent]({url}/transactions/{tx_hash})"
 
         bet_msg = f"{bet_msg}\n\n{link}"

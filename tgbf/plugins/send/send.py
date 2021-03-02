@@ -97,7 +97,7 @@ class Send(TGBFPlugin):
             amount,
             tx_hash)
 
-        ex_url = lamden.cfg.get("explorer", lamden.chain)
+        ex_url = lamden.explorer_url
 
         message.edit_text(
             f"{emo.MONEY} Sent `{amount}` TAU\n"

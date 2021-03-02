@@ -178,7 +178,7 @@ class Rain(TGBFPlugin):
             logging.error(f"Transaction not successful: {result}")
             return
 
-        url = lamden.cfg.get("explorer", lamden.chain)
+        url = lamden.explorer_url
         link = f"[View Transaction on Explorer]({url}/transactions/{tx_hash})"
 
         msg = f"{msg}\n\n{link}"

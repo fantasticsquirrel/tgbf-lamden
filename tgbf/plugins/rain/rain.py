@@ -145,7 +145,7 @@ class Rain(TGBFPlugin):
             approved = approved["value"] if "value" in approved else 0
             approved = approved if approved is not None else 0
 
-            if amount_single > float(approved):
+            if amount_total > float(approved):
                 lamden.approve_contract(contract)
 
             res = lamden.post_transaction(

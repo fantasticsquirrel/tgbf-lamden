@@ -542,7 +542,7 @@ class TGBFPlugin:
                 return func(self, update, context, **kwargs)
             else:
                 name = context.bot.username if context.bot.username else context.bot.name
-                msg = f"{emo.ERROR} Can only be used in a chat with @{name}"
+                msg = f"{emo.ERROR} DM the bot @{name} to use this command"
                 update.message.reply_text(msg)
 
         return _private

@@ -3,8 +3,7 @@
     "description": "Returns random number between 1-6",
     "contract": "con_dice",
     "function": "roll",
-    "whitelist": [-1001128168999],
-    "whitelist_msg": "Command only allowed in [Lamden (TAU) Gambling](https://t.me/bet_tau)",
+    "blacklist": [-1001287365947],
     "min_amount": 10,
     "max_amount": 50,
     "multiplier": 5

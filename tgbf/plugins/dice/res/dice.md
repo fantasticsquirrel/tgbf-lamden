@@ -1,6 +1,6 @@
 A smart contract determines a random number between 1 and 6 and if you can guess it correctly then the TAU you've bet will be multiplied by 5.
 
-**Minimum amount 10 TAU, maximum amount 1000 TAU**
+**Minimum amount {{min}} TAU, maximum amount {{max}} TAU**
 
 `/{{handle}} <amount TAU> <your guess>`
 

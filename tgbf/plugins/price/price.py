@@ -21,6 +21,13 @@ class Price(TGBFPlugin):
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def price_callback(self, update: Update, context: CallbackContext):
+        if len(context.args) == 1:
+            if context.args[0].lower() == "jeff":
+                update.message.reply_text(
+                    f"`1 JEFF = 1 JEFF`",
+                    parse_mode=ParseMode.MARKDOWN_V2)
+                return
+
         try:
             data = CoinGeckoAPI().get_coin_by_id(self.CGID)
         except Exception as e:

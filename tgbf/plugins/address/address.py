@@ -10,6 +10,7 @@ from telegram import ParseMode
 from tgbf.plugin import TGBFPlugin
 
 
+# FIXME: Currently throws an error with qrcode_artistic
 class Address(TGBFPlugin):
 
     def load(self):

@@ -81,6 +81,8 @@ class Dice(TGBFPlugin):
         user_wallet = self.get_wallet(user_id)
         user_api = Connect(user_wallet)
 
+        bot_api = Connect(self.bot_wallet)
+
         try:
             # Send the bet amount to bot wallet
             send = user_api.send(amount, self.bot_wallet.verifying_key)
@@ -151,7 +153,12 @@ class Dice(TGBFPlugin):
                 self.notify(msg)
                 return
         else:
-            msg = f"{bet_msg}\n\n{send_msg}\n{emo.ERROR} {esc_mk(result, version=2)}"
+            # Return funds to user
+            return_bet = bot_api.send(amount, user_wallet.verifying_key)
+            msg = f"Returned {amount} TAU due to error"
+            logging.info(f"{msg}: {return_bet}")
+
+            msg = f"{bet_msg}\n\n{send_msg}\n{emo.ERROR} {esc_mk(result, version=2)}\n\n{msg}"
             update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
             logging.error(msg)
             self.notify(msg)
@@ -177,8 +184,6 @@ class Dice(TGBFPlugin):
 
             msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}\n\n{esc_mk(result_msg, version=2)}\n\n{return_msg}"
             message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-
-            bot_api = Connect(self.bot_wallet)
 
             try:
                 # Return amount of TAU to user

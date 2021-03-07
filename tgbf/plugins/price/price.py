@@ -27,6 +27,11 @@ class Price(TGBFPlugin):
                     f"`1 JEFF = 1 JEFF`",
                     parse_mode=ParseMode.MARKDOWN_V2)
                 return
+            elif context.args[0].lower() == "doug":
+                update.message.reply_text(
+                    f"`1 DOUG = 1 DOUG`",
+                    parse_mode=ParseMode.MARKDOWN_V2)
+                return
 
         try:
             data = CoinGeckoAPI().get_coin_by_id(self.CGID)

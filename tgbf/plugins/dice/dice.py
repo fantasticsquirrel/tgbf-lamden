@@ -73,33 +73,50 @@ class Dice(TGBFPlugin):
         send_msg = f"{emo.HOURGLASS} Sending {amount} TAU to bot"
         msg = f"{bet_msg}\n\n{send_msg}"
 
-        message = update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-
         logging.info(f"{bet_msg} - {update}")
+
+        contract = self.config.get("contract")
+        function = self.config.get("function")
 
         user_id = update.effective_user.id
         user_wallet = self.get_wallet(user_id)
         user_api = Connect(user_wallet)
 
+        balance = user_api.get_balance()
+        balance = balance["value"] if "value" in balance else 0
+        balance = balance if balance else 0
+
+        extra = 1
+
+        if float(balance) < amount + extra:
+            msg = f"{emo.ERROR} You must have at least {amount + extra} TAU"
+            update.message.reply_text(msg)
+            return
+
+        message = update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+
         bot_api = Connect(self.bot_wallet)
+
+        # Return bet amount to user in case of error
+        def payback(amn=amount):
+            return_bet = bot_api.send(amn, user_wallet.verifying_key)
+            logging.info(f"Returned {amn} TAU due to error: {return_bet}")
 
         try:
             # Send the bet amount to bot wallet
             send = user_api.send(amount, self.bot_wallet.verifying_key)
         except Exception as e:
+            logging.error(f"Could not send transaction: {e}")
             msg = f"{bet_msg}\n\n{emo.ERROR} {esc_mk(str(e), version=2)}"
             message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-            msg = f"Could not send transaction: {e}"
-            logging.error(msg)
             return
 
         logging.info(f"Sent {amount} TAU to bot wallet: {send}")
 
         if "error" in send:
+            logging.error(f"Error in sending TAU: {send['error']}")
             msg = f"{bet_msg}\n\n{emo.ERROR} {esc_mk(send['error'], version=2)}"
             message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-            msg = f"Transaction error: {send['error']}"
-            logging.error(msg)
             return
 
         # Get transaction hash
@@ -109,9 +126,9 @@ class Dice(TGBFPlugin):
         success, result = user_api.tx_succeeded(tx_hash)
 
         if not success:
+            logging.error(f"Transaction not successful: {result}")
             msg = f"{bet_msg}\n\n{emo.ERROR} {esc_mk(result, version=2)}"
             message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-            logging.error(f"Transaction not successful: {result}")
             return
 
         ex_url = f"{user_api.explorer_url}/transactions/{tx_hash}"
@@ -122,23 +139,39 @@ class Dice(TGBFPlugin):
         msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}"
         message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
 
-        contract = self.config.get("contract")
-        function = self.config.get("function")
+        bck_msg = f"Paying back {amount} TAU due to error"
 
         try:
             # Roll the dice - execute smart contract
             roll = user_api.post_transaction(500, contract, function, {})
         except Exception as e:
+            logging.error(f"Could not send transaction: {e}")
             msg = f"{bet_msg}\n\n{send_msg}\n{emo.ERROR} {esc_mk(str(e), version=2)}"
             message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-            msg = f"Could not send transaction: {e}"
-            logging.error(msg)
             return
 
         logging.info(f"Dice rolled: {roll}")
 
-        # Get transaction hash for rolling the dice
-        roll_hash = roll["hash"]
+        if "error" in roll:
+            logging.error(f"Error in rolling dice: {roll['error']}")
+
+            payback()
+
+            msg = f"{bet_msg}\n\n{emo.ERROR} {esc_mk(send['error'] + '. ' + bck_msg, version=2)}"
+            message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+            return
+
+        if "hash" in roll:
+            # Get transaction hash for rolling the dice
+            roll_hash = roll["hash"]
+        else:
+            msg = f"No 'hash' in transaction result"
+            logging.error(msg)
+            self.notify(msg)
+
+            msg = f"{bet_msg}\n\n{send_msg}\n{emo.ERROR} {esc_mk(msg, version=2)}"
+            message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+            return
 
         # Wait for transaction to be completed
         success, result = user_api.tx_succeeded(roll_hash)
@@ -147,21 +180,24 @@ class Dice(TGBFPlugin):
             try:
                 int(result["result"])
             except:
-                msg = f"{bet_msg}\n\n{send_msg}\n{emo.ERROR} {esc_mk(result, version=2)}"
+                msg = f"Wrong dice result"
+                logging.error(f"{msg}: {result}")
+                self.notify(f"{msg}: {result}")
+
+                payback()
+
+                msg = f"{bet_msg}\n\n{send_msg}\n{emo.ERROR} {bck_msg}"
                 update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-                logging.error(msg)
-                self.notify(msg)
                 return
         else:
-            # Return funds to user
-            return_bet = bot_api.send(amount, user_wallet.verifying_key)
-            msg = f"Returned {amount} TAU due to error"
-            logging.info(f"{msg}: {return_bet}")
+            msg = "Error on rolling dice"
+            logging.error(f"{msg}: {result}")
+            self.notify(f"{msg}: {result}")
 
-            msg = f"{bet_msg}\n\n{send_msg}\n{emo.ERROR} {esc_mk(result, version=2)}\n\n{msg}"
+            payback()
+
+            msg = f"{bet_msg}\n\n{send_msg}\n{emo.ERROR} {bck_msg}"
             update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-            logging.error(msg)
-            self.notify(msg)
             return
 
         ex_url = f"{user_api.explorer_url}/transactions/{roll_hash}"
@@ -189,35 +225,47 @@ class Dice(TGBFPlugin):
                 # Return amount of TAU to user
                 send_won = bot_api.send(amount_back, user_wallet.verifying_key)
             except Exception as e:
-                msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}\n\n{result_msg}\n\n{emo.ERROR} {esc_mk(str(e), version=2)}"
-                message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-                msg = f"Could not send won amount back: {e}"
+                msg = f"Could not sent won amount to user: {e}"
                 logging.error(msg)
-                self.notify(e)
+                self.notify(msg)
+
+                msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}\n\n{esc_mk(result_msg, version=2)}\n\n{emo.ERROR} {esc_mk(str(e), version=2)}"
+                message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
                 return
 
             logging.info(f"Sent {amount_back} TAU back to user: {send_won}")
 
             if "error" in send_won:
-                msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}\n\n{result_msg}\n\n{esc_mk(send_won['error'], version=2)}"
-                message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-                msg = f"Transaction error: {send_won['error']}"
+                msg = f"Error sending won amount to user: {send_won['error']}"
                 logging.error(msg)
                 self.notify(msg)
+
+                msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}\n\n{esc_mk(result_msg, version=2)}\n\n{emo.ERROR} {esc_mk(send_won['error'], version=2)}"
+                message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
                 return
 
-            # Get transaction hash
-            won_tx_hash = send_won["hash"]
+            if "hash" in send_won:
+                # Get transaction hash
+                won_tx_hash = send_won["hash"]
+            else:
+                msg = f"No 'hash' in transaction result"
+                logging.error(msg)
+                self.notify(msg)
+
+                msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}\n\n{esc_mk(result_msg, version=2)}\n\n{emo.ERROR} {esc_mk(msg, version=2)}"
+                message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+                return
 
             # Wait for transaction to be completed
             success, res = user_api.tx_succeeded(won_tx_hash)
 
             if not success:
-                msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}\n\n{result_msg}\n\n{emo.ERROR} {esc_mk(res, version=2)}"
-                message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
-                msg = f"Transaction not successful: {res}"
+                msg = f"Sending amount to user not successful: {res}"
                 logging.error(msg)
                 self.notify(msg)
+
+                msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}\n\n{result_msg}\n\n{emo.ERROR} {esc_mk(res, version=2)}"
+                message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
                 return
 
             ex_url = f"{user_api.explorer_url}/transactions/{won_tx_hash}"

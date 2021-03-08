@@ -1,4 +1,5 @@
 import time
+import logging
 import requests
 
 from typing import Union
@@ -82,8 +83,12 @@ class API:
         res = requests.get(f"{self.node_url}/blocks?num={block_number}")
         return decode(res.text)
 
-    def get_balance(self, address):
-        """ Get balance for a given address """
+    def get_balance(self, address=None):
+        """ Get balance for a given address or for the current
+        address if no address is provided as an argument """
+        if not address:
+            address = self.wallet.verifying_key
+
         res = requests.get(f"{self.node_url}/contracts/currency/balances?key={address}")
         return decode(res.text)
 
@@ -97,7 +102,7 @@ class API:
         res = requests.get(f"{self.node_url}/tx?hash={tx_hash}")
         return decode(res.text)
 
-    def tx_succeeded(self, tx_hash, check_period=1, timeout=10):
+    def tx_succeeded(self, tx_hash, check_period=1.1, timeout=30):
         end = int(time.time()) + timeout
 
         while int(time.time()) < end:
@@ -134,6 +139,7 @@ class API:
             kwargs=kwargs)
 
         res = requests.post(self.node_url, data=tx)
+        logging.info(f"TRANSACTION({stamps}, {contract}, {function}, {kwargs}) -> {res.text}")
         return decode(res.text)
 
     def get_network_constitution(self):

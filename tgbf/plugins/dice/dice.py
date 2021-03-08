@@ -157,7 +157,7 @@ class Dice(TGBFPlugin):
 
             payback()
 
-            msg = f"{bet_msg}\n\n{emo.ERROR} {esc_mk(send['error'] + '. ' + bck_msg, version=2)}"
+            msg = f"{bet_msg}\n\n{emo.ERROR} {esc_mk(roll['error'] + '. ' + bck_msg, version=2)}"
             message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
             return
 

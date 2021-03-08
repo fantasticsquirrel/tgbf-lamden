@@ -143,7 +143,7 @@ class Dice(TGBFPlugin):
 
         try:
             # Roll the dice - execute smart contract
-            roll = user_api.post_transaction(500, contract, function, {})
+            roll = user_api.post_transaction(5, contract, function, {})
         except Exception as e:
             logging.error(f"Could not send transaction: {e}")
             msg = f"{bet_msg}\n\n{send_msg}\n{emo.ERROR} {esc_mk(str(e), version=2)}"

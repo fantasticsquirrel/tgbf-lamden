@@ -264,7 +264,7 @@ class Dice(TGBFPlugin):
                 logging.error(msg)
                 self.notify(msg)
 
-                msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}\n\n{result_msg}\n\n{emo.ERROR} {esc_mk(res, version=2)}"
+                msg = f"{bet_msg}\n\n{send_msg}\n{dice_msg}\n\n{esc_mk(result_msg, version=2)}\n\n{emo.ERROR} {esc_mk(res, version=2)}"
                 message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
                 return
 

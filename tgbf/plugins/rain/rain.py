@@ -149,7 +149,7 @@ class Rain(TGBFPlugin):
                 lamden.approve_contract(contract)
 
             res = lamden.post_transaction(
-                500,
+                3500,
                 contract,
                 function,
                 {"addresses": addresses, "amount": amount_single})

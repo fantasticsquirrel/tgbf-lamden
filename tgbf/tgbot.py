@@ -99,7 +99,7 @@ class TelegramBot:
 
     def bot_start_polling(self):
         """ Start the bot in polling mode """
-        self.updater.start_polling(clean=True)
+        self.updater.start_polling(drop_pending_updates=True)
 
     def bot_start_webhook(self):
         """ Start the bot in webhook mode """

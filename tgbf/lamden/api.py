@@ -102,7 +102,7 @@ class API:
         res = requests.get(f"{self.node_url}/tx?hash={tx_hash}")
         return decode(res.text)
 
-    def tx_succeeded(self, tx_hash, check_period=1.1, timeout=30):
+    def tx_succeeded(self, tx_hash, check_period=1.5, timeout=45):
         end = int(time.time()) + timeout
 
         while int(time.time()) < end:

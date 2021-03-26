@@ -22,7 +22,7 @@ class Address(TGBFPlugin):
             self.privkey_callback,
             run_async=True))
 
-    @TGBFPlugin.private
+    @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def address_callback(self, update: Update, context: CallbackContext):
         wallet = self.get_wallet(update.effective_user.id)

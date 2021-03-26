@@ -10,7 +10,6 @@ from telegram import ParseMode
 from tgbf.plugin import TGBFPlugin
 
 
-# FIXME: Currently throws an error with qrcode_artistic
 class Address(TGBFPlugin):
 
     def load(self):
@@ -34,10 +33,9 @@ class Address(TGBFPlugin):
 
             if photos.photos:
                 for photo in photos.photos:
-                    b_in = io.BytesIO()
-                    b_out = io.BytesIO()
+                    img = photo[-1].get_file().download(out=io.BytesIO())
                     qr = segno.make_qr(wallet.verifying_key)
-                    qr.to_artistic(background=b_in, target=b_out, border=1, scale=10, kind='png')
+                    qr.to_artistic(background=img, target=b_out, border=1, scale=10, kind='png')
                     break
             else:
                 segno.make_qr(wallet.verifying_key).save(b_out, border=1, scale=10, kind="png")

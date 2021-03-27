@@ -18,6 +18,7 @@ kaleido = "*"
 segno = "*"
 qrcode-artistic = "*"
 pytrends = "*"
+image = "*"
 
 [dev-packages]
 

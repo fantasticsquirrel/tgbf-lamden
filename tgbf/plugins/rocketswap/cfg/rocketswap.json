@@ -1,0 +1,6 @@
+{
+    "handle": "rs",
+    "category": "Lamden",
+    "description": "Interact with Rocketswap DEX",
+    "price_url": "/contracts/con_rocketswap_official_v1_1/prices?key="
+}

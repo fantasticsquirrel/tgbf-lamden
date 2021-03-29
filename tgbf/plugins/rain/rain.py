@@ -11,6 +11,8 @@ from tgbf.plugin import TGBFPlugin
 
 class Rain(TGBFPlugin):
 
+    STAMPS = [29, 23, 20, 19, 18, 17]
+
     def load(self):
         if not self.table_exists("rain"):
             sql = self.get_resource("create_rain.sql")
@@ -146,10 +148,20 @@ class Rain(TGBFPlugin):
             approved = approved if approved is not None else 0
 
             if amount_total > float(approved):
-                lamden.approve_contract(contract)
+                app = lamden.approve_contract(contract)
+                msg = f"Approving {contract}: {app}"
+                logging.info(msg)
+
+            # Calculate stamp costs
+            stamps_to_use = 0
+            for a in range(len(addresses)):
+                try:
+                    stamps_to_use += self.STAMPS[a]
+                except IndexError:
+                    stamps_to_use += self.STAMPS[-1]
 
             res = lamden.post_transaction(
-                3500,
+                stamps_to_use,
                 contract,
                 function,
                 {"addresses": addresses, "amount": amount_single})

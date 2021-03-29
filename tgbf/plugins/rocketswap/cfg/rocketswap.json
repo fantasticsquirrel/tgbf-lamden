@@ -2,5 +2,7 @@
     "handle": "rs",
     "category": "Lamden",
     "description": "Interact with Rocketswap DEX",
-    "price_url": "/contracts/con_rocketswap_official_v1_1/prices?key="
+    "price_url": "/contracts/con_rocketswap_official_v1_1/prices?key=",
+    "blacklist": [-1001287365947],
+    "blacklist_msg": "Execute in chat with @{{name}} or in [Trading Group](https://t.me/Tradetau) or [Rocketswap Group](https://t.me/rocketswap)"
 }

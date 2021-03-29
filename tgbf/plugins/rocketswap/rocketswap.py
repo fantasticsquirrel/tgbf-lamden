@@ -22,6 +22,7 @@ class Rocketswap(TGBFPlugin):
 
         self.lamden = Connect()
 
+    @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def rocketswap_callback(self, update: Update, context: CallbackContext):
         if len(context.args) != 1:

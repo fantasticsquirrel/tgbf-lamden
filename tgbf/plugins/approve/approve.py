@@ -1,8 +1,8 @@
 import logging
 import tgbf.emoji as emo
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
+from telegram import Update
+from telegram.ext import CommandHandler, CallbackContext
 from telegram.utils.helpers import escape_markdown as esc_mk
 from telegram import ParseMode
 

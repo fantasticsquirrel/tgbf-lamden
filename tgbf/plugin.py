@@ -536,6 +536,10 @@ class TGBFPlugin:
         """ Decorator for methods that need to be run in a private chat with the bot """
 
         def _private(self, update: Update, context: CallbackContext, **kwargs):
+            if not update.message:
+                # Message was edited
+                return _private
+
             if self.config.get("private") == False:
                 return func(self, update, context, **kwargs)
             elif context.bot.get_chat(update.message.chat_id).type == Chat.PRIVATE:
@@ -552,6 +556,10 @@ class TGBFPlugin:
         """ Decorator for methods that need to be run in a public group """
 
         def _public(self, update: Update, context: CallbackContext, **kwargs):
+            if not update.message:
+                # Message was edited
+                return _public
+
             if self.config.get("public") == False:
                 return func(self, update, context, **kwargs)
             elif context.bot.get_chat(update.message.chat_id).type != Chat.PRIVATE:
@@ -573,6 +581,10 @@ class TGBFPlugin:
         """
 
         def _owner(self, update: Update, context: CallbackContext, **kwargs):
+            if not update.message:
+                # Message was edited
+                return _owner
+
             if self.config.get("owner") == False:
                 return func(self, update, context, **kwargs)
 
@@ -621,7 +633,6 @@ class TGBFPlugin:
             elif update.callback_query:
                 user_id = update.callback_query.message.chat_id
             else:
-                logging.warning(f"Can not extract user ID - {update}")
                 return func(self, update, context, **kwargs)
 
             try:

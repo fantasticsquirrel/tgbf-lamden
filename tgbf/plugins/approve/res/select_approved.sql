@@ -1,3 +1,3 @@
-SELECT DISTINCT contract
+SELECT DISTINCT contract, token
 FROM approved
 WHERE address = ?

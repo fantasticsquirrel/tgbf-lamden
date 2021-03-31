@@ -1,2 +1,2 @@
-INSERT INTO approved (address, contract, amount, tx_hash)
-VALUES (?, ?, ?, ?)
+INSERT INTO approved (address, contract, token, amount, tx_hash)
+VALUES (?, ?, ?, ?, ?)

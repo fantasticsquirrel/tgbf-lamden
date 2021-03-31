@@ -35,13 +35,6 @@ class Approve(TGBFPlugin):
                 parse_mode=ParseMode.MARKDOWN)
             return
 
-        # If more than 2 arguments, show how to use
-        if len(context.args) > 2:
-            update.message.reply_text(
-                self.get_usage(),
-                parse_mode=ParseMode.MARKDOWN)
-            return
-
         # If argument is 'list' show all approved contracts
         if len(context.args) == 1 and context.args[0].lower() == "list":
             approved = self.execute_sql(
@@ -55,15 +48,18 @@ class Approve(TGBFPlugin):
             msg = str("Approved Contracts\n\n")
             for a in approved["data"]:
                 contract = a[0]
+                token = a[1]
 
-                amount = lamden.get_approved_amount(contract)
+                amount = lamden.get_approved_amount(contract, token=token)
                 amount = amount["value"] if "value" in amount else 0
                 amount = amount if amount is not None else 0
 
                 if float(amount).is_integer():
                     amount = int(amount)
 
-                msg += f"{contract} -> {amount} TAU\n"
+                msg += f"Contract: {contract}\n" \
+                       f"Token:    {token}\n" \
+                       f"Amount:   {amount}\n\n"
 
             update.message.reply_text(
                 "`" + esc_mk(msg, version=2) + "`",
@@ -71,8 +67,16 @@ class Approve(TGBFPlugin):
 
             return
 
+        # If not 3 arguments provided, show how to use
+        if len(context.args) != 3:
+            update.message.reply_text(
+                self.get_usage(),
+                parse_mode=ParseMode.MARKDOWN)
+            return
+
         contract = context.args[0]
-        amount = context.args[1]
+        token = context.args[1]
+        amount = context.args[2]
 
         try:
             amount = float(amount)
@@ -86,7 +90,7 @@ class Approve(TGBFPlugin):
 
         try:
             # Approve contract
-            result = lamden.approve_contract(contract, amount)
+            result = lamden.approve_contract(contract, token=token, amount=amount)
         except Exception as e:
             msg = f"Could not send transaction: {e}"
             message.edit_text(f"{emo.ERROR} {e}")
@@ -114,6 +118,7 @@ class Approve(TGBFPlugin):
             self.get_resource("insert_approved.sql"),
             wallet.verifying_key,
             contract,
+            token,
             amount,
             tx_hash)
 

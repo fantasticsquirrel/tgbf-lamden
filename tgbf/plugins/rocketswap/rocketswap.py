@@ -31,7 +31,7 @@ class Rocketswap(TGBFPlugin):
                 parse_mode=ParseMode.MARKDOWN)
             return
 
-        contract = context.args[0]
+        contract = context.args[0].lower()
         url = self.config.get("price_url")
         url = f"{self.lamden.node_url}{url}{contract}"
 
@@ -60,6 +60,8 @@ class Rocketswap(TGBFPlugin):
         price = Decimal(str(price))
         price = price.quantize(Decimal(10) ** -8)
 
+        rs_url = f"https://rocketswap.exchange/#/{contract}"
+
         update.message.reply_text(
-            text=f"`Price of {contract}\n\n{price} TAU`",
+            text=f"[Rocketswap Price]({rs_url})\n`{price} TAU`",
             parse_mode=ParseMode.MARKDOWN_V2)

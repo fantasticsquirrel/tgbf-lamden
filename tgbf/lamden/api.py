@@ -83,11 +83,18 @@ class API:
         res = requests.get(f"{self.node_url}/blocks?num={block_number}")
         return decode(res.text)
 
-    def get_balance(self, add: str = None, token: str = "currency", contract: str = None):
+    def get_balance(self, token: str = "currency", address: str = None, contract: str = None):
         """ Get balance for a given address or for the current
         address if no address is provided as an argument """
-        add = add if add else self.wallet.verifying_key
-        key = f"{add}:{contract}" if contract else add
+        if address and contract:
+            key = f"{address}:{contract}"
+        elif contract:
+            key = contract
+        else:
+            if address:
+                key = address
+            else:
+                key = self.wallet.verifying_key
 
         res = requests.get(f"{self.node_url}/contracts/{token}/balances?key={key}")
         return decode(res.text)

@@ -23,6 +23,21 @@ class Dice(TGBFPlugin):
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def dice_callback(self, update: Update, context: CallbackContext):
+        if len(context.args) == 1 and context.args[0].lower() == "balance":
+            contract = self.config.get("contract")
+
+            b = Connect().get_balance(contract=contract)
+            b = b["value"] if "value" in b else 0
+            b = float(str(b)) if b else float("0")
+            b = str(int(b)) if b.is_integer() else f"{b:.2f}"
+
+            update.message.reply_text(
+                text=f"`Balance of {contract}\n{b} TAU`",
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+
+            return
+
         if len(context.args) != 2:
             min = self.config.get("min_amount")
             max = self.config.get("max_amount")
@@ -75,13 +90,13 @@ class Dice(TGBFPlugin):
             f"{bet_msg}\n{con_msg}",
             parse_mode=ParseMode.MARKDOWN_V2)
 
-        user_id = update.effective_user.id
-        user_wallet = self.get_wallet(user_id)
-        user_api = Connect(user_wallet)
+        usr_id = update.effective_user.id
+        wallet = self.get_wallet(usr_id)
+        lamden = Connect(wallet)
 
         try:
             # Check if dice contract is approved to spend TAU
-            approved = user_api.get_approved_amount(contract)
+            approved = lamden.get_approved_amount(contract)
             approved = approved["value"] if "value" in approved else 0
             approved = approved if approved is not None else 0
 
@@ -89,7 +104,7 @@ class Dice(TGBFPlugin):
             logging.info(msg)
 
             if amount > float(approved):
-                app = user_api.approve_contract(contract)
+                app = lamden.approve_contract(contract)
                 msg = f"Approved {contract}: {app}"
                 logging.info(msg)
         except Exception as e:
@@ -100,7 +115,7 @@ class Dice(TGBFPlugin):
 
         try:
             # Call dice contract
-            dice = user_api.post_transaction(
+            dice = lamden.post_transaction(
                 stamps=50,
                 contract=contract,
                 function=function,
@@ -123,7 +138,7 @@ class Dice(TGBFPlugin):
         tx_hash = dice["hash"]
 
         # Wait for transaction to be completed
-        success, result = user_api.tx_succeeded(tx_hash)
+        success, result = lamden.tx_succeeded(tx_hash)
 
         if not success:
             logging.error(f"Transaction not successful: {result}")
@@ -131,7 +146,7 @@ class Dice(TGBFPlugin):
             message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
             return
 
-        ex_url = f"{user_api.explorer_url}/transactions/{tx_hash}"
+        ex_url = f"{lamden.explorer_url}/transactions/{tx_hash}"
         con_msg = f"{emo.DONE} [Contract executed]({ex_url})"
 
         if int(result["result"]) == int(number):
@@ -152,7 +167,7 @@ class Dice(TGBFPlugin):
         # Insert details into database
         self.execute_sql(
             self.get_resource("insert_bet.sql"),
-            user_id,
+            usr_id,
             amount,
             number,
             tx_hash,

@@ -1,8 +1,8 @@
+import html
 import logging
 import tgbf.emoji as emo
 
 from telegram import Update, ParseMode
-from telegram.utils.helpers import escape_markdown as esc_mk
 from telegram.ext import CommandHandler, CallbackContext
 from datetime import datetime, timedelta
 from tgbf.lamden.connect import Connect
@@ -112,7 +112,7 @@ class Rain(TGBFPlugin):
         if amount_single.is_integer():
             amount_single = int(amount_single)
 
-        msg = f"Rained `{amount_single}` TAU each to following users:\n"
+        msg = f"Rained <code>{amount_single}</code> TAU each to following users:\n"
         suffix = ", "
 
         # List of addresses that will get the airdrop
@@ -127,7 +127,7 @@ class Rain(TGBFPlugin):
             # Add address to list of addresses to rain on
             addresses.append(address)
             # Add username to output message
-            msg += esc_mk(to_username, version=2) + suffix
+            msg += html.escape(to_username) + suffix
 
             logging.info(
                 f"User {to_username} ({to_user_id}) will be "
@@ -191,11 +191,11 @@ class Rain(TGBFPlugin):
             return
 
         url = lamden.explorer_url
-        link = f"[View Transaction on Explorer]({url}/transactions/{tx_hash})"
+        link = f'<a href="{url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
 
         message.edit_text(
             f"{msg}\n\n{link}",
-            parse_mode=ParseMode.MARKDOWN_V2)
+            parse_mode=ParseMode.HTML)
 
         sql = self.get_resource("insert_rain.sql")
 
@@ -209,8 +209,8 @@ class Rain(TGBFPlugin):
                 # Notify user about tip
                 context.bot.send_message(
                     to_user_id,
-                    f"You received `{amount_single}` TAU from {esc_mk(from_username, version=2)}\n{link}",
-                    parse_mode=ParseMode.MARKDOWN_V2,
+                    f"You received <code>{amount_single}</code> TAU from {html.escape(from_username)}\n{link}",
+                    parse_mode=ParseMode.HTML,
                     disable_web_page_preview=True)
                 logging.info(f"User {to_user_id} notified about rain of {amount_single} TAU")
             except Exception as e:

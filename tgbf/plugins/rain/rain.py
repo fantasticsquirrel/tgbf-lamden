@@ -127,7 +127,7 @@ class Rain(TGBFPlugin):
             # Add address to list of addresses to rain on
             addresses.append(address)
             # Add username to output message
-            msg += esc_mk(to_username + suffix, version=2)
+            msg += esc_mk(to_username, version=2) + suffix
 
             logging.info(
                 f"User {to_username} ({to_user_id}) will be "
@@ -193,8 +193,9 @@ class Rain(TGBFPlugin):
         url = lamden.explorer_url
         link = f"[View Transaction on Explorer]({url}/transactions/{tx_hash})"
 
-        msg = f"{msg}\n\n{link}"
-        message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+        message.edit_text(
+            f"{msg}\n\n{link}",
+            parse_mode=ParseMode.MARKDOWN_V2)
 
         sql = self.get_resource("insert_rain.sql")
 

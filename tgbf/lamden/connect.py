@@ -15,6 +15,7 @@ class Connect(API):
         self.chain = self.cfg.get("chain")
 
         node_host, node_port, explorer_host, explorer_port = self.connect()
+        wallet = wallet if wallet else Wallet()
 
         super().__init__(
             node_host=node_host,

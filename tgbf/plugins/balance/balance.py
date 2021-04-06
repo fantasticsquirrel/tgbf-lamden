@@ -26,7 +26,7 @@ class Balance(TGBFPlugin):
         wallet = self.get_wallet(update.effective_user.id)
         lamden = Connect(wallet=wallet)
 
-        b = lamden.get_balance(wallet.verifying_key)
+        b = lamden.get_balance()
         b = b["value"] if "value" in b else 0
         b = float(str(b)) if b else float("0")
         b = str(int(b)) if b.is_integer() else f"{b:.2f}"

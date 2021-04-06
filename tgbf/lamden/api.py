@@ -83,13 +83,13 @@ class API:
         res = requests.get(f"{self.node_url}/blocks?num={block_number}")
         return decode(res.text)
 
-    def get_balance(self, address: str = None):
+    def get_balance(self, add: str = None, token: str = "currency", contract: str = None):
         """ Get balance for a given address or for the current
         address if no address is provided as an argument """
-        if not address:
-            address = self.wallet.verifying_key
+        add = add if add else self.wallet.verifying_key
+        key = f"{add}:{contract}" if contract else add
 
-        res = requests.get(f"{self.node_url}/contracts/currency/balances?key={address}")
+        res = requests.get(f"{self.node_url}/contracts/{token}/balances?key={key}")
         return decode(res.text)
 
     def get_contracts(self):
@@ -157,14 +157,14 @@ class API:
         res = requests.get(f"{self.node_url}/contracts/{contract}/variables")
         return decode(res.text)
 
-    def approve_contract(self, contract_name: str, token: str = "currency", amount: float = 100000000):
+    def approve_contract(self, contract: str, token: str = "currency", amount: float = 100000000):
         """ Approve smart contract to spend a specific amount of TAU """
-        kwargs = {"amount": float(amount), "to": contract_name}
+        kwargs = {"amount": float(amount), "to": contract}
         return self.post_transaction(50, token, "approve", kwargs)
 
-    def get_approved_amount(self, contract_name: str, token: str = "currency"):
+    def get_approved_amount(self, contract: str, token: str = "currency"):
         """ Get amount of TAU that is approved to be spent by smart contract """
-        key = f"{self.wallet.verifying_key}:{contract_name}"
+        key = f"{self.wallet.verifying_key}:{contract}"
         res = requests.get(f"{self.node_url}/contracts/{token}/balances?key={key}")
         return decode(res.text)
 

@@ -219,6 +219,9 @@ class TelegramBot:
         All of this will only work in a private chat with the bot.
         """
 
+        if not update.message:
+            return
+
         # Check if in a private chat
         if context.bot.get_chat(update.message.chat_id).type != Chat.PRIVATE:
             return

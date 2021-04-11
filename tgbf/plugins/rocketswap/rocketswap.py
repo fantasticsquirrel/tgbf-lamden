@@ -1,9 +1,11 @@
 import tgbf.emoji as emo
+import tgbf.utils as utl
 import requests
 import logging
 
 from decimal import Decimal
 from tgbf.plugin import TGBFPlugin
+from pycoingecko import CoinGeckoAPI
 from telegram import ParseMode, Update
 from telegram.ext import CommandHandler, CallbackContext
 from tgbf.lamden.connect import Connect
@@ -13,6 +15,8 @@ from contracting.db.encoder import decode
 class Rocketswap(TGBFPlugin):
 
     lamden = None
+    CGID = "lamden"
+    VS_CUR = "usd,eur"
 
     def load(self):
         self.add_handler(CommandHandler(
@@ -58,10 +62,33 @@ class Rocketswap(TGBFPlugin):
             return
 
         price = Decimal(str(price))
-        price = price.quantize(Decimal(10) ** -8)
+        price = price.quantize(Decimal(10) ** -4)
 
         rs_url = f"https://rocketswap.exchange/#/{contract}"
+        msg = f"[Trade on Rocketswap]({rs_url})\n\n`TAU: {price}`\n"
 
-        update.message.reply_text(
-            text=f"[Rocketswap Price]({rs_url})\n`{price} TAU`",
+        message = update.message.reply_text(
+            text=msg,
             parse_mode=ParseMode.MARKDOWN_V2)
+
+        try:
+            data = CoinGeckoAPI().get_coin_by_id(self.CGID)
+            prices = data["market_data"]["current_price"]
+
+            value = str()
+
+            for c in self.VS_CUR.split(","):
+                if c in prices:
+                    p = utl.format(prices[c] * float(price), decimals=4)
+                    value += f"{c.upper()}: {p}\n"
+
+            msg += f"`" \
+                   f"{value}" \
+                   f"`"
+
+            message.edit_text(
+                text=msg,
+                parse_mode=ParseMode.MARKDOWN_V2)
+        except Exception as e:
+            logging.warning(f"Could not calculate value for user balance: {e}")
+

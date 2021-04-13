@@ -1,4 +1,6 @@
 {
+    "category": "Lamden",
+    "description": "Create or take OTC offers",
     "contract": "con_otc001",
     "function": "take_offer"
 }

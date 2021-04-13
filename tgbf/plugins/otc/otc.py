@@ -28,7 +28,7 @@ class Otc(TGBFPlugin):
         context.user_data.clear()
 
         # If no arguments, show how to use
-        if not context.args:
+        if not context.args or len(context.args) != 1:
             update.message.reply_text(
                 self.get_usage(),
                 parse_mode=ParseMode.MARKDOWN)
@@ -36,9 +36,16 @@ class Otc(TGBFPlugin):
 
         contract = self.config.get("contract")
         function = self.config.get("function")
+        argument = context.args[0]
 
         # Taking an offer
-        if len(context.args) == 1:
+        if argument.lower() == "create":
+            # TODO: Create offer
+            pass
+        elif argument.lower() == "cancel":
+            # TODO: Cancel offer
+            pass
+        else:
             otc_id = context.args[0]
 
             wallet = self.get_wallet(update.effective_user.id)

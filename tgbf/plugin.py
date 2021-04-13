@@ -1,4 +1,5 @@
 import os
+import hashlib
 import sqlite3
 import logging
 import inspect
@@ -12,7 +13,7 @@ from pathlib import Path
 from typing import List, Dict, Tuple, Callable
 from telegram import ChatAction, Chat, Update, Message, ParseMode
 from telegram.utils.helpers import escape_markdown as esc_mk
-from telegram.ext import CallbackContext, Handler
+from telegram.ext import CallbackContext, Handler, CallbackQueryHandler
 from telegram.ext.jobqueue import Job
 from tgbf.config import ConfigManager
 from tgbf.tgbot import TelegramBot
@@ -187,9 +188,22 @@ class TGBFPlugin:
         from the bot private key """
         return self._bot_wallet
 
-    def add_handler(self, handler: Handler, group: int = 0):
+    def add_handler(self, handler: Handler, group: int = None):
         """ Will add bot handlers to this plugins list of handlers
          and also add them to the bot dispatcher """
+
+        if not group:
+            """
+            Make sure that all CallbackQueryHandlers are in their own
+            group so that ALL CallbackQueryHandler callbacks get triggered.
+            But that means that we need to make sure that only the right
+            one gets executed! This is a workaround due to not knowing
+            how to call only the 'right' callback function.
+            """
+            if isinstance(handler, CallbackQueryHandler):
+                group = int(hashlib.md5(self.name.encode("utf-8")).hexdigest(), 16)
+            else:
+                group = 0
 
         self.bot.dispatcher.add_handler(handler, group)
         self.handlers.append(handler)
@@ -536,15 +550,12 @@ class TGBFPlugin:
         """ Decorator for methods that need to be run in a private chat with the bot """
 
         def _private(self, update: Update, context: CallbackContext, **kwargs):
-            if not update.message:
-                # Message was edited
-                return _private
-
             if self.config.get("private") == False:
                 return func(self, update, context, **kwargs)
-            elif context.bot.get_chat(update.message.chat_id).type == Chat.PRIVATE:
+            if context.bot.get_chat(update.effective_chat.id).type == Chat.PRIVATE:
                 return func(self, update, context, **kwargs)
-            else:
+
+            if update.message:
                 name = context.bot.username if context.bot.username else context.bot.name
                 msg = f"{emo.ERROR} DM the bot @{name} to use this command"
                 update.message.reply_text(msg)
@@ -556,15 +567,12 @@ class TGBFPlugin:
         """ Decorator for methods that need to be run in a public group """
 
         def _public(self, update: Update, context: CallbackContext, **kwargs):
-            if not update.message:
-                # Message was edited
-                return _public
-
             if self.config.get("public") == False:
                 return func(self, update, context, **kwargs)
-            elif context.bot.get_chat(update.message.chat_id).type != Chat.PRIVATE:
+            if context.bot.get_chat(update.effective_chat.id).type != Chat.PRIVATE:
                 return func(self, update, context, **kwargs)
-            else:
+
+            if update.message:
                 msg = f"{emo.ERROR} Can only be used in a public chat"
                 update.message.reply_text(msg)
 
@@ -581,10 +589,6 @@ class TGBFPlugin:
         """
 
         def _owner(self, update: Update, context: CallbackContext, **kwargs):
-            if not update.message:
-                # Message was edited
-                return _owner
-
             if self.config.get("owner") == False:
                 return func(self, update, context, **kwargs)
 
@@ -628,16 +632,13 @@ class TGBFPlugin:
     def send_typing(cls, func):
         """ Decorator for sending typing notification in the Telegram chat """
         def _send_typing(self, update: Update, context: CallbackContext, **kwargs):
-            if update.message:
-                user_id = update.message.chat_id
-            elif update.callback_query:
-                user_id = update.callback_query.message.chat_id
-            else:
-                return func(self, update, context, **kwargs)
+            # Make sure that edited messages will not trigger any functionality
+            if update.edited_message:
+                return
 
             try:
                 context.bot.send_chat_action(
-                    chat_id=user_id,
+                    chat_id=update.effective_chat.id,
                     action=ChatAction.TYPING)
             except:
                 pass
@@ -654,8 +655,7 @@ class TGBFPlugin:
         def _blacklist(self, update: Update, context: CallbackContext, **kwargs):
             blacklist_chats = self.config.get("blacklist")
 
-            current_chat_id = update.effective_chat.id
-            if blacklist_chats and current_chat_id in blacklist_chats:
+            if blacklist_chats and (update.effective_chat.id in blacklist_chats):
                 name = context.bot.username if context.bot.username else context.bot.name
                 msg = self.config.get("blacklist_msg").replace("{{name}}", esc_mk(name))
 
@@ -677,8 +677,7 @@ class TGBFPlugin:
         def _whitelist(self, update: Update, context: CallbackContext, **kwargs):
             whitelist_chats = self.config.get("whitelist")
 
-            current_chat_id = update.effective_chat.id
-            if whitelist_chats and current_chat_id in whitelist_chats:
+            if whitelist_chats and (update.effective_chat.id in whitelist_chats):
                 return func(self, update, context, **kwargs)
             else:
                 name = context.bot.username if context.bot.username else context.bot.name

@@ -35,16 +35,14 @@ class Otc(TGBFPlugin):
             return
 
         contract = self.config.get("contract")
-        function = self.config.get("function")
         argument = context.args[0]
 
-        # Taking an offer
+        # Create an offer
         if argument.lower() == "create":
             # TODO: Create offer
             pass
-        elif argument.lower() == "cancel":
-            # TODO: Cancel offer
-            pass
+
+        # Show / take / cancel an offer
         else:
             otc_id = context.args[0]
 
@@ -69,6 +67,12 @@ class Otc(TGBFPlugin):
 
             logging.info(f"{otc_id} {otc}")
 
+            context.user_data["otc"] = otc
+            context.user_data["otc_id"] = otc_id
+            context.user_data["lamden"] = lamden
+            context.user_data["contract"] = contract
+            context.user_data["confirmed"] = False
+
             offer_amount = float(otc['offer_amount']['__fixed__'])
             offer_amount = int(offer_amount) if offer_amount.is_integer() else offer_amount
 
@@ -78,35 +82,42 @@ class Otc(TGBFPlugin):
             msg = f"BUY {offer_amount} {otc['offer_token']}\n" \
                   f"FOR {take_amount} {otc['take_token']}"
 
-            # If not available anymore then only show details
-            if otc["state"] == "CANCELED":
-                ex = f"{emo.INFO} Trade was canceled"
+            # User is the creator of this offer
+            # Show "Cancel offer" button instead of "Take offer"
+            if otc["maker"] == wallet.verifying_key:
+                context.user_data["cancel"] = True
+
                 update.message.reply_text(
-                    f"<code>{msg}\n\n{ex}</code>",
-                    parse_mode=ParseMode.HTML)
-                return
-            if otc["state"] == "EXECUTED":
-                ex = f"{emo.INFO} Trade was executed"
+                    f"<code>{msg}</code>",
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=self.button_callback("Cancel offer"))
+
+            # Show "Take offer" button
+            else:
+                context.user_data["cancel"] = False
+
+                # If not available anymore then only show details
+                if otc["state"] == "CANCELED":
+                    ex = f"{emo.INFO} Trade was canceled"
+                    update.message.reply_text(
+                        f"<code>{msg}\n\n{ex}</code>",
+                        parse_mode=ParseMode.HTML)
+                    return
+                if otc["state"] == "EXECUTED":
+                    ex = f"{emo.INFO} Trade was executed"
+                    update.message.reply_text(
+                        f"<code>{msg}\n\n{ex}</code>",
+                        parse_mode=ParseMode.HTML)
+                    return
+
+                fee = float(otc['fee']['__fixed__'])
+                fee = int(fee) if fee.is_integer() else fee
+                fee = f"Excluding {fee}% Taker fee"
+
                 update.message.reply_text(
-                    f"<code>{msg}\n\n{ex}</code>",
-                    parse_mode=ParseMode.HTML)
-                return
-
-            fee = float(otc['fee']['__fixed__'])
-            fee = int(fee) if fee.is_integer() else fee
-            fee = f"Excluding {fee}% Maker and Taker fee"
-
-            context.user_data["otc"] = otc
-            context.user_data["otc_id"] = otc_id
-            context.user_data["lamden"] = lamden
-            context.user_data["contract"] = contract
-            context.user_data["function"] = function
-            context.user_data["confirmed"] = False
-
-            update.message.reply_text(
-                f"<code>{msg}\n{fee}</code>",
-                parse_mode=ParseMode.HTML,
-                reply_markup=self.take_offer_button_callback())
+                    f"<code>{msg}\n{fee}</code>",
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=self.button_callback("Take offer"))
 
     def execute_trade_callback(self, update: Update, context: CallbackContext):
         if update.callback_query.data != self.name:
@@ -121,96 +132,146 @@ class Otc(TGBFPlugin):
             message.edit_text(
                 f"<code>{message.text}</code>",
                 parse_mode=ParseMode.HTML,
-                reply_markup=self.confirm_offer_button_callback())
+                reply_markup=self.button_callback("CONFIRM TO EXECUTE"))
 
         # User already confirmed
         else:
-            message.edit_text(
-                f"<code>{message.text}</code>\n\n{emo.HOURGLASS} Executing trade ...",
-                parse_mode=ParseMode.HTML)
 
             otc = context.user_data["otc"]
             otc_id = context.user_data["otc_id"]
             lamden = context.user_data["lamden"]
             contract = context.user_data["contract"]
-            function = context.user_data["function"]
 
-            try:
-                # Check if contract is approved to spend TAU
-                approved = lamden.get_approved_amount(
-                    contract=contract,
-                    token=otc["take_token"])
+            # Order needs to be canceled
+            if context.user_data["cancel"]:
+                message.edit_text(
+                    f"<code>{message.text}</code>\n\n{emo.HOURGLASS} Canceling trade ...",
+                    parse_mode=ParseMode.HTML)
 
-                approved = approved["value"] if "value" in approved else 0
-                approved = approved if approved is not None else 0
-
-                logging.info(f"Approved amount of TAU for {contract}: {approved}")
-
-                # Approving exact amount
-                if float(otc["take_amount"]['__fixed__']) > float(approved):
-                    app = lamden.approve_contract(
+                try:
+                    # Call OTC contract
+                    ret = lamden.post_transaction(
+                        stamps=80,
                         contract=contract,
-                        token=otc["take_token"],
-                        amount=otc["take_amount"]['__fixed__'])
+                        function="cancel_offer",
+                        kwargs={"offer_id": otc_id})
+                except Exception as e:
+                    logging.error(f"Error calling 'cancel_offer' on {contract}: {e}")
+                    message.edit_text(
+                        f"<code>{message.text}</code>\n\n{emo.ERROR} {e}",
+                        parse_mode=ParseMode.HTML)
+                    return
 
-                    logging.info(f"Approved {contract}: {app}")
-            except Exception as e:
-                logging.error(f"Error approving contract {contract}: {e}")
+                logging.info(f"Executed 'cancel_offer' on {contract}: {ret}")
+
+                if "error" in ret:
+                    logging.error(f"Error calling 'cancel_offer' on {contract}: {ret['error']}")
+                    message.edit_text(
+                        f"<code>{message.text}</code>\n\n{emo.ERROR} {ret['error']}",
+                        parse_mode=ParseMode.HTML)
+                    return
+
+                # Get transaction hash
+                tx_hash = ret["hash"]
+
+                # Wait for transaction to be completed
+                success, result = lamden.tx_succeeded(tx_hash)
+
+                if not success:
+                    logging.error(f"Tx not successful 'cancel_offer' on {contract}: {result}")
+                    message.edit_text(
+                        f"<code>{message.text}</code>\n\n{emo.ERROR} {result}",
+                        parse_mode=ParseMode.HTML)
+                    return
+
+                trade_url = f"{lamden.explorer_url}/transactions/{tx_hash}"
+                trade_msg = f'{emo.DONE} <a href="{trade_url}">Trade canceled</a>'
+
                 message.edit_text(
-                    f"<code>{message.text}</code>\n\n{emo.ERROR} {e}",
+                    f"<code>{message.text}</code>\n\n{trade_msg}",
                     parse_mode=ParseMode.HTML)
-                return
 
-            try:
-                # Call OTC contract
-                ret = lamden.post_transaction(
-                    stamps=80,
-                    contract=contract,
-                    function=function,
-                    kwargs={"offer_id": otc_id})
-            except Exception as e:
-                logging.error(f"Error calling OTC contract: {e}")
+                msg = f"{emo.DONE} Trade canceled"
+                context.bot.answer_callback_query(update.callback_query.id, msg)
+
+            # Order needs to be executed
+            else:
                 message.edit_text(
-                    f"<code>{message.text}</code>\n\n{emo.ERROR} {e}",
+                    f"<code>{message.text}</code>\n\n{emo.HOURGLASS} Executing trade ...",
                     parse_mode=ParseMode.HTML)
-                return
 
-            logging.info(f"Executed OTC contract: {ret}")
+                try:
+                    # Check if contract is approved to spend TAU
+                    approved = lamden.get_approved_amount(
+                        contract=contract,
+                        token=otc["take_token"])
 
-            if "error" in ret:
-                logging.error(f"OTC contract returned error: {ret['error']}")
+                    approved = approved["value"] if "value" in approved else 0
+                    approved = approved if approved is not None else 0
+
+                    logging.info(f"Approved amount of TAU for {contract}: {approved}")
+
+                    # Approving exact amount
+                    if float(otc["take_amount"]['__fixed__']) > float(approved):
+                        app = lamden.approve_contract(
+                            contract=contract,
+                            token=otc["take_token"],
+                            amount=otc["take_amount"]['__fixed__'])
+
+                        logging.info(f"Approved {contract}: {app}")
+                except Exception as e:
+                    logging.error(f"Error approving contract {contract}: {e}")
+                    message.edit_text(
+                        f"<code>{message.text}</code>\n\n{emo.ERROR} {e}",
+                        parse_mode=ParseMode.HTML)
+                    return
+
+                try:
+                    # Call OTC contract
+                    ret = lamden.post_transaction(
+                        stamps=80,
+                        contract=contract,
+                        function="take_offer",
+                        kwargs={"offer_id": otc_id})
+                except Exception as e:
+                    logging.error(f"Error calling 'take_offer' on {contract}: {e}")
+                    message.edit_text(
+                        f"<code>{message.text}</code>\n\n{emo.ERROR} {e}",
+                        parse_mode=ParseMode.HTML)
+                    return
+
+                logging.info(f"Executed 'take_offer' on {contract}: {ret}")
+
+                if "error" in ret:
+                    logging.error(f"Error calling 'take_offer' on {contract}: {ret['error']}")
+                    message.edit_text(
+                        f"<code>{message.text}</code>\n\n{emo.ERROR} {ret['error']}",
+                        parse_mode=ParseMode.HTML)
+                    return
+
+                # Get transaction hash
+                tx_hash = ret["hash"]
+
+                # Wait for transaction to be completed
+                success, result = lamden.tx_succeeded(tx_hash)
+
+                if not success:
+                    logging.error(f"Tx not successful 'take_offer' on {contract}: {result}")
+                    message.edit_text(
+                        f"<code>{message.text}</code>\n\n{emo.ERROR} {result}",
+                        parse_mode=ParseMode.HTML)
+                    return
+
+                trade_url = f"{lamden.explorer_url}/transactions/{tx_hash}"
+                trade_msg = f'{emo.DONE} <a href="{trade_url}">Trade executed</a>'
+
                 message.edit_text(
-                    f"<code>{message.text}</code>\n\n{emo.ERROR} {ret['error']}",
+                    f"<code>{message.text}</code>\n\n{trade_msg}",
                     parse_mode=ParseMode.HTML)
-                return
 
-            # Get transaction hash
-            tx_hash = ret["hash"]
+                msg = f"{emo.DONE} Trade executed"
+                context.bot.answer_callback_query(update.callback_query.id, msg)
 
-            # Wait for transaction to be completed
-            success, result = lamden.tx_succeeded(tx_hash)
-
-            if not success:
-                logging.error(f"OTC transaction not successful: {result}")
-                message.edit_text(
-                    f"<code>{message.text}</code>\n\n{emo.ERROR} {result}",
-                    parse_mode=ParseMode.HTML)
-                return
-
-            trade_url = f"{lamden.explorer_url}/transactions/{tx_hash}"
-            trade_msg = f'{emo.DONE} <a href="{trade_url}">Trade executed</a>'
-
-            message.edit_text(
-                f"<code>{message.text}</code>\n\n{trade_msg}",
-                parse_mode=ParseMode.HTML)
-
-            msg = f"{emo.DONE} Trade executed"
-            context.bot.answer_callback_query(update.callback_query.id, msg)
-
-    def take_offer_button_callback(self):
-        menu = utl.build_menu([InlineKeyboardButton("Take offer", callback_data=self.name)])
-        return InlineKeyboardMarkup(menu, resize_keyboard=True)
-
-    def confirm_offer_button_callback(self):
-        menu = utl.build_menu([InlineKeyboardButton("CONFIRM TO EXECUTE TRADE", callback_data=self.name)])
+    def button_callback(self, label: str):
+        menu = utl.build_menu([InlineKeyboardButton(label, callback_data=self.name)])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)

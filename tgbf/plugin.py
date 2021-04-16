@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Dict, Tuple, Callable
 from telegram import ChatAction, Chat, Update, Message, ParseMode
 from telegram.utils.helpers import escape_markdown as esc_mk
-from telegram.ext import CallbackContext, Handler, CallbackQueryHandler
+from telegram.ext import CallbackContext, Handler, CallbackQueryHandler, ConversationHandler
 from telegram.ext.jobqueue import Job
 from tgbf.config import ConfigManager
 from tgbf.tgbot import TelegramBot
@@ -200,7 +200,7 @@ class TGBFPlugin:
             one gets executed! This is a workaround due to not knowing
             how to call only the 'right' callback function.
             """
-            if isinstance(handler, CallbackQueryHandler):
+            if isinstance(handler, (CallbackQueryHandler, ConversationHandler)):
                 group = int(hashlib.md5(self.name.encode("utf-8")).hexdigest(), 16)
             else:
                 group = 0

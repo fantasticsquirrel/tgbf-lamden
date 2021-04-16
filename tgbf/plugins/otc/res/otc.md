@@ -1,10 +1,7 @@
-Create or take OTC offers that are processed by a smart contract  
+Create or take OTC offers that are processed by a smart contract. Maker and Taker will pay 2% fee on the token they sell. Canceling an offer will result in payback of the whole deposited amount including fee.  
 
-Show offer by providing its ID. If it's still available, you will be able to take that offer after confirming.  
-`/{{handle}} <offer ID>`  
-
-Create an offer. This will trigger a workflow that requires you to provide all needed informations to create an offer.  
+This will trigger a workflow that requires you to provide all needed information to create an offer  
 `/{{handle}} create`  
 
-Cancel a created offer (only possible if you initially created it)  
-`/{{handle}} cancel`  
+Providing an offer ID will display the offer details. If you are the creator of the offer then you are able ot cancel it and if you didn't create it then you will be able to take it.
+`/{{handle}} <offer ID>`

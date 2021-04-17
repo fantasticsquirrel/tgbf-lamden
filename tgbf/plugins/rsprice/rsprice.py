@@ -12,7 +12,7 @@ from tgbf.lamden.connect import Connect
 from contracting.db.encoder import decode
 
 
-class Rocketswap(TGBFPlugin):
+class Rsprice(TGBFPlugin):
 
     lamden = None
     CGID = "lamden"
@@ -21,14 +21,14 @@ class Rocketswap(TGBFPlugin):
     def load(self):
         self.add_handler(CommandHandler(
             self.handle,
-            self.rocketswap_callback,
+            self.rsprice,
             run_async=True))
 
         self.lamden = Connect()
 
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
-    def rocketswap_callback(self, update: Update, context: CallbackContext):
+    def rsprice(self, update: Update, context: CallbackContext):
         if len(context.args) != 1:
             update.message.reply_text(
                 self.get_usage(),

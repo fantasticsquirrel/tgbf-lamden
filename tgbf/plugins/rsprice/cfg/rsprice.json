@@ -1,6 +1,6 @@
 {
-    "handle": "rs",
-    "category": "Lamden",
+    "handle": "rs_price",
+    "category": "Rocketswap",
     "description": "Show token prices on Rocketswap",
     "price_url": "/contracts/con_rocketswap_official_v1_1/prices?key=",
     "blacklist": [-1001287365947],

@@ -1,0 +1,8 @@
+{
+    "handle": "rs_chart",
+    "category": "Rocketswap",
+    "description": "Show token charts on Rocketswap",
+    "trade_history_url": "https://stats.rocketswap.exchange:2053/api/get_trade_history",
+    "blacklist": [-1001287365947],
+    "blacklist_msg": "Execute in chat with @{{name}} or in [Trading Group](https://t.me/Tradetau) or [Rocketswap Group](https://t.me/rocketswap)"
+}

@@ -28,6 +28,7 @@ class Otc(TGBFPlugin):
 
     def load(self):
 
+        # TODO: Change 'RegexHandler' to ???
         self.add_handler(ConversationHandler(
             entry_points=[CommandHandler(self.name, self.start)],
             states={
@@ -111,6 +112,7 @@ class Otc(TGBFPlugin):
         update.message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=self.cancel_keyboard())
         return self.OFFER_AMOUNT
 
+    # TODO: Validate that amounts are float
     def offer_amount(self, update: Update, context: CallbackContext):
         context.user_data["offer_amount"] = float(update.message.text)
         msg = "Enter <b>contract name</b> of token to <b>RECEIVE</b>"

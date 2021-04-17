@@ -1,4 +1,4 @@
-Create or take OTC offers that are processed by a smart contract. Maker and Taker will pay 2% fee on the token they sell. Canceling an offer will result in payback of the whole deposited amount including fee.  
+Create or take OTC offers that are processed by a smart contract. Maker and Taker will pay 0.5% fee on the token they sell. Canceling an offer will result in payback of the whole deposited amount including fee.  
 
 This will trigger a workflow that requires you to provide all needed information to create an offer  
 `/{{handle}} create`  

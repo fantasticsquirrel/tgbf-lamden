@@ -78,6 +78,11 @@ class Rschart(TGBFPlugin):
             if len(res.json()) != take:
                 call = False
 
+        if not data:
+            msg = f"{emo.ERROR} No data for {token_symbol}"
+            update.message.reply_text(msg)
+            return
+
         df_price = DataFrame(reversed(data), columns=["DateTime", "Price"])
         df_price["DateTime"] = pd.to_datetime(df_price["DateTime"], unit="s")
         price = go.Scatter(x=df_price.get("DateTime"), y=df_price.get("Price"))

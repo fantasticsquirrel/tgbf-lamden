@@ -8,7 +8,7 @@ from enum import auto
 from telegram import Update, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, \
     KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler, ConversationHandler, \
-    RegexHandler, MessageHandler, Filters
+    MessageHandler, Filters
 from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
@@ -28,29 +28,28 @@ class Otc(TGBFPlugin):
 
     def load(self):
 
-        # TODO: Change 'RegexHandler' to ???
         self.add_handler(ConversationHandler(
             entry_points=[CommandHandler(self.name, self.start)],
             states={
                 self.OFFER_TOKEN: [
-                    RegexHandler(f"^({self.CANCEL})$", self.cancel),
+                    MessageHandler(Filters.regex(f"^({self.CANCEL})$"), self.cancel),
                     MessageHandler(Filters.text, self.offer_token, pass_user_data=True)
                 ],
                 self.OFFER_AMOUNT: [
-                    RegexHandler(f"^({self.CANCEL})$", self.cancel),
+                    MessageHandler(Filters.regex(f"^({self.CANCEL})$"), self.cancel),
                     MessageHandler(Filters.text, self.offer_amount, pass_user_data=True)
                 ],
                 self.TAKE_TOKEN: [
-                    RegexHandler(f"^({self.CANCEL})$", self.cancel),
+                    MessageHandler(Filters.regex(f"^({self.CANCEL})$"), self.cancel),
                     MessageHandler(Filters.text, self.take_token, pass_user_data=True)
                 ],
                 self.TAKE_AMOUNT: [
-                    RegexHandler(f"^({self.CANCEL})$", self.cancel),
+                    MessageHandler(Filters.regex(f"^({self.CANCEL})$"), self.cancel),
                     MessageHandler(Filters.text, self.take_amount, pass_user_data=True)
                 ],
                 self.SUMMARY: [
-                    RegexHandler(f"^({self.CANCEL})$", self.cancel),
-                    RegexHandler(f"^({self.CONFIRM})$", self.summary, pass_user_data=True)
+                    MessageHandler(Filters.regex(f"^({self.CANCEL})$"), self.cancel),
+                    MessageHandler(Filters.regex(f"^({self.CONFIRM})$"), self.summary, pass_user_data=True),
                 ]
             },
             fallbacks=[CommandHandler(self.name, self.start)],
@@ -79,7 +78,7 @@ class Otc(TGBFPlugin):
         # Create new offer
         if context.args[0].strip().lower() == "create":
             update.message.reply_text(
-                "Enter <b>contract name</b> of token to <b>SELL</b>",
+                "1) Enter <b>contract name</b> of token to <b>SELL</b>",
                 parse_mode=ParseMode.HTML,
                 reply_markup=self.cancel_keyboard())
             return self.OFFER_TOKEN
@@ -108,14 +107,19 @@ class Otc(TGBFPlugin):
         message.delete()
 
         context.user_data["offer_token"] = offer_token
-        msg = "Enter <b>amount</b> of tokens to <b>SELL</b>"
+        msg = "2) Enter <b>amount</b> to <b>SELL</b>"
         update.message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=self.cancel_keyboard())
         return self.OFFER_AMOUNT
 
-    # TODO: Validate that amounts are float
     def offer_amount(self, update: Update, context: CallbackContext):
-        context.user_data["offer_amount"] = float(update.message.text)
-        msg = "Enter <b>contract name</b> of token to <b>RECEIVE</b>"
+        try:
+            context.user_data["offer_amount"] = float(update.message.text)
+        except:
+            msg = f"{emo.ERROR} Provided amount not valid, try again"
+            update.message.reply_text(msg)
+            return
+
+        msg = "3) Enter <b>contract name</b> of token to <b>RECEIVE</b>"
         update.message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=self.cancel_keyboard())
         return self.TAKE_TOKEN
 
@@ -138,12 +142,17 @@ class Otc(TGBFPlugin):
         message.delete()
 
         context.user_data["take_token"] = update.message.text.lower()
-        msg = "Enter <b>amount</b> of tokens to <b>RECEIVE</b>"
+        msg = "4) Enter <b>amount</b> to <b>RECEIVE</b>"
         update.message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=self.cancel_keyboard())
         return self.TAKE_AMOUNT
 
     def take_amount(self, update: Update, context: CallbackContext):
-        context.user_data["take_amount"] = float(update.message.text)
+        try:
+            context.user_data["take_amount"] = float(update.message.text)
+        except:
+            msg = f"{emo.ERROR} Provided amount not valid, try again"
+            update.message.reply_text(msg)
+            return
 
         offer_amount = context.user_data["offer_amount"]
         offer_amount = int(offer_amount) if offer_amount.is_integer() else offer_amount
@@ -178,11 +187,16 @@ class Otc(TGBFPlugin):
             update.message.reply_text(f"{emo.ERROR} {e}")
             return
 
+        if "error" in res.json():
+            msg = f"{emo.ERROR} Can't retrieve fee details: {res.json()['error']}"
+            update.message.reply_text(msg)
+            return
+
         fee = res.json()["value"]["__fixed__"]
         context.user_data["fee"] = fee
 
         fee_int = int(float(fee)) if float(fee).is_integer() else fee
-        confirm = f"Confirm to send {offer_amount} {offer_symbol} + {fee_int}% fee"
+        confirm = f"5) Confirm to send {offer_amount} {offer_symbol} + {fee_int}% fee"
 
         update.message.reply_text(
             f"<code>{msg}</code>\n{confirm}",

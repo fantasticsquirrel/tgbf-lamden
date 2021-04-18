@@ -1,6 +1,7 @@
 import io
 import time
 import plotly
+import base64
 import logging
 import pandas as pd
 import plotly.io as pio
@@ -36,6 +37,7 @@ class Rschart(TGBFPlugin):
             return
 
         token_symbol = context.args[0].strip().upper()
+        token_contract = None
 
         if len(context.args) == 2:
             try:
@@ -58,8 +60,7 @@ class Rschart(TGBFPlugin):
             try:
                 res = requests.get(
                     self.config.get("trade_history_url"),
-                    params={"take": take, "skip": skip}
-                )
+                    params={"take": take, "skip": skip})
             except Exception as e:
                 logging.error(f"Can't retrieve trade history: {e}")
                 update.message.reply_text(f"{emo.ERROR} {e}")
@@ -69,6 +70,8 @@ class Rschart(TGBFPlugin):
 
             for tx in res.json():
                 if tx["token_symbol"] == token_symbol:
+                    if not token_contract:
+                        token_contract = tx["contract_name"]
                     if int(tx["time"]) > end_secs:
                         data.append([tx["time"], float(tx["price"])])
                     else:
@@ -82,6 +85,24 @@ class Rschart(TGBFPlugin):
             msg = f"{emo.ERROR} No data for {token_symbol}"
             update.message.reply_text(msg)
             return
+
+        """
+        try:
+            res = requests.get(f"{self.config.get('token_url')}/{token_contract}")
+        except Exception as e:
+            logging.error(f"Can't retrieve trade history: {e}")
+            update.message.reply_text(f"{emo.ERROR} {e}")
+            return
+
+        if res.json()["token"]["token_base64_png"]:
+            img_data = res.json()["token"]["token_base64_png"]
+        elif res.json()["token"]["token_base64_svg"]:
+            img_data = res.json()["token"]["token_base64_svg"]
+        else:
+            img_data = None
+
+        image = base64.decodebytes(str.encode(img_data))
+        """
 
         df_price = DataFrame(reversed(data), columns=["DateTime", "Price"])
         df_price["DateTime"] = pd.to_datetime(df_price["DateTime"], unit="s")
@@ -119,8 +140,19 @@ class Rschart(TGBFPlugin):
                     "width": 1,
                     "dash": "dot"
                 }
-            }],
+            }]
         )
+
+        """
+            images=[dict(
+                source="set image url",
+                opacity=0.8,
+                xref="paper", yref="paper",
+                x=1.05, y=1,
+                sizex=0.2, sizey=0.2,
+                xanchor="right", yanchor="bottom"
+            )]
+        """
 
         try:
             fig = go.Figure(data=[price], layout=layout)

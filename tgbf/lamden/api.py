@@ -130,7 +130,7 @@ class API:
     def send(self, amount: Union[int, float], to_address: str):
         """ Send TAU to given address by triggering 'currency' smart contract """
         kwargs = {"amount": amount, "to": to_address}
-        return self.post_transaction(100, "currency", "transfer", kwargs)
+        return self.post_transaction(30, "currency", "transfer", kwargs)
 
     def post_transaction(self, stamps: int, contract: str, function: str, kwargs: dict):
         """ Post a transaction to the chain and trigger given smart contract """
@@ -167,7 +167,7 @@ class API:
     def approve_contract(self, contract: str, token: str = "currency", amount: float = 100000000):
         """ Approve smart contract to spend a specific amount of TAU """
         kwargs = {"amount": float(amount), "to": contract}
-        return self.post_transaction(50, token, "approve", kwargs)
+        return self.post_transaction(30, token, "approve", kwargs)
 
     def get_approved_amount(self, contract: str, token: str = "currency"):
         """ Get amount of TAU that is approved to be spent by smart contract """

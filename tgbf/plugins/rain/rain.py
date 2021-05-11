@@ -26,19 +26,26 @@ class Rain(TGBFPlugin):
     @TGBFPlugin.public
     @TGBFPlugin.send_typing
     def rain_callback(self, update: Update, context: CallbackContext):
-        if not context.args or len(context.args) > 2:
+        if not context.args or len(context.args) != 3:
             update.message.reply_text(
                 self.get_usage(),
                 parse_mode=ParseMode.MARKDOWN)
             return
 
-        # Read arguments 'amount' and 'time frame'
-        if len(context.args) == 1:
-            amount_total = context.args[0]
-            time_frame = "3h"
-        else:
-            amount_total = context.args[0]
-            time_frame = context.args[1]
+        token_name = context.args[0].upper()
+        amount_total = context.args[1]
+        time_frame = context.args[2]
+
+        token_contract = None
+        for token in self.config.get("tokens"):
+            if token_name == token[0]:
+                token_contract = token[1]
+                break
+
+        if not token_contract:
+            msg = f"{emo.ERROR} Token not found"
+            update.message.reply_text(msg)
+            return
 
         try:
             # Check if amount is valid
@@ -103,7 +110,7 @@ class Rain(TGBFPlugin):
         msg = f"{emo.RAIN} Initiating rain clouds..."
         message = update.message.reply_text(msg)
 
-        # Amount of TAU to airdrop to one user
+        # Amount to airdrop to one user
         amount_single = float(f"{(amount_total / len(user_data)):.2f}")
 
         from_user = update.message.from_user
@@ -112,7 +119,7 @@ class Rain(TGBFPlugin):
         if amount_single.is_integer():
             amount_single = int(amount_single)
 
-        msg = f"Rained <code>{amount_single}</code> TAU each to following users:\n"
+        msg = f"Rained <code>{amount_single} {token_name}</code> each to following users:\n"
         suffix = ", "
 
         # List of addresses that will get the airdrop
@@ -143,12 +150,12 @@ class Rain(TGBFPlugin):
         function = self.config.get("function")
 
         try:
-            approved = lamden.get_approved_amount(contract)
+            approved = lamden.get_approved_amount(contract, token_contract)
             approved = approved["value"] if "value" in approved else 0
             approved = approved if approved is not None else 0
 
             if amount_total > float(approved):
-                app = lamden.approve_contract(contract)
+                app = lamden.approve_contract(contract, token_contract)
                 msg = f"Approving {contract}: {app}"
                 logging.info(msg)
 
@@ -164,9 +171,9 @@ class Rain(TGBFPlugin):
                 stamps_to_use,
                 contract,
                 function,
-                {"addresses": addresses, "amount": amount_single})
+                {"addresses": addresses, "amount": amount_single, "contract": token_contract})
 
-            logging.info(f"Rained {amount_total} TAU from {from_username} on {len(user_data)} users: {res}")
+            logging.info(f"Rained {amount_total} {token_name} from {from_username} on {len(user_data)} users: {res}")
         except Exception as e:
             msg = f"Error on posting transaction: {e}"
             message.edit_text(f"{emo.ERROR} {e}")
@@ -209,9 +216,9 @@ class Rain(TGBFPlugin):
                 # Notify user about tip
                 context.bot.send_message(
                     to_user_id,
-                    f"You received <code>{amount_single}</code> TAU from {html.escape(from_username)}\n{link}",
+                    f"You received <code>{amount_single} {token_name}</code> from {html.escape(from_username)}\n{link}",
                     parse_mode=ParseMode.HTML,
                     disable_web_page_preview=True)
-                logging.info(f"User {to_user_id} notified about rain of {amount_single} TAU")
+                logging.info(f"User {to_user_id} notified about rain of {amount_single} {token_name}")
             except Exception as e:
                 logging.info(f"User {to_user_id} could not be notified about rain: {e} - {update}")

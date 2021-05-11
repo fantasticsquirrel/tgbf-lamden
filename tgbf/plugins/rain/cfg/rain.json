@@ -1,6 +1,17 @@
 {
     "category": "Lamden",
     "description": "Rain TAU on last active users",
-    "contract": "con_multisend",
-    "function": "send"
+    "contract": "con_multisend2",
+    "function": "send",
+    "tokens": [
+        ["RSWP", "con_rswp_lst001"],
+        ["DOUGLAS", "con_doug_lst001"],
+        ["SBUX", "con_stubucks"],
+        ["RCL_1", "con_rainman_contract"],
+        ["LAMDO", "con_lamdo_contract"],
+        ["LBT", "con_lbt_contract"],
+        ["LOTI", "con_irish_luck_lst001"],
+        ["JEFF", "con_jeff_lst001"],
+        ["TAU", "currency"]
+    ]
 }

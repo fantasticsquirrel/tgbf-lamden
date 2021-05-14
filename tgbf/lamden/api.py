@@ -166,7 +166,13 @@ class API:
 
     def approve_contract(self, contract: str, token: str = "currency", amount: float = 100000000):
         """ Approve smart contract to spend a specific amount of TAU """
-        kwargs = {"amount": float(amount), "to": contract}
+
+        # --- TEMP ---
+        # kwargs = {"amount": float(amount), "to": contract}
+        # TODO: Remove temporal fix
+        kwargs = {"amount": int(amount), "to": contract}
+        # --- TEMP ---
+
         return self.post_transaction(30, token, "approve", kwargs)
 
     def get_approved_amount(self, contract: str, token: str = "currency"):

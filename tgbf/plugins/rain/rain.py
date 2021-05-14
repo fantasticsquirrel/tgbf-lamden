@@ -164,9 +164,9 @@ class Rain(TGBFPlugin):
             approved = approved if approved is not None else 0
 
             if amount_total > float(approved):
-                app = lamden.approve_contract(contract, token_contract)
-                msg = f"Approving {contract}: {app}"
-                logging.info(msg)
+                approval = lamden.approve_contract(contract, token_contract)
+                message = f"Approving {contract}: {approval}"
+                logging.info(message)
 
             # Calculate stamp costs
             stamps_to_use = 0

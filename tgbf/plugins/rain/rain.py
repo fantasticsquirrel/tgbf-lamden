@@ -32,12 +32,15 @@ class Rain(TGBFPlugin):
                 parse_mode=ParseMode.MARKDOWN)
             return
 
+        wallet = self.get_wallet(update.effective_user.id)
+        lamden = Connect(wallet)
+
         token_name = context.args[0].upper()
         amount_total = context.args[1]
         time_frame = context.args[2]
 
         token_contract = None
-        for token in self.config.get("tokens"):
+        for token in lamden.tokens:
             if token_name == token[0]:
                 token_contract = token[1]
                 break
@@ -119,6 +122,15 @@ class Rain(TGBFPlugin):
         if amount_single.is_integer():
             amount_single = int(amount_single)
 
+        # --- TEMP ---
+        # TODO: Remove temporal fix
+        amount_single = int(amount_single)
+        if amount_single == 0:
+            msg = f"{emo.ERROR} Individual amount too low"
+            message.edit_text(msg)
+            return
+        # --- TEMP ---
+
         msg = f"Rained <code>{amount_single} {token_name}</code> each to following users:\n"
         suffix = ", "
 
@@ -142,9 +154,6 @@ class Rain(TGBFPlugin):
 
         # Remove last suffix
         msg = msg[:-len(suffix)]
-
-        wallet = self.get_wallet(update.effective_user.id)
-        lamden = Connect(wallet)
 
         contract = self.config.get("contract")
         function = self.config.get("function")

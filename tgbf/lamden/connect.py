@@ -13,6 +13,7 @@ class Connect(API):
     def __init__(self, wallet: Wallet = None):
         self.cfg = Cfg(os.path.join(c.DIR_CFG, "lamden.json"))
         self.chain = self.cfg.get("chain")
+        self.tokens = self.cfg.get("tokens")
 
         node_host, node_port, explorer_host, explorer_port = self.connect()
         wallet = wallet if wallet else Wallet()

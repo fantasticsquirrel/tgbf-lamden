@@ -14,7 +14,6 @@ from contracting.db.encoder import decode
 
 class Rsprice(TGBFPlugin):
 
-    lamden = None
     CGID = "lamden"
     VS_CUR = "usd,eur"
 
@@ -23,8 +22,6 @@ class Rsprice(TGBFPlugin):
             self.handle,
             self.rsprice,
             run_async=True))
-
-        self.lamden = Connect()
 
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
@@ -35,9 +32,22 @@ class Rsprice(TGBFPlugin):
                 parse_mode=ParseMode.MARKDOWN)
             return
 
-        contract = context.args[0].lower()
+        token_symbol = context.args[0].upper()
+
+        lamden = Connect()
+        contract = None
+
+        for token in lamden.tokens:
+            if token[0] == token_symbol:
+                contract = token[1]
+
+        if not contract:
+            msg = f"{emo.ERROR} Unknown token"
+            update.message.reply_text(msg)
+            return
+
         url = self.config.get("price_url")
-        url = f"{self.lamden.node_url}{url}{contract}"
+        url = f"{lamden.node_url}{url}{contract}"
 
         try:
             res = requests.get(url)

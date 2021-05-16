@@ -69,7 +69,7 @@ class Rschart(TGBFPlugin):
             skip += take
 
             for tx in res.json():
-                if tx["token_symbol"] == token_symbol:
+                if tx["token_symbol"].upper() == token_symbol:
                     if not token_contract:
                         token_contract = tx["contract_name"]
                     if int(tx["time"]) > end_secs:

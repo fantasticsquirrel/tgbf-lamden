@@ -5,7 +5,6 @@ from tgbf.plugin import TGBFPlugin
 from tgbf.lamden.connect import Connect
 from telegram.ext import CommandHandler, CallbackContext
 from telegram import Update, ParseMode
-from tgbf.web import EndpointAction
 
 
 class Send(TGBFPlugin):
@@ -20,30 +19,31 @@ class Send(TGBFPlugin):
             self.send_callback,
             run_async=True))
 
-        web_pass = self.config.get("web_secret")
-        endpoint = EndpointAction(self.send_endpoint, web_pass)
-        self.add_endpoint(self.name, endpoint)
-
-    def send_endpoint(self):
-        res = self.execute_sql(self.get_resource("select_send.sql"))
-
-        if not res["success"]:
-            return {"ERROR": res["data"]}
-        if not res["data"]:
-            return {"ERROR": "NO DATA"}
-
-        return res["data"]
-
     @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def send_callback(self, update: Update, context: CallbackContext):
-        if len(context.args) != 2:
+        if len(context.args) != 3:
             update.message.reply_text(
                 self.get_usage(),
                 parse_mode=ParseMode.MARKDOWN)
             return
 
-        amount = context.args[0]
+        from_wallet = self.get_wallet(update.effective_user.id)
+        lamden = Connect(wallet=from_wallet)
+
+        token_name = context.args[0].upper()
+        amount = context.args[1]
+
+        token_contract = None
+        for token in lamden.tokens:
+            if token_name == token[0]:
+                token_contract = token[1]
+                break
+
+        if not token_contract:
+            msg = f"{emo.ERROR} Token not found"
+            update.message.reply_text(msg)
+            return
 
         try:
             # Check if amount is valid
@@ -56,21 +56,18 @@ class Send(TGBFPlugin):
         if amount.is_integer():
             amount = int(amount)
 
-        to_address = context.args[1]
-
-        from_wallet = self.get_wallet(update.effective_user.id)
-        lamden = Connect(wallet=from_wallet)
+        to_address = context.args[2]
 
         if not lamden.is_address_valid(to_address):
             msg = f"{emo.ERROR} Address not valid"
             update.message.reply_text(msg)
             return
 
-        message = update.message.reply_text(f"{emo.HOURGLASS} Sending TAU...")
+        message = update.message.reply_text(f"{emo.HOURGLASS} Sending {token_name}...")
 
         try:
-            # Send TAU
-            send = lamden.send(amount, to_address)
+            # Send token
+            send = lamden.send(amount, to_address, token=token_contract)
         except Exception as e:
             msg = f"Could not send transaction: {e}"
             message.edit_text(f"{emo.ERROR} {e}")
@@ -78,7 +75,7 @@ class Send(TGBFPlugin):
             self.notify(msg)
             return
 
-        logging.info(f"Sent {amount} TAU from {from_wallet.verifying_key} to {to_address}: {send}")
+        logging.info(f"Sent {amount} {token_name} from {from_wallet.verifying_key} to {to_address}: {send}")
 
         if "error" in send:
             msg = f"Transaction replied error: {send['error']}"
@@ -97,10 +94,9 @@ class Send(TGBFPlugin):
             amount,
             tx_hash)
 
-        ex_url = lamden.explorer_url
+        link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
 
         message.edit_text(
-            f"{emo.MONEY} Sent `{amount}` TAU\n"
-            f"[View Transaction on Explorer]({ex_url}/transactions/{tx_hash})",
-            parse_mode=ParseMode.MARKDOWN_V2,
+            f"{emo.MONEY} Sent <code>{amount}</code> {token_name}\n{link}",
+            parse_mode=ParseMode.HTML,
             disable_web_page_preview=True)

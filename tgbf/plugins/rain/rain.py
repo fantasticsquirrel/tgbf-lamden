@@ -131,7 +131,7 @@ class Rain(TGBFPlugin):
             return
         # --- TEMP ---
 
-        msg = f"Rained <code>{amount_single} {token_name}</code> each to following users:\n"
+        msg = f"Rained <code>{amount_single}</code> {token_name} each to following users:\n"
         suffix = ", "
 
         # List of addresses that will get the airdrop
@@ -225,7 +225,7 @@ class Rain(TGBFPlugin):
                 # Notify user about tip
                 context.bot.send_message(
                     to_user_id,
-                    f"You received <code>{amount_single} {token_name}</code> from {html.escape(from_username)}\n{link}",
+                    f"You received <code>{amount_single}</code> {token_name} from {html.escape(from_username)}\n{link}",
                     parse_mode=ParseMode.HTML,
                     disable_web_page_preview=True)
                 logging.info(f"User {to_user_id} notified about rain of {amount_single} {token_name}")

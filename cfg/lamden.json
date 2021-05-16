@@ -22,6 +22,8 @@
         ["LBT", "con_lbt_contract"],
         ["LOTI", "con_irish_luck_lst001"],
         ["JEFF", "con_jeff_lst001"],
-        ["LUCK", "con_luck_lst001"]
+        ["LUCK", "con_luck_lst001"],
+        ["GOLD", "con_gold_contract"],
+        ["666", "con_demoncoin"]
     ]
 }

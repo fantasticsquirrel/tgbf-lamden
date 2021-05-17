@@ -22,10 +22,66 @@ class Rschart(TGBFPlugin):
     def load(self):
         plotly.io.orca.ensure_server()
 
+        if not self.table_exists("trade_history"):
+            sql = self.get_resource("create_trade_history.sql")
+            self.execute_sql(sql)
+
+        update_interval = self.config.get("update_interval")
+        self.run_repeating(self.update_trades, update_interval)
+
         self.add_handler(CommandHandler(
             self.handle,
             self.rschart_callback,
             run_async=True))
+
+    def update_trades(self, context: CallbackContext):
+        res = self.execute_sql(self.get_resource("select_last_trade.sql"))
+
+        if res and res["data"]:
+            last_secs = res["data"][0][0]
+        else:
+            last_secs = 0
+
+        trades = list()
+
+        skip = 0
+        take = 10
+
+        insert_sql = self.get_resource("insert_trade.sql")
+
+        while True:
+            try:
+                res = requests.get(
+                    self.config.get('trade_history_url'),
+                    params={"take": take, "skip": skip},
+                    timeout=2)
+            except Exception as e:
+                msg = f"Can't retrieve Rocketswap trade history: {e}"
+                logging.error(msg)
+                return
+
+            skip += take
+
+            for tx in res.json():
+                if tx["time"] > last_secs:
+                    if tx not in trades:
+                        trade = [
+                            tx["contract_name"],
+                            tx["token_symbol"],
+                            tx["price"],
+                            tx["time"],
+                            tx["amount"],
+                            tx["type"]
+                        ]
+
+                        trades.append(tx)
+                        self.execute_sql(insert_sql, *trade)
+                        logging.info(f"New RS trade: {tx}")
+                else:
+                    return
+
+            if len(res.json()) != take:
+                return
 
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
@@ -37,7 +93,6 @@ class Rschart(TGBFPlugin):
             return
 
         token_symbol = context.args[0].strip().upper()
-        token_contract = None
 
         if len(context.args) == 2:
             try:
@@ -51,38 +106,11 @@ class Rschart(TGBFPlugin):
 
         end_secs = int(time.time() - (timeframe * 24 * 60 * 60))
 
-        skip = 0
-        take = 50
-        call = True
-        data = list()
+        sql = self.get_resource("select_trades.sql")
+        res = self.execute_sql(sql, token_symbol, end_secs)
 
-        while call:
-            try:
-                res = requests.get(
-                    self.config.get("trade_history_url"),
-                    params={"take": take, "skip": skip})
-            except Exception as e:
-                logging.error(f"Can't retrieve trade history: {e}")
-                update.message.reply_text(f"{emo.ERROR} {e}")
-                return
-
-            skip += take
-
-            for tx in res.json():
-                if tx["token_symbol"].upper() == token_symbol:
-                    if not token_contract:
-                        token_contract = tx["contract_name"]
-                    if int(tx["time"]) > end_secs:
-                        data.append([tx["time"], float(tx["price"])])
-                    else:
-                        call = False
-                        break
-
-            if len(res.json()) != take:
-                call = False
-
-        if not data:
-            msg = f"{emo.ERROR} No data for {token_symbol}"
+        if not res["data"]:
+            msg = f"{emo.ERROR} No trades found"
             update.message.reply_text(msg)
             return
 
@@ -104,7 +132,7 @@ class Rschart(TGBFPlugin):
         image = base64.decodebytes(str.encode(img_data))
         """
 
-        df_price = DataFrame(reversed(data), columns=["DateTime", "Price"])
+        df_price = DataFrame(res["data"], columns=["DateTime", "Price"])
         df_price["DateTime"] = pd.to_datetime(df_price["DateTime"], unit="s")
         price = go.Scatter(x=df_price.get("DateTime"), y=df_price.get("Price"))
 
@@ -133,8 +161,8 @@ class Rschart(TGBFPlugin):
                 "yref": "y",
                 "x0": 0,
                 "x1": 1,
-                "y0": data[0][1],
-                "y1": data[0][1],
+                "y0": res["data"][0][1],
+                "y1": res["data"][0][1],
                 "line": {
                     "color": "rgb(50, 171, 96)",
                     "width": 1,

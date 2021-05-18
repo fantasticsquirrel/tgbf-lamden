@@ -5,7 +5,7 @@ import tgbf.utils as utl
 import qrcode_artistic
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler, ConversationHandler
+from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from telegram import ParseMode
 from tgbf.plugin import TGBFPlugin
 
@@ -49,14 +49,14 @@ class Address(TGBFPlugin):
 
             update.message.reply_photo(
                 photo=b_out.getvalue(),
-                caption=f"`{wallet.verifying_key}`",
-                parse_mode=ParseMode.MARKDOWN_V2,
+                caption=f"<code>{wallet.verifying_key}</code>",
+                parse_mode=ParseMode.HTML,
                 reply_markup=self.privkey_button_callback())
         else:
             update.message.reply_photo(
                 photo=b_out.getvalue(),
-                caption=f"`{wallet.verifying_key}`",
-                parse_mode=ParseMode.MARKDOWN_V2)
+                caption=f"<code>{wallet.verifying_key}</code>",
+                parse_mode=ParseMode.HTML)
 
     def privkey_callback(self, update: Update, context: CallbackContext):
         if update.callback_query.data != self.name:
@@ -66,8 +66,11 @@ class Address(TGBFPlugin):
         privkey = context.user_data["privkey"]
 
         message.edit_caption(
-            caption=f"*Address*\n`{message.caption}`\n\n*Private Key*\n`{privkey}`",
-            parse_mode=ParseMode.MARKDOWN_V2)
+            caption=f"<b>Address</b>\n"
+                    f"<code>{message.caption}</code>\n\n"
+                    f"<b>Private Key</b>\n"
+                    f"<code>{privkey}</code>",
+            parse_mode=ParseMode.HTML)
 
         msg = f"{emo.WARNING} DELETE AFTER VIEWING {emo.WARNING}"
         context.bot.answer_callback_query(update.callback_query.id, msg)

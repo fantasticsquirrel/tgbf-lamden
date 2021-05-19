@@ -39,7 +39,7 @@ class Balance(TGBFPlugin):
             # There is a balance for this token
             if b > 0:
                 t_symbol = f"{token[0]}:"
-                b = str(int(b)) if b.is_integer() else f"{b:.2f}"
+                b = int(b) if b.is_integer() else f"{b:,.2f}"
                 balances += f"{t_symbol:<{max_length + 1}} {b}\n"
 
         message.edit_text(

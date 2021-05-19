@@ -62,6 +62,10 @@ class Address(TGBFPlugin):
         if update.callback_query.data != self.name:
             return
 
+        if "privkey" not in context.user_data:
+            msg = f"Old message. Please execute command again"
+            context.bot.answer_callback_query(update.callback_query.id, msg)
+
         message = update.callback_query.message
         privkey = context.user_data["privkey"]
 

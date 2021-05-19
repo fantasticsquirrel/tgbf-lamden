@@ -164,7 +164,7 @@ class API:
         res = requests.get(f"{self.node_url}/contracts/{contract}/variables")
         return decode(res.text)
 
-    def approve_contract(self, contract: str, token: str = "currency", amount: float = 100000000):
+    def approve_contract(self, contract: str, token: str = "currency", amount: float = 900000000000):
         """ Approve smart contract to spend a specific amount of TAU """
 
         # --- TEMP ---

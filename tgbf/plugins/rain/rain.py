@@ -137,7 +137,16 @@ class Rain(TGBFPlugin):
         # List of addresses that will get the airdrop
         addresses = list()
 
+        user_limit = self.config.get("user_limit")
+        counter = 0
+
         for user in user_data:
+            counter += 1
+
+            if counter > user_limit:
+                logging.info(f"User limit of {user_limit} hit")
+                break
+
             to_user_id = user[0]
             to_username = user[1]
 
@@ -150,7 +159,7 @@ class Rain(TGBFPlugin):
 
             logging.info(
                 f"User {to_username} ({to_user_id}) will be "
-                f"rained on with {amount_single} TAU to wallet {address}")
+                f"rained on with {amount_single} {token_name} to wallet {address}")
 
         # Remove last suffix
         msg = msg[:-len(suffix)]

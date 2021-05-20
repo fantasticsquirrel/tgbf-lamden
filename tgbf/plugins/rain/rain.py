@@ -11,7 +11,7 @@ from tgbf.plugin import TGBFPlugin
 
 class Rain(TGBFPlugin):
 
-    STAMPS = [29, 23, 20, 19, 18, 17]
+    STAMPS = [28, 22, 19, 18, 17, 16]
 
     def load(self):
         if not self.table_exists("rain"):

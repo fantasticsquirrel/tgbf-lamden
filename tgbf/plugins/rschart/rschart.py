@@ -76,7 +76,7 @@ class Rschart(TGBFPlugin):
 
                         trades.append(tx)
                         self.execute_sql(insert_sql, *trade)
-                        logging.info(f"New RS trade: {tx}")
+                        logging.info(f"NEW TRADE: {tx}")
                 else:
                     return
 

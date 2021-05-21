@@ -1,5 +1,4 @@
 {
     "category": "Lamden",
-    "description": "Show your TAU balance",
-    "update_interval": 30
+    "description": "Show your TAU balance"
 }

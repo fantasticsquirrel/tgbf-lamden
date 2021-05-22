@@ -6,7 +6,6 @@ import logging
 import pandas as pd
 import plotly.io as pio
 import plotly.graph_objs as go
-import requests
 
 import tgbf.emoji as emo
 
@@ -22,66 +21,10 @@ class Rschart(TGBFPlugin):
     def load(self):
         plotly.io.orca.ensure_server()
 
-        if not self.table_exists("trade_history"):
-            sql = self.get_resource("create_trade_history.sql")
-            self.execute_sql(sql)
-
-        update_interval = self.config.get("update_interval")
-        self.run_repeating(self.update_trades, update_interval)
-
         self.add_handler(CommandHandler(
             self.handle,
             self.rschart_callback,
             run_async=True))
-
-    def update_trades(self, context: CallbackContext):
-        res = self.execute_sql(self.get_resource("select_last_trade.sql"))
-
-        if res and res["data"]:
-            last_secs = res["data"][0][0]
-        else:
-            last_secs = 0
-
-        trades = list()
-
-        skip = 0
-        take = 10
-
-        insert_sql = self.get_resource("insert_trade.sql")
-
-        while True:
-            try:
-                res = requests.get(
-                    self.config.get('trade_history_url'),
-                    params={"take": take, "skip": skip},
-                    timeout=2)
-            except Exception as e:
-                msg = f"Can't retrieve Rocketswap trade history: {e}"
-                logging.error(msg)
-                return
-
-            skip += take
-
-            for tx in res.json():
-                if tx["time"] > last_secs:
-                    if tx not in trades:
-                        trade = [
-                            tx["contract_name"],
-                            tx["token_symbol"],
-                            tx["price"],
-                            tx["time"],
-                            tx["amount"],
-                            tx["type"]
-                        ]
-
-                        trades.append(tx)
-                        self.execute_sql(insert_sql, *trade)
-                        logging.info(f"NEW TRADE: {tx}")
-                else:
-                    return
-
-            if len(res.json()) != take:
-                return
 
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
@@ -107,7 +50,7 @@ class Rschart(TGBFPlugin):
         end_secs = int(time.time() - (timeframe * 24 * 60 * 60))
 
         sql = self.get_resource("select_trades.sql")
-        res = self.execute_sql(sql, token_symbol, end_secs)
+        res = self.execute_sql(sql, token_symbol, end_secs, plugin="trades")
 
         if not res["data"]:
             msg = f"{emo.ERROR} No trades found"

@@ -21,7 +21,7 @@ class Balance(TGBFPlugin):
         wallet = self.get_wallet(update.effective_user.id)
         balances = Rocketswap().balances(wallet.verifying_key)
 
-        symbol_sql = self.get_resource("select_symbol.sql")
+        sql = self.get_resource("select_symbol.sql", plugin="tokens")
 
         tau_balance = list()
         balances_list = list()
@@ -29,7 +29,7 @@ class Balance(TGBFPlugin):
             if contract == "currency":
                 tau_balance.append(["TAU", b])
             else:
-                symbol = self.execute_sql(symbol_sql, contract, plugin="tokens")
+                symbol = self.execute_sql(sql, contract, plugin="tokens")
 
                 if symbol and symbol["data"]:
                     balances_list.append([symbol["data"][0][0].upper(), b])

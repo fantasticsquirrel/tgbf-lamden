@@ -49,7 +49,7 @@ class Rschart(TGBFPlugin):
 
         end_secs = int(time.time() - (timeframe * 24 * 60 * 60))
 
-        sql = self.get_resource("select_trades.sql")
+        sql = self.get_resource("select_trades.sql", plugin="trades")
         res = self.execute_sql(sql, token_symbol, end_secs, plugin="trades")
 
         if not res["data"]:

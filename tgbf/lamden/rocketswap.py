@@ -16,3 +16,9 @@ class Rocketswap:
 
     def token(self, contract):
         return requests.get(self.base_url + "token/" + contract).json()
+
+    def trade_history(self, take, skip):
+        return requests.get(
+            self.base_url + "get_trade_history/",
+            params={"take": take, "skip": skip},
+        ).json()

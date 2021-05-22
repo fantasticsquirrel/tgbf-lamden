@@ -1,0 +1,3 @@
+SELECT time
+FROM trades
+ORDER BY time DESC LIMIT 1

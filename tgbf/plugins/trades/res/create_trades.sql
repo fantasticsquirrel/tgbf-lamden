@@ -1,4 +1,4 @@
-CREATE TABLE trade_history (
+CREATE TABLE trades (
     contract_name TEXT NOT NULL,
     token_symbol TEXT NOT NULL,
     price REAL NOT NULL,

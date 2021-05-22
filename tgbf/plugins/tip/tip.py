@@ -46,16 +46,18 @@ class Tip(TGBFPlugin):
         from_wallet = self.get_wallet(from_user_id)
         lamden = Connect(wallet=from_wallet)
 
-        token_contract = None
-        for token in lamden.tokens:
-            if token_name == token[0]:
-                token_contract = token[1]
-                break
+        if token_name == "TAU":
+            token_contract = "currency"
+        else:
+            sql = self.get_resource("select_contract.sql", plugin="tokens")
+            res = self.execute_sql(sql, token_name, plugin="tokens")
 
-        if not token_contract:
-            msg = f"{emo.ERROR} Token not found"
-            update.message.reply_text(msg)
-            return
+            if res and res["data"] and res["data"][0]:
+                token_contract = res["data"][0][0]
+            else:
+                msg = f"{emo.ERROR} Unknown token"
+                update.message.reply_text(msg)
+                return
 
         usr_msg = str()
         if len(context.args) > 2:

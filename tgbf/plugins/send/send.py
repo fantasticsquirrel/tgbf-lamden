@@ -34,16 +34,18 @@ class Send(TGBFPlugin):
         token_name = context.args[0].upper()
         amount = context.args[1]
 
-        token_contract = None
-        for token in lamden.tokens:
-            if token_name == token[0]:
-                token_contract = token[1]
-                break
+        if token_name == "TAU":
+            token_contract = "currency"
+        else:
+            sql = self.get_resource("select_contract.sql", plugin="tokens")
+            res = self.execute_sql(sql, token_name, plugin="tokens")
 
-        if not token_contract:
-            msg = f"{emo.ERROR} Token not found"
-            update.message.reply_text(msg)
-            return
+            if res and res["data"] and res["data"][0]:
+                token_contract = res["data"][0][0]
+            else:
+                msg = f"{emo.ERROR} Unknown token"
+                update.message.reply_text(msg)
+                return
 
         try:
             # Check if amount is valid

@@ -1,5 +1,5 @@
 {
-    "chain": "test",
+    "chain": "main",
     "main": {
         "masternodes": [
             {"https://masternode-01.lamden.io": null}

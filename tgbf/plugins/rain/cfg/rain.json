@@ -1,6 +1,6 @@
 {
     "category": "Lamden",
-    "description": "Rain TAU on last active users",
+    "description": "Rain tokens on last active users",
     "contract": "con_multisend2",
     "function": "send",
     "user_limit": 160

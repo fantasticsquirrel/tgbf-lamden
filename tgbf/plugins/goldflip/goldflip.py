@@ -77,7 +77,7 @@ class Goldflip(TGBFPlugin):
             logging.info(msg)
 
             if amount > float(approved):
-                app = lamden.approve_contract(contract)
+                app = lamden.approve_contract(contract, token=self.TOKEN_CONTRACT)
                 msg = f"Approved {contract}: {app}"
                 logging.info(msg)
         except Exception as e:

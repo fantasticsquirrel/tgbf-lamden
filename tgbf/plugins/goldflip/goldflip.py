@@ -123,7 +123,7 @@ class Goldflip(TGBFPlugin):
             msg = f"YOU WON <code>{amount:,}</code> {self.TOKEN_SYMBOL} {emo.MONEY_FACE}"
         else:
             logging.info(f"User LOST {amount} {self.TOKEN_SYMBOL}")
-            msg = f"You lost <code>{amount:,}</code> {self.TOKEN_SYMBOL} {emo.SAD}"
+            msg = f"You lost <code>{amount:,}</code> {self.TOKEN_SYMBOL} {emo.SAD} better luck next time"
 
         message.edit_text(
             f"{msg}\n{ex_link}",

@@ -27,7 +27,7 @@ class Goldflip(TGBFPlugin):
             b = Connect().get_balance(token=self.TOKEN_CONTRACT, contract=contract)
             b = b["value"] if "value" in b else 0
             b = float(str(b)) if b else float("0")
-            b = f"{str(int(b)):,}"
+            b = f"{int(b):,}"
 
             update.message.reply_text(
                 text=f"<code>Balance of {contract}\n{b} {self.TOKEN_SYMBOL}</code>",

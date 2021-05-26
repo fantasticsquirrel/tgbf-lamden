@@ -1,4 +1,5 @@
 import logging
+import tgbf.emoji as emo
 
 from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext
@@ -43,6 +44,11 @@ class Balance(TGBFPlugin):
             balances_list.insert(0, tau_balance[0])
 
         min_limit = 0.01
+
+        if not balances_list:
+            msg = f"{emo.INFO} Your wallet is empty"
+            update.message.reply_text(msg)
+            return
 
         # Find longest token symbol
         max_length = max([len(t[0]) for t in balances_list if float(t[1]) > min_limit])

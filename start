@@ -1,0 +1,3 @@
+#!/bin/bash
+
+pipenv run python -m tgbf -log 20 &

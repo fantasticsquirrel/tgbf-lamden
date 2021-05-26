@@ -58,6 +58,15 @@ class Send(TGBFPlugin):
         if amount.is_integer():
             amount = int(amount)
 
+        # --- TEMP ---
+        # TODO: Remove temporal fix
+        amount = int(amount)
+        if amount == 0:
+            msg = f"{emo.ERROR} Amount needs to be an Integer"
+            update.message.reply_text(msg)
+            return
+        # --- TEMP ---
+
         to_address = context.args[2]
 
         if not lamden.is_address_valid(to_address):

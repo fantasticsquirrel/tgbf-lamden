@@ -13,7 +13,7 @@ def create_kill_script(filename):
 
 
 # Create script to kill bot by PID
-create_kill_script("kill.sh")
+create_kill_script("stop")
 
 # Entry point for bot
 TGBF().start()

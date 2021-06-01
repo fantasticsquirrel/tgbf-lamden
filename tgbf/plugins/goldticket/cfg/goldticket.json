@@ -1,0 +1,9 @@
+{
+    "category": "GOLD Token",
+    "description": "Lotto-style game",
+    "contract": "con_gold_ticket",
+    "function": "buy_ticket",
+    "blacklist": [],
+    "blacklist_msg": "Execute in [Trading Group](https://t.me/Tradetau) or [Rocketswap Group](https://t.me/rocketswap) or [LamDegen Lounge Group](https://t.me/TheLamdenLounge)",
+    "amount_tau": 10
+}

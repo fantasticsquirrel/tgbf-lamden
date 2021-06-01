@@ -164,6 +164,11 @@ class API:
         res = requests.get(f"{self.node_url}/contracts/{contract}/variables")
         return decode(res.text)
 
+    def get_contract_variable(self, contract: str, variable: str):
+        """ Get variables for a given smart contract """
+        res = requests.get(f"{self.node_url}/contracts/{contract}/{variable}")
+        return decode(res.text)
+
     def approve_contract(self, contract: str, token: str = "currency", amount: float = 900000000000):
         """ Approve smart contract to spend a specific amount of TAU """
 

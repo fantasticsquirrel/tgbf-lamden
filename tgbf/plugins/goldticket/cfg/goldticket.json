@@ -1,6 +1,6 @@
 {
     "category": "GOLD Token",
-    "description": "Pay TAU & GOLD and win the Lottery",
+    "description": "Pay TAU & GOLD and win the Pot",
     "contract": "con_gold_ticket_001",
     "function": "buy_ticket",
     "blacklist": [],

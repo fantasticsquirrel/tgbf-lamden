@@ -9,6 +9,7 @@ from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
 
+# TODO: Add possibility to start next round at a later time and not directly
 class Goldticket(TGBFPlugin):
 
     TOKEN_CONTRACT = "con_gold_contract"
@@ -136,7 +137,10 @@ class Goldticket(TGBFPlugin):
 
             if res["data"]:
                 user = context.bot.get_chat(int(res["data"][0][0]))
-                user = "@" + user.username if user.username else user.first_name
+                if user:
+                    user = "@" + user.username if user.username else user.first_name
+                else:
+                    user = ""
             else:
                 user = ""
 
@@ -188,7 +192,7 @@ class Goldticket(TGBFPlugin):
         context.user_data["amount_gold"] = amount_gold
 
         message.edit_caption(
-            f"Pay TAU and GOLD to buy a ticket:\n"
+            f"Pay TAU and GOLD to buy a TICKET:\n"
             f"<code>"
             f"TAU:  {amount_tau}\n"
             f"GOLD: {int(amount_gold)+1:,}\n"
@@ -321,7 +325,7 @@ class Goldticket(TGBFPlugin):
             max_users = lamden.get_contract_variable(contract, "max_entries")["value"]
 
             message.edit_caption(
-                f"Thanks entering Goldticket. You are entry {cur_users}/{max_users}\n{ex_link}",
+                f"Thanks entering GOLDTICKET. You are entry {cur_users}/{max_users}\n{ex_link}",
                 parse_mode=ParseMode.HTML)
 
             msg = f"{emo.TICKET} Ticket bought"

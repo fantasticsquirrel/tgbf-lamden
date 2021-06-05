@@ -155,7 +155,7 @@ class Goldticket(TGBFPlugin):
                   f"<code>GOLD: {last_won_gold}</code>\n\n" \
                   f"AMOUNT BURNED ({br_link})\n" \
                   f"<code>GOLD: {last_burned_gold}</code>\n\n" \
-                  f"TOTAL AMOUNT WON\n" \
+                  f"TOTAL AMOUNT WON TO DATE\n" \
                   f"<code>TAU:  {total_won_tau}</code>\n" \
                   f"<code>GOLD: {total_won_gold}</code>\n\n" \
                   f"TOTAL DEV FUND AMOUNT\n" \

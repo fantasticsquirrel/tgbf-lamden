@@ -1,3 +1,4 @@
+import os
 import logging
 import tgbf.emoji as emo
 import tgbf.utils as utl
@@ -7,11 +8,7 @@ from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
-# TODO: Make sure that only initiator can press buttons
-# TODO: 40 participants
-# TODO: Result should include amount of GOLD and TAU won and dev-fund
-# TODO: Include banner
-# TODO: Include link to https://www.tauhq.com/tokens/con_gold_contract
+
 class Goldticket(TGBFPlugin):
 
     TOKEN_CONTRACT = "con_gold_contract"
@@ -34,6 +31,7 @@ class Goldticket(TGBFPlugin):
             contract = self.config.get("contract")
 
             lamden = Connect()
+
             tau_balance = lamden.get_contract_variable(contract, "tau_balance")
 
             tau_balance = tau_balance["value"] if "value" in tau_balance else 0
@@ -57,8 +55,120 @@ class Goldticket(TGBFPlugin):
 
             return
 
+        # TODO: Add confirmation for drawing the winner
+        if len(context.args) == 1 and context.args[0].lower() == "draw_winner":
+            usr_id = update.effective_user.id
+
+            if usr_id not in self.config.get("admins"):
+                return
+
+            wallet = self.get_wallet(usr_id)
+            lamden = Connect(wallet)
+
+            contract = self.config.get("contract")
+            function = "draw_winner"
+
+            try:
+                # Call contract
+                ticket = lamden.post_transaction(
+                    stamps=100,
+                    contract=contract,
+                    function=function,
+                    kwargs={}
+                )
+            except Exception as e:
+                logging.error(f"Error calling goldticket contract (draw_winner): {e}")
+                update.message.reply_text(f"{emo.ERROR} {e}")
+                return
+
+            logging.info(f"Executed goldticket contract: {ticket}")
+
+            if "error" in ticket:
+                logging.error(f"Goldticket contract (draw_winner) returned error: {ticket['error']}")
+                update.message.reply_text(f"{emo.ERROR} {ticket['error']}")
+                return
+
+            # Get transaction hash
+            tx_hash = ticket["hash"]
+
+            # Wait for transaction to be completed
+            success, result = lamden.tx_succeeded(tx_hash)
+
+            if not success:
+                logging.error(f"Goldticket (draw_winner) transaction not successful: {result}")
+                update.message.reply_text(f"{emo.ERROR} {result}")
+                return
+
+            winner_address = result["result"].replace("'", "")
+
+            last_won_tau = lamden.get_contract_variable(contract, "last_won_tau")
+            last_won_tau = last_won_tau["value"] if "value" in last_won_tau else 0
+            last_won_tau = float(str(last_won_tau)) if last_won_tau else float("0")
+            last_won_tau = f"{int(last_won_tau):,}"
+
+            last_won_gold = lamden.get_contract_variable(contract, "last_won_gold")
+            last_won_gold = last_won_gold["value"] if "value" in last_won_gold else 0
+            last_won_gold = float(str(last_won_gold)) if last_won_gold else float("0")
+            last_won_gold = f"{int(last_won_gold):,}"
+
+            last_burned_gold = lamden.get_contract_variable(contract, "last_burned_gold")
+            last_burned_gold = last_burned_gold["value"] if "value" in last_burned_gold else 0
+            last_burned_gold = float(str(last_burned_gold)) if last_burned_gold else float("0")
+            last_burned_gold = f"{int(last_burned_gold):,}"
+
+            total_won_tau = lamden.get_contract_variable(contract, "total_won_tau")
+            total_won_tau = total_won_tau["value"] if "value" in total_won_tau else 0
+            total_won_tau = float(str(total_won_tau)) if total_won_tau else float("0")
+            total_won_tau = f"{int(total_won_tau):,}"
+
+            total_won_gold = lamden.get_contract_variable(contract, "total_won_gold")
+            total_won_gold = total_won_gold["value"] if "value" in total_won_gold else 0
+            total_won_gold = float(str(total_won_gold)) if total_won_gold else float("0")
+            total_won_gold = f"{int(total_won_gold):,}"
+
+            total_dev_fund = lamden.get_contract_variable(contract, "dev_tau")
+            total_dev_fund = total_dev_fund["value"] if "value" in total_dev_fund else 0
+            total_dev_fund = float(str(total_dev_fund)) if total_dev_fund else float("0")
+            total_dev_fund = f"{int(total_dev_fund):,}"
+
+            sql = self.get_global_resource("select_user_id.sql")
+            res = self.execute_global_sql(sql, winner_address)
+
+            if res["data"]:
+                user = context.bot.get_chat(int(res["data"][0][0]))
+                user = "@" + user.username if user.username else user.first_name
+            else:
+                user = ""
+
+            first = winner_address[0:6]
+            last = winner_address[len(winner_address)-6:len(winner_address)]
+
+            tx_link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
+            ad_link = f'<a href="{lamden.explorer_url}/addresses/{winner_address}">{first}...{last}</a>'
+            br_link = f'<a href="https://www.tauhq.com/addresses/0000000000000BURN0000000000000">ADDRESS</a>'
+
+            msg = f"WINNER\n" \
+                  f"{user}\n" \
+                  f"{ad_link}\n\n" \
+                  f"AMOUNT WON\n" \
+                  f"<code>TAU:  {last_won_tau}</code>\n" \
+                  f"<code>GOLD: {last_won_gold}</code>\n\n" \
+                  f"AMOUNT BURNED ({br_link})\n" \
+                  f"<code>GOLD: {last_burned_gold}</code>\n\n" \
+                  f"TOTAL AMOUNT WON\n" \
+                  f"<code>TAU:  {total_won_tau}</code>\n" \
+                  f"<code>GOLD: {total_won_gold}</code>\n\n" \
+                  f"TOTAL DEV FUND AMOUNT\n" \
+                  f"<code>TAU:  {total_dev_fund}</code>\n\n" \
+                  f"{tx_link}"
+
+            winner_video_path = os.path.join(self.get_res_path(), "goldticket_winner.mp4")
+            update.message.reply_video(open(winner_video_path, "rb"), caption=msg, parse_mode=ParseMode.HTML)
+            return
+
         cal_msg = f"{emo.HOURGLASS} Calculating GOLD amount..."
-        message = update.message.reply_text(cal_msg)
+        gt_path = os.path.join(self.get_res_path(), "goldticket.jpg")
+        message = update.message.reply_photo(open(gt_path, "rb"), caption=cal_msg)
 
         lamden = Connect()
 
@@ -77,9 +187,9 @@ class Goldticket(TGBFPlugin):
         context.user_data["amount_tau"] = amount_tau
         context.user_data["amount_gold"] = amount_gold
 
-        message.edit_text(
+        message.edit_caption(
             f"<code>"
-            f"Buy ticket by paying:\n"
+            f"Pay TAU and GOLD to buy a ticket:\n\n"
             f"TAU:  {amount_tau}\n"
             f"GOLD: {int(amount_gold)+1:,}\n"
             f"</code>",
@@ -94,18 +204,37 @@ class Goldticket(TGBFPlugin):
 
         data_list = data.split("|")
 
+        if not data_list:
+            return
+
+        if len(data_list) < 2:
+            return
+
         if int(data_list[1]) != update.effective_user.id:
             return
 
         action = data_list[2]
         if action == "READ":
-            update.callback_query.message.edit_text(self.get_resource("goldticket.md"))
+            tauhq_link = f'<a href="https://www.tauhq.com/tokens/con_gold_contract">GOLD Token on TauHQ</a>'
+
+            update.callback_query.message.edit_caption(
+                f"{self.get_resource('goldticket.md')}\n\n{tauhq_link}",
+                parse_mode=ParseMode.HTML)
 
             msg = f"{emo.BOOKS} Happy reading!"
             context.bot.answer_callback_query(update.callback_query.id, msg)
             return
 
         elif action == "SEND":
+            if "amount_tau" not in context.user_data:
+                msg = f"{emo.ERROR} Message expired"
+                context.bot.answer_callback_query(update.callback_query.id, msg)
+                return
+            if "amount_gold" not in context.user_data:
+                msg = f"{emo.ERROR} Message expired"
+                context.bot.answer_callback_query(update.callback_query.id, msg)
+                return
+
             amount_tau = context.user_data["amount_tau"]
             amount_gold = context.user_data["amount_gold"]
 
@@ -113,7 +242,7 @@ class Goldticket(TGBFPlugin):
             function = self.config.get("function")
 
             message = update.callback_query.message
-            message.edit_text(f"{emo.HOURGLASS} Buying ticket...")
+            message.edit_caption(f"{emo.HOURGLASS} Buying ticket...")
 
             usr_id = update.effective_user.id
             wallet = self.get_wallet(usr_id)
@@ -134,7 +263,7 @@ class Goldticket(TGBFPlugin):
                     logging.info(msg)
             except Exception as e:
                 logging.error(f"Error approving goldticket contract: {e}")
-                message.edit_text(f"{emo.ERROR} {e}")
+                message.edit_caption(f"{emo.ERROR} {e}")
                 return
 
             try:
@@ -152,7 +281,7 @@ class Goldticket(TGBFPlugin):
                     logging.info(msg)
             except Exception as e:
                 logging.error(f"Error approving goldticket contract: {e}")
-                message.edit_text(f"{emo.ERROR} {e}")
+                message.edit_caption(f"{emo.ERROR} {e}")
                 return
 
             try:
@@ -165,14 +294,14 @@ class Goldticket(TGBFPlugin):
                 )
             except Exception as e:
                 logging.error(f"Error calling goldticket contract: {e}")
-                message.edit_text(f"{emo.ERROR} {e}")
+                message.edit_caption(f"{emo.ERROR} {e}")
                 return
 
             logging.info(f"Executed goldticket contract: {ticket}")
 
             if "error" in ticket:
                 logging.error(f"Goldticket contract returned error: {ticket['error']}")
-                message.edit_text(f"{emo.ERROR} {ticket['error']}")
+                message.edit_caption(f"{emo.ERROR} {ticket['error']}")
                 return
 
             # Get transaction hash
@@ -183,7 +312,7 @@ class Goldticket(TGBFPlugin):
 
             if not success:
                 logging.error(f"Goldticket transaction not successful: {result}")
-                message.edit_text(f"{emo.ERROR} {result}")
+                message.edit_caption(f"{emo.ERROR} {result}")
                 return
 
             ex_link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
@@ -191,8 +320,8 @@ class Goldticket(TGBFPlugin):
             cur_users = len(lamden.get_contract_variable(contract, "user_list")["value"])
             max_users = lamden.get_contract_variable(contract, "max_entries")["value"]
 
-            message.edit_text(
-                f"Thanks entering Goldticket - you are entry {cur_users}/{max_users}\n{ex_link}",
+            message.edit_caption(
+                f"Thanks entering Goldticket. You are entry {cur_users}/{max_users}\n{ex_link}",
                 parse_mode=ParseMode.HTML)
 
             msg = f"{emo.TICKET} Ticket bought"

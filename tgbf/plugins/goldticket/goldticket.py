@@ -188,8 +188,8 @@ class Goldticket(TGBFPlugin):
         context.user_data["amount_gold"] = amount_gold
 
         message.edit_caption(
+            f"Pay TAU and GOLD to buy a ticket:\n"
             f"<code>"
-            f"Pay TAU and GOLD to buy a ticket:\n\n"
             f"TAU:  {amount_tau}\n"
             f"GOLD: {int(amount_gold)+1:,}\n"
             f"</code>",

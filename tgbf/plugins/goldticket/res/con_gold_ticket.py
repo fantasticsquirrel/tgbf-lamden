@@ -21,18 +21,22 @@ tau_balance = Variable()
 gold_balance = Variable()
 # Overall amount of TAU for Endogen
 endo_tau = Variable()
-# Overall amount of GOLD for Endogen
-endo_gold = Variable()
 # Overall amount of TAU for devs
 dev_tau = Variable()
-# Overall amount of GOLD for devs
-dev_gold = Variable()
 # List of players for current run
 user_list = Variable()
 # Last won amount of TAU
 last_won_tau = Variable()
 # Last won amount of GOLD
 last_won_gold = Variable()
+# Total won amount of TAU
+total_won_tau = Variable()
+# Total won amount of GOLD
+total_won_gold = Variable()
+# Last amount of burned GOLD
+last_burned_gold = Variable()
+# Total amount of burned GOLD
+total_burned_gold = Variable()
 
 
 @construct
@@ -46,12 +50,14 @@ def init():
     tau_balance.set(0)
     gold_balance.set(0)
     endo_tau.set(0)
-    endo_gold.set(0)
     dev_tau.set(0)
-    dev_gold.set(0)
     user_list.set([])
     last_won_tau.set(0)
     last_won_gold.set(0)
+    total_won_tau.set(0)
+    total_won_gold.set(0)
+    last_burned_gold.set(0)
+    total_burned_gold.set(0)
 
 
 @export
@@ -109,17 +115,17 @@ def draw_winner():
     dev_amount_tau = tau_balance.get() / 100 * dev_share.get()
     dev_tau.set(dev_tau.get() + dev_amount_tau)
 
-    dev_amount_gold = gold_balance.get() / 100 * dev_share.get()
-    dev_gold.set(dev_gold.get() + dev_amount_gold)
-
     endo_amount_tau = tau_balance.get() / 100 * endo_share.get()
     endo_tau.set(endo_tau.get() + endo_amount_tau)
 
-    endo_amount_gold = gold_balance.get() / 100 * endo_share.get()
-    endo_gold.set(endo_gold.get() + endo_amount_gold)
+    last_burned_gold.set(gold_balance.get() / 100 * (dev_share.get() + endo_share.get()))
+    total_burned_gold.set(total_burned_gold.get() + last_burned_gold.get())
 
     last_won_tau.set(tau_balance.get() - dev_amount_tau - endo_amount_tau)
-    last_won_gold.set(gold_balance.get() - dev_amount_gold - endo_amount_gold)
+    last_won_gold.set(gold_balance.get() - last_burned_gold.get())
+
+    total_won_tau.set(total_won_tau.get() + last_won_tau.get())
+    total_won_gold.set(total_won_gold.get() + last_won_gold.get())
 
     # Transfer TAU from contract to winner
     tau.transfer(
@@ -130,6 +136,11 @@ def draw_winner():
     gold.transfer(
         amount=last_won_gold.get(),
         to=winner)
+
+    # Transfer GOLD from contract to burning address
+    gold.transfer(
+        amount=last_burned_gold.get(),
+        to="0000000000000BURN0000000000000")
 
     # Prepare for next run
     tau_balance.set(0)
@@ -206,13 +217,6 @@ def endo_payout():
 
     endo_tau.set(0)
 
-    # Transfer GOLD from contract to Endogen
-    gold.transfer(
-        amount=endo_gold,
-        to=ctx.caller)
-
-    endo_gold.set(0)
-
 
 @export
 def dev_payout():
@@ -227,10 +231,3 @@ def dev_payout():
         to=ctx.caller)
 
     dev_tau.set(0)
-
-    # Transfer GOLD from contract to Lamden devs
-    gold.transfer(
-        amount=dev_gold,
-        to=ctx.caller)
-
-    dev_gold.set(0)

@@ -34,22 +34,28 @@ class Goldticket(TGBFPlugin):
             lamden = Connect()
 
             tau_balance = lamden.get_contract_variable(contract, "tau_balance")
-
             tau_balance = tau_balance["value"] if "value" in tau_balance else 0
             tau_balance = float(str(tau_balance)) if tau_balance else float("0")
             tau_balance = f"{int(tau_balance):,}"
 
             gold_balance = lamden.get_contract_variable(contract, "gold_balance")
-
             gold_balance = gold_balance["value"] if "value" in gold_balance else 0
             gold_balance = float(str(gold_balance)) if gold_balance else float("0")
             gold_balance = f"{int(gold_balance):,}"
 
+            user_count = len(lamden.get_contract_variable(contract, "user_list")["value"])
+
+            max_entries = lamden.get_contract_variable(contract, "max_entries")
+            max_entries = max_entries["value"] if "value" in max_entries else 0
+
             update.message.reply_text(
                 text=f"<code>"
-                     f"GOLD Ticket Balance:\n"
+                     f"GOLD Ticket Balance\n"
                      f"TAU:  {tau_balance}\n"
-                     f"GOLD: {gold_balance}"
+                     f"GOLD: {gold_balance}\n\n"
+                     f"Tickets\n"
+                     f"Total:     {max_entries}\n"
+                     f"Available: {int(max_entries) - int(user_count)}"
                      f"</code>",
                 parse_mode=ParseMode.HTML
             )
@@ -72,7 +78,7 @@ class Goldticket(TGBFPlugin):
             try:
                 # Call contract
                 ticket = lamden.post_transaction(
-                    stamps=120,
+                    stamps=150,
                     contract=contract,
                     function=function,
                     kwargs={}
@@ -150,6 +156,7 @@ class Goldticket(TGBFPlugin):
             tx_link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
             ad_link = f'<a href="{lamden.explorer_url}/addresses/{winner_address}">{first}...{last}</a>'
             br_link = f'<a href="https://www.tauhq.com/addresses/0000000000000BURN0000000000000">ADDRESS</a>'
+            lp_link = f'<a href="https://rocketswap.exchange/#/pool-add/con_gold_contract">add your winnings to the LP</a>'
 
             msg = f"WINNER\n" \
                   f"{user}\n" \
@@ -164,7 +171,8 @@ class Goldticket(TGBFPlugin):
                   f"<code>GOLD: {total_won_gold}</code>\n\n" \
                   f"TOTAL DEV FUND AMOUNT\n" \
                   f"<code>TAU:  {total_dev_fund}</code>\n\n" \
-                  f"{tx_link}"
+                  f"{tx_link}\n\n" \
+                  f"Hey, why not {lp_link} to earn more GOLD?"
 
             winner_video_path = os.path.join(self.get_res_path(), "goldticket_winner.mp4")
             update.message.reply_video(open(winner_video_path, "rb"), caption=msg, parse_mode=ParseMode.HTML)
@@ -291,7 +299,7 @@ class Goldticket(TGBFPlugin):
             try:
                 # Call contract
                 ticket = lamden.post_transaction(
-                    stamps=150,
+                    stamps=200,
                     contract=contract,
                     function=function,
                     kwargs={}

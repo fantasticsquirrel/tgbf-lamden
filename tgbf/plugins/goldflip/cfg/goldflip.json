@@ -1,6 +1,6 @@
 {
     "category": "GOLD Token",
-    "description": "Double your GOLD or loose it",
+    "description": "Double your GOLD or lose it",
     "contract": "con_gold_flip",
     "function": "flip",
     "blacklist": [],

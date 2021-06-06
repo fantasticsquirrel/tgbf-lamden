@@ -72,7 +72,7 @@ class Goldticket(TGBFPlugin):
             try:
                 # Call contract
                 ticket = lamden.post_transaction(
-                    stamps=100,
+                    stamps=120,
                     contract=contract,
                     function=function,
                     kwargs={}
@@ -325,7 +325,7 @@ class Goldticket(TGBFPlugin):
             max_users = lamden.get_contract_variable(contract, "max_entries")["value"]
 
             message.edit_caption(
-                f"Thanks entering GOLDTICKET. You are entry {cur_users}/{max_users}\n{ex_link}",
+                f"Thanks for entering GOLDTICKET. You are entry {cur_users}/{max_users}\n{ex_link}",
                 parse_mode=ParseMode.HTML)
 
             msg = f"{emo.TICKET} Ticket bought"

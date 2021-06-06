@@ -291,7 +291,7 @@ class Goldticket(TGBFPlugin):
             try:
                 # Call contract
                 ticket = lamden.post_transaction(
-                    stamps=120,
+                    stamps=150,
                     contract=contract,
                     function=function,
                     kwargs={}

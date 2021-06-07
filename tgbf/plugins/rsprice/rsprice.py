@@ -1,5 +1,4 @@
 import tgbf.emoji as emo
-import tgbf.utils as utl
 import requests
 import logging
 
@@ -16,6 +15,8 @@ class Rsprice(TGBFPlugin):
 
     CGID = "lamden"
     VS_CUR = "usd,eur"
+
+    DECIMALS = 8
 
     def load(self):
         self.add_handler(CommandHandler(
@@ -72,7 +73,7 @@ class Rsprice(TGBFPlugin):
             return
 
         price = Decimal(str(price))
-        price = price.quantize(Decimal(10) ** -4)
+        price = price.quantize(Decimal(10) ** - self.DECIMALS)
 
         rs_url = f"https://rocketswap.exchange/#/{contract}"
         msg = f"[Trade on Rocketswap]({rs_url})\n\n`TAU: {price}`\n"
@@ -89,7 +90,7 @@ class Rsprice(TGBFPlugin):
 
             for c in self.VS_CUR.split(","):
                 if c in prices:
-                    p = utl.format(prices[c] * float(price), decimals=8)
+                    p = f'{(prices[c] * float(price)):.{self.DECIMALS}f}'
                     value += f"{c.upper()}: {p}\n"
 
             msg += f"`" \

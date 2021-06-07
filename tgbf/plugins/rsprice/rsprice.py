@@ -89,7 +89,7 @@ class Rsprice(TGBFPlugin):
 
             for c in self.VS_CUR.split(","):
                 if c in prices:
-                    p = utl.format(prices[c] * float(price), decimals=4)
+                    p = utl.format(prices[c] * float(price), decimals=8)
                     value += f"{c.upper()}: {p}\n"
 
             msg += f"`" \

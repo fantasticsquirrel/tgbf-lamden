@@ -212,7 +212,7 @@ def endo_payout():
 
     # Transfer TAU from contract to Endogen
     tau.transfer(
-        amount=endo_tau,
+        amount=endo_tau.get(),
         to=ctx.caller)
 
     endo_tau.set(0)
@@ -227,7 +227,7 @@ def dev_payout():
 
     # Transfer TAU from contract to Lamden devs
     tau.transfer(
-        amount=dev_tau,
+        amount=dev_tau.get(),
         to=ctx.caller)
 
     dev_tau.set(0)

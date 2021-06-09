@@ -55,7 +55,7 @@ class Burnsix(TGBFPlugin):
         contract = self.config.get("contract")
         function = self.config.get("function")
 
-        msg = f"{emo.HOURGLASS} Burning 666 and minting LIGHT..."
+        msg = f"{emo.HOURGLASS} Burning 666 and redeeming LIGHT..."
         message = update.message.reply_text(msg)
 
         try:
@@ -78,7 +78,7 @@ class Burnsix(TGBFPlugin):
 
 
         try:
-            # Burn SIXSIXSIX token and mint LIGHT token
+            # Burn SIXSIXSIX token and redeem LIGHT token
             burn = lamden.post_transaction(
                 100,
                 contract,
@@ -109,7 +109,7 @@ class Burnsix(TGBFPlugin):
         light_amount = int(float(rate) * amount)
 
         message.edit_text(
-            f"{emo.STARS} Minted <code>{light_amount}</code> LIGHT\n"
+            f"{emo.STARS} Redeemed <code>{light_amount}</code> LIGHT\n"
             f"{emo.FIRE} Burned <code>{amount}</code> SIXSIXSIX\n{link}",
             parse_mode=ParseMode.HTML,
             disable_web_page_preview=True)

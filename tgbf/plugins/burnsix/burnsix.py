@@ -13,7 +13,7 @@ class Burnsix(TGBFPlugin):
 
     def load(self):
         self.add_handler(CommandHandler(
-            self.name,
+            self.handle,
             self.burn_callback,
             run_async=True))
 
@@ -55,7 +55,8 @@ class Burnsix(TGBFPlugin):
         contract = self.config.get("contract")
         function = self.config.get("function")
 
-        message = update.message
+        msg = f"{emo.HOURGLASS} Burning 666 and minting LIGHT..."
+        message = update.message.reply_text(msg)
 
         try:
             # Check if contract is approved to spend the token
@@ -82,7 +83,7 @@ class Burnsix(TGBFPlugin):
                 100,
                 contract,
                 function,
-                {"amount": float(amount)}
+                {"amount": amount}
             )
         except Exception as e:
             msg = f"Could not send transaction: {e}"
@@ -104,10 +105,11 @@ class Burnsix(TGBFPlugin):
 
         link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
 
-        light_amount = 0
+        rate = lamden.get_contract_variable(contract, "metadata", key="rate")["value"]
+        light_amount = int(float(rate) * amount)
 
         message.edit_text(
-            f"{emo.FIRE} Burned <code>{amount}</code> SIXSIXSIX"
-            f"{emo.STARS} Minted <code>{light_amount}</code> LIGHT\n{link}",
+            f"{emo.STARS} Minted <code>{light_amount}</code> LIGHT\n"
+            f"{emo.FIRE} Burned <code>{amount}</code> SIXSIXSIX\n{link}",
             parse_mode=ParseMode.HTML,
             disable_web_page_preview=True)

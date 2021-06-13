@@ -1,0 +1,6 @@
+{
+    "category": "GOLD Token",
+    "description": "Win GOLD by holding GOLD",
+    "contract": "con_gold_balances",
+    "function": "get_gold_balances"
+}

@@ -1,0 +1,1 @@
+Convert all tokens (except TAU) in your bot wallet to GOLD. All tokens will be automatically sold on Rocketswap for TAU and GOLD will be bought from it  

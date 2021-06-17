@@ -1,6 +1,7 @@
 {
     "category": "GOLD Token",
     "description": "Convert shitcoins to pure GOLD",
-    "save_amount_percent": 55,
-    "threshold": 5
+    "slippage": 49,
+    "tau_threshold": 5,
+    "tau_for_gold": 90
 }

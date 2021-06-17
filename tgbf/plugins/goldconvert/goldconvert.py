@@ -31,7 +31,7 @@ class Goldconvert(TGBFPlugin):
     @TGBFPlugin.send_typing
     def goldconvert_callback(self, update: Update, context: CallbackContext):
         message = update.message.reply_text(
-            f"{emo.HOURGLASS} Retrieving token prices to analyse which tokens could be sold. "
+            f"{emo.HOURGLASS} Calculating which tokens could be sold. "
             f"This can take a while..."
         )
 
@@ -40,7 +40,7 @@ class Goldconvert(TGBFPlugin):
 
         sql = self.get_resource("select_symbol.sql", plugin="tokens")
 
-        threshold = self.config.get("threshold")
+        threshold = self.config.get("tau_threshold")
 
         lamden = Connect()
 
@@ -139,7 +139,16 @@ class Goldconvert(TGBFPlugin):
 
         message.edit_text(f"{emo.HOURGLASS} Converting to GOLD...")
 
-        total_tau = sum(results)
+        total_tau = 0
+        for res in results:
+            if res:
+                try:
+                    res = float(res)
+                except:
+                    res = 0
+            else:
+                res = 0
+            total_tau += res
 
         try:
             # Check if Rocketswap contract is approved to spend TAU
@@ -171,7 +180,7 @@ class Goldconvert(TGBFPlugin):
         gold_price = float(gold_price["value"])
 
         gold_amount_to_buy = total_tau / gold_price
-        min_gold = gold_amount_to_buy / 100 * self.config.get("save_amount_percent")
+        min_gold = gold_amount_to_buy / 100 * (100 - self.config.get("slippage"))
 
         # TODO: Remove. Temporal fix
         min_gold = int(min_gold)
@@ -249,7 +258,7 @@ class Goldconvert(TGBFPlugin):
 
         token_price = float(token_data[3])
 
-        min_total = token_price / 100 * self.config.get("save_amount_percent")
+        min_total = token_price / 100 * (100 - self.config.get("slippage"))
 
         # TODO: Remove. Temporal fix
         min_total = int(min_total)
@@ -292,5 +301,8 @@ class Goldconvert(TGBFPlugin):
             logging.error(f"Transaction to sell {token_data[0]} not successful: {result}")
             results[i] = 0
         else:
-            tau_amount = result["result"][result["result"].find("'")+1:result["result"].rfind("'")]
-            results[i] = float(tau_amount)
+            if result["result"].startswith("AssertionError"):
+                results[i] = 0
+            else:
+                tau_amount = result["result"][result["result"].find("'")+1:result["result"].rfind("'")]
+                results[i] = float(tau_amount) / 100 * self.config.get("tau_for_gold")

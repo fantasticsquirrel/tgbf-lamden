@@ -10,11 +10,11 @@ from tgbf.lamden.api import API
 
 class Connect(API):
 
-    def __init__(self, wallet: Wallet = None):
+    def __init__(self, wallet: Wallet = None, ping: bool = False):
         self.cfg = Cfg(os.path.join(c.DIR_CFG, "lamden.json"))
         self.chain = self.cfg.get("chain")
 
-        node_host, node_port, explorer_host, explorer_port = self.connect()
+        node_host, node_port, explorer_host, explorer_port = self.connect(ping)
         wallet = wallet if wallet else Wallet()
 
         super().__init__(
@@ -24,7 +24,7 @@ class Connect(API):
             explorer_host=explorer_host,
             explorer_port=explorer_port)
 
-    def connect(self):
+    def connect(self, ping: bool):
         explorer_dict = self.cfg.get(self.chain)["explorer"]
         explorer_host = next(iter(explorer_dict))
         explorer_port = explorer_dict[explorer_host]
@@ -33,7 +33,8 @@ class Connect(API):
         for node in node_list:
             for node_host, node_port in node.items():
                 try:
-                    self.ping(node_host, node_port)
+                    if ping:
+                        self.ping(node_host, node_port)
                     return node_host, node_port, explorer_host, explorer_port
                 except:
                     msg = f"Can not connect to host '{node_host}' and port '{node_port}'"

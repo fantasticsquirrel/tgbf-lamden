@@ -130,7 +130,7 @@ class Goldconvert(TGBFPlugin):
         results = [None] * len(sell_list)
 
         for i in range(len(sell_list)):
-            threads[i] = Thread(target=self.sell_asset, args=(lamden, sell_list[i], update, results, i))
+            threads[i] = Thread(target=self.sell_asset, args=(lamden, sell_list[i], results, i))
             threads[i].start()
             threads[i].join()
 
@@ -161,6 +161,11 @@ class Goldconvert(TGBFPlugin):
 
         # TODO: Remove. Temporal fix
         total_tau = int(total_tau)
+
+        if not total_tau or total_tau <= 0:
+            msg = f"{emo.ERROR} Tokens couldn't be sold"
+            message.edit_text(msg)
+            return
 
         gold_price = lamden.get_contract_variable("con_rocketswap_official_v1_1", "prices", self.GOLD_CONTRACT)
         gold_price = float(gold_price["value"])
@@ -218,7 +223,7 @@ class Goldconvert(TGBFPlugin):
         menu = utl.build_menu([InlineKeyboardButton(label, callback_data=self.name)])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 
-    def sell_asset(self, lamden: Connect, token_data: list, update: Update, results: list, i: int):
+    def sell_asset(self, lamden: Connect, token_data: list, results: list, i: int):
         try:
             # Check if contract is approved to spend the token
             approved = lamden.get_approved_amount(self.RS_CONTRACT, token=token_data[1])
@@ -234,7 +239,7 @@ class Goldconvert(TGBFPlugin):
                 logging.info(msg)
         except Exception as e:
             logging.error(f"Error approving {self.RS_CONTRACT} for {token_data[1]}: {e}")
-            update.message.reply_text(f"{emo.ERROR} {e}")
+            results[i] = 0
             return
 
         token_amount = float(token_data[2])
@@ -266,14 +271,14 @@ class Goldconvert(TGBFPlugin):
             )
         except Exception as e:
             logging.error(f"Error calling Rocketswap contract to sell {token_data[0]}: {e}")
-            update.message.reply_text(f"{emo.ERROR} Selling {token_data[0]}: {e}")
+            results[i] = 0
             return
 
         logging.info(f"Executed Rocketswap - sell {token_data[0]}: {sell}")
 
         if "error" in sell:
             logging.error(f"Rocketswap - sell {token_data[0]} - contract returned error: {sell['error']}")
-            update.message.reply_text(f"{emo.ERROR} Selling {token_data[0]}: {sell['error']}")
+            results[i] = 0
             return
 
         # Get transaction hash
@@ -285,9 +290,7 @@ class Goldconvert(TGBFPlugin):
 
         if not success:
             logging.error(f"Transaction to sell {token_data[0]} not successful: {result}")
-            msg = f"{emo.ERROR} Selling {token_data[0]}: {result}"
-            update.message.reply_text(msg)
-            results.append(0)
-
-        tau_amount = result["result"][result["result"].find("'")+1:result["result"].rfind("'")]
-        results[i] = float(tau_amount)
+            results[i] = 0
+        else:
+            tau_amount = result["result"][result["result"].find("'")+1:result["result"].rfind("'")]
+            results[i] = float(tau_amount)

@@ -75,6 +75,18 @@ class Goldconvert(TGBFPlugin):
                 if balance == 0:
                     continue
 
+                liquidity = lamden.get_contract_variable(
+                    "con_rocketswap_official_v1_1",
+                    "reserves",
+                    contract)
+
+                liquidity = liquidity["value"]
+
+                if not liquidity:
+                    continue
+                if liquidity[0] <= tau_value:
+                    continue
+
                 sell_list.append([symbol["data"][0][0], contract, balance, tau_value])
             else:
                 logging.info(f"Unknown token with contract '{contract}'")

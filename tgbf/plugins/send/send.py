@@ -86,8 +86,6 @@ class Send(TGBFPlugin):
             self.notify(msg)
             return
 
-        logging.info(f"Sent {amount} {token_name} from {from_wallet.verifying_key} to {to_address}: {send}")
-
         if "error" in send:
             msg = f"Transaction replied error: {send['error']}"
             message.edit_text(f"{emo.ERROR} {send['error']}")
@@ -97,6 +95,29 @@ class Send(TGBFPlugin):
         # Get transaction hash
         tx_hash = send["hash"]
 
+        logging.info(f"Sent {amount} {token_name} from {from_wallet.verifying_key} to {to_address}: {send}")
+
+        link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
+
+        message.edit_text(
+            f"{emo.MONEY} Sent <code>{amount}</code> {token_name}\n{link}",
+            parse_mode=ParseMode.HTML,
+            disable_web_page_preview=True)
+
+        # Wait for transaction to be completed
+        success, result = lamden.tx_succeeded(tx_hash)
+
+        if not success:
+            logging.error(f"Transaction not successful: {result}")
+
+            link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">TRANSACTION FAILED</a>'
+
+            message.edit_text(
+                f"{emo.STOP} <del>Sent</del> <code>{amount}</code> {token_name}\n{link}",
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True)
+            return
+
         # Insert details into database
         self.execute_sql(
             self.get_resource("insert_send.sql"),
@@ -105,9 +126,4 @@ class Send(TGBFPlugin):
             amount,
             tx_hash)
 
-        link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
 
-        message.edit_text(
-            f"{emo.MONEY} Sent <code>{amount}</code> {token_name}\n{link}",
-            parse_mode=ParseMode.HTML,
-            disable_web_page_preview=True)

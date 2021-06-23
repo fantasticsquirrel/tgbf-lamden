@@ -1,7 +1,7 @@
 {
     "category": "GOLD Token",
     "description": "Double your GOLD or lose it",
-    "contract": "con_gold_flip",
+    "contract": "con_gold_flip_001",
     "function": "flip",
     "blacklist": [],
     "blacklist_msg": "Execute in [Trading Group](https://t.me/Tradetau) or [Rocketswap Group](https://t.me/rocketswap) or [LamDegen Lounge Group](https://t.me/TheLamdenLounge)"

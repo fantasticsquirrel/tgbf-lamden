@@ -88,7 +88,7 @@ class Goldflip(TGBFPlugin):
         try:
             # Call contract
             flip = lamden.post_transaction(
-                stamps=50,
+                stamps=100,
                 contract=contract,
                 function=function,
                 kwargs={"amount": amount, "token_contract": self.TOKEN_CONTRACT}

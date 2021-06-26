@@ -1,4 +1,4 @@
-A smart contract determines a random number between 1 and 6 and if you can guess it correctly then the TAU you've bet will be multiplied by 5. If you lose then you lost your TAU, but you will get 5 DEGEN tokens.
+A smart contract determines a random number between 1 and 6 and if you can guess it correctly then the TAU you've bet will be multiplied by 5. If you lose then you lost your TAU, but you will get 0.5 DEGEN per TAU you bet.
 
 **Minimum amount {{min}} TAU, maximum amount {{max}} TAU**
 

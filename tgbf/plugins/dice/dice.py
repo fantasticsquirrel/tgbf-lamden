@@ -116,7 +116,7 @@ class Dice(TGBFPlugin):
         try:
             # Call dice contract
             dice = lamden.post_transaction(
-                stamps=50,
+                stamps=80,
                 contract=contract,
                 function=function,
                 kwargs={"guess": number, "amount": amount})

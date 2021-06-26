@@ -133,7 +133,11 @@ class Rain(TGBFPlugin):
             return
         # --- TEMP ---
 
-        msg = f"Rained <code>{amount_single}</code> {token_name} each to following users:\n"
+        if token_name == "CORN":
+            msg = f"DAAAMN! <code>{amount_single}</code> 🌽 RAINED ON FOLLOWING USERS:"
+        else:
+            msg = f"Rained <code>{amount_single}</code> {token_name} each to following users:\n"
+
         suffix = ", "
 
         # List of addresses that will get the airdrop

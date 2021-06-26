@@ -17,7 +17,6 @@ class Burnsix(TGBFPlugin):
             self.burn_callback,
             run_async=True))
 
-    @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def burn_callback(self, update: Update, context: CallbackContext):
         if len(context.args) != 1:

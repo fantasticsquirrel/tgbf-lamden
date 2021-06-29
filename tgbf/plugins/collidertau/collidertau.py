@@ -1,3 +1,4 @@
+import os
 import logging
 import tgbf.emoji as emo
 
@@ -36,7 +37,10 @@ class Collidertau(TGBFPlugin):
             return
 
         if len(context.args) != 1:
-            update.message.reply_text(
+            cl_path = os.path.join(self.get_res_path(), "collider.png")
+
+            update.message.reply_photo(
+                open(cl_path, "rb"),
                 self.get_usage(),
                 parse_mode=ParseMode.MARKDOWN)
             return
@@ -87,7 +91,7 @@ class Collidertau(TGBFPlugin):
         try:
             # Call contract
             collide = lamden.post_transaction(
-                stamps=120,
+                stamps=160,
                 contract=contract,
                 function=function,
                 kwargs={"amount": amount}
@@ -117,16 +121,24 @@ class Collidertau(TGBFPlugin):
 
         ex_link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
 
-        if result["result"].upper().startswith("'YOU WON'"):
+        message.edit_text(f"{emo.STARS} Experiment complete!")
+
+        if result["result"].upper().startswith("'YOU WON"):
             won_msg_list = result["result"].split(" ")
             won_lhc_amount = int(float(won_msg_list[5]))
 
             logging.info(f"User WON <code>{won_lhc_amount}</code> {self.TOKEN_SYMBOL}")
             msg = f"YOU WON <code>{won_lhc_amount}</code> {self.TOKEN_SYMBOL} {emo.MONEY_FACE}"
+
+            cl_path = os.path.join(self.get_res_path(), "discovery.png")
         else:
             logging.info(f"User LOST {amount} TAU")
             msg = f"You lost <code>{amount}</code> TAU {emo.SAD}"
 
-        message.edit_text(
-            f"{msg}\n{ex_link}",
-            parse_mode=ParseMode.HTML)
+            cl_path = os.path.join(self.get_res_path(), "failed.png")
+
+        message.reply_photo(
+            photo=open(cl_path, "rb"),
+            caption=f"{msg}\n{ex_link}",
+            parse_mode=ParseMode.HTML
+        )

@@ -1,0 +1,7 @@
+{
+    "handle": "collider_tau",
+    "category": "Lamden Tokens",
+    "description": "Send TAU and win LHC or lose",
+    "contract": "con_collider_007",
+    "function": "collide"
+}

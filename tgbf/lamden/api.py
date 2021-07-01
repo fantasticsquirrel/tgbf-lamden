@@ -145,7 +145,10 @@ class API:
             function=function,
             kwargs=kwargs)
 
+        logging.info(f"TRANSACTION: {tx}")
+
         res = requests.post(self.node_url, data=tx)
+
         logging.info(f"TRANSACTION({stamps}, {contract}, {function}, {kwargs}) -> {res.text}")
         return decode(res.text)
 

@@ -52,7 +52,7 @@ class Goldape(TGBFPlugin):
                         f"{market['token']['token_name']} ({market['token']['token_symbol']})\n\n"
                         f"Base Supply:\n"
                         f"{int(base_supply):,}\n\n"
-                        f"Reserves:\n"
+                        f"Liquidity Reserves:\n"
                         f"TAU: {float(market['reserves'][0]):,.8f}\n"
                         f"{market['token']['token_symbol']}: {float(market['reserves'][1]):,.8f}\n\n"
                         f"Current Price:\n"

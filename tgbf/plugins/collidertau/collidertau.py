@@ -133,7 +133,7 @@ class Collidertau(TGBFPlugin):
             cl_path = os.path.join(self.get_res_path(), "discovery.png")
         else:
             logging.info(f"User LOST {amount} TAU")
-            msg = f"You lost <code>{amount}</code> TAU {emo.SAD}"
+            msg = f"You lost <code>{amount}</code> TAU {emo.SAD} Try another experiment?"
 
             cl_path = os.path.join(self.get_res_path(), "failed.png")
 

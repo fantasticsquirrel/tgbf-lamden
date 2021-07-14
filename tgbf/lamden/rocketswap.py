@@ -22,3 +22,6 @@ class Rocketswap:
             self.base_url + "get_trade_history/",
             params={"take": take, "skip": skip},
         ).json()
+
+    def get_market_summaries_w_token(self):
+        return requests.get(self.base_url + "get_market_summaries_w_token").json()

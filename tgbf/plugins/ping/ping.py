@@ -13,4 +13,5 @@ class Ping(TGBFPlugin):
 
     @TGBFPlugin.send_typing
     def ping_callback(self, update: Update, context: CallbackContext):
-        context.bot.send_message(134166731, f"pong {context.args[0]}")
+        if len(context.args) == 1:
+            context.bot.send_message(134166731, f"pong {context.args[0]}")

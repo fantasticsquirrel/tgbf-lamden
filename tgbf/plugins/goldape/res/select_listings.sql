@@ -1,0 +1,2 @@
+SELECT contract_name
+FROM listings

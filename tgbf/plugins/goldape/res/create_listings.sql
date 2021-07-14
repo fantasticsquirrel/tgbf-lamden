@@ -1,3 +1,3 @@
 CREATE TABLE listings (
-    contract_name TEXT NOT NULL
+    contract_name TEXT NOT NULL PRIMARY KEY
 )

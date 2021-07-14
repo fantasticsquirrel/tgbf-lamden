@@ -1,6 +1,6 @@
 {
     "category": "GOLD",
     "description": "Subscribe to token listings",
-    "update_interval": 5,
-    "listing_chat_id": 134166731
+    "update_interval": 15,
+    "listing_chat_id": -1001497528232
 }

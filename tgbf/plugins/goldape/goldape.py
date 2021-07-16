@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import tgbf.emoji as emo
 import tgbf.utils as utl
@@ -34,23 +35,45 @@ class Goldape(TGBFPlugin):
 
     @TGBFPlugin.send_typing
     def goldape_callback(self, update: Update, context: CallbackContext):
-        if len(context.args) == 0:
-            cal_msg = f"{emo.HOURGLASS} Calculating {self.TOKEN_SYMBOL} amount..."
-            gt_path = os.path.join(self.get_res_path(), "goldape.jpg")
-            message = update.message.reply_photo(open(gt_path, "rb"), caption=cal_msg)
+        cal_msg = f"{emo.HOURGLASS} Checking subscription..."
+        gt_path = os.path.join(self.get_res_path(), "goldape.jpg")
+        message = update.message.reply_photo(open(gt_path, "rb"), caption=cal_msg)
 
+        usr_id = update.effective_user.id
+        wallet = self.get_wallet(usr_id)
+        lamden = Connect(wallet)
+
+        deposit = lamden.get_contract_variable(
+            self.config.get("contract"),
+            "data",
+            wallet.verifying_key
+        )
+
+        deposit = deposit["value"] if "value" in deposit else 0
+        deposit = float(str(deposit)) if deposit else float("0")
+
+        if deposit > 0:
             message.edit_caption(
-                f"<b>{self.TOKEN_SYMBOL} Ape Listings</b>\n\n"
-                f"Subscribe to the service by paying {self.get_amount_gold():,} {self.TOKEN_SYMBOL} "
-                f"or unsubscribe to get % of your subscription amount back based on time "
-                f"you were subscribed:\n\n"
-                f"subscribed for <  30 days --> 30%\n"
-                f"subscribed for <  90 days --> 50%\n"
-                f"subscribed for < 120 days --> 70%\n"
-                f"subscribed for > 120 days --> 80%\n"
+                f"You are currently subscribed to <b>GOLD Ape Listings</b>. If you "
+                f"unsubscribe, you will be removed from the listing channel and get "
+                f"part of your GOLD deposit back. If you are subscribed for...\n\n"
+                f"<code>"
+                f"... less than  30 days = 30% back\n"
+                f"... less than  90 days = 50% back\n"
+                f"... less than 120 days = 70% back\n"
+                f"... more than 120 days = 80% back\n"
                 f"</code>",
                 parse_mode=ParseMode.HTML,
-                reply_markup=self.get_buttons(update.effective_user.id))
+                reply_markup=self.get_unsubscribe_button(update.effective_user.id))
+        else:
+            message.edit_caption(
+                f"Pay <code>{int(self.get_amount_gold()):,}</code> {self.TOKEN_SYMBOL} "
+                f"to subscribe to <b>GOLD Ape Listings</b>. Once you are subscribed "
+                f"you will receive an invite link to a private group in which newly "
+                f"created token markets on Rocketswap are being listed as soon as "
+                f"they are available.",
+                parse_mode=ParseMode.HTML,
+                reply_markup=self.get_subscribe_button(update.effective_user.id))
 
     def check_tokens(self, context: CallbackContext):
         contract_list = list()
@@ -151,17 +174,37 @@ class Goldape(TGBFPlugin):
                 message.edit_caption(f"{emo.ERROR} {result}")
                 return
 
-            gold_returned = result["result"]
+            gold_returned = result["result"][result["result"].find("'")+1:result["result"].rfind("'")]
 
             ex_link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
 
             message.edit_caption(
                 f"You successfully unsubscribed from GOLD Ape Listings. "
-                f"{int(gold_returned):,} GOLD was returned.\n{ex_link}",
+                f"{int(float(gold_returned)):,} GOLD was returned.\n{ex_link}",
                 parse_mode=ParseMode.HTML)
 
             msg = f"{emo.DONE} Unsubscribed"
             context.bot.answer_callback_query(update.callback_query.id, msg)
+
+            msg = f"{emo.STOP} Remove user from APE: {update.effective_user}"
+
+            try:
+                # Notify Endogen
+                context.bot.send_message(134166731, msg)
+            except Exception as e:
+                msg = f"Could not notify Endogen about user leaving Ape: {e}"
+                logging.error(msg)
+                self.notify(msg)
+
+            """
+            try:
+                # Notify MLLR
+                context.bot.send_message(1674997512, msg)
+            except Exception as e:
+                msg = f"Could not notify MLLR about user leaving Ape: {e}"
+                logging.error(msg)
+                self.notify(msg)
+            """
 
         # --- SUBSCRIBE ---
         elif action == "SUB":
@@ -225,14 +268,38 @@ class Goldape(TGBFPlugin):
                 f"You will receive an invite to a listing channel in a DM.\n{ex_link}",
                 parse_mode=ParseMode.HTML)
 
-            # TODO: Send channel invite to user
-
-            msg = f"{emo.DONE} Subscribed & Invite sent"
+            msg = f"{emo.DONE} Subscribed and Invite sent"
             context.bot.answer_callback_query(update.callback_query.id, msg)
 
-    def get_buttons(self, user_id):
+            msg = f"{emo.DONE} Add new user to APE: {update.effective_user}"
+
+            # TODO: Bereite notofications auf so that direkt auf Username geklickt werden kann
+            try:
+                # Notify Endogen
+                context.bot.send_message(134166731, msg)
+            except Exception as e:
+                msg = f"Could not notify Endogen about user leaving Ape: {e}"
+                logging.error(msg)
+                self.notify(msg)
+
+            """
+            try:
+                # Notify MLLR
+                context.bot.send_message(1674997512, msg)
+            except Exception as e:
+                msg = f"Could not notify MLLR about user leaving Ape: {e}"
+                logging.error(msg)
+                self.notify(msg)
+            """
+
+    def get_subscribe_button(self, user_id):
         menu = utl.build_menu([
-            InlineKeyboardButton("Subscribe", callback_data=f"{self.name}|{user_id}|SUB"),
+            InlineKeyboardButton("Subscribe", callback_data=f"{self.name}|{user_id}|SUB")
+        ])
+        return InlineKeyboardMarkup(menu, resize_keyboard=True)
+
+    def get_unsubscribe_button(self, user_id):
+        menu = utl.build_menu([
             InlineKeyboardButton("Unsubscribe", callback_data=f"{self.name}|{user_id}|UNSUB")
         ])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
@@ -253,5 +320,8 @@ class Goldape(TGBFPlugin):
             self.config.get("contract"),
             "tau_amount"
         )
+
+        amount_tau = amount_tau["value"] if "value" in amount_tau else 0
+        amount_tau = float(str(amount_tau)) if amount_tau else float("0")
 
         return amount_tau / gold_price

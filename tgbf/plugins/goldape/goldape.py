@@ -76,6 +76,7 @@ class Goldape(TGBFPlugin):
                 reply_markup=self.get_subscribe_button(update.effective_user.id))
 
     def check_tokens(self, context: CallbackContext):
+        logging.info("Checking for new market on Rocketswap...")
         contract_list = list()
 
         listings = self.execute_sql(self.get_resource("select_listings.sql"))
@@ -137,6 +138,10 @@ class Goldape(TGBFPlugin):
         wallet = self.get_wallet(usr_id)
         lamden = Connect(wallet)
 
+        user = update.effective_user
+        name = user.first_name if not user.last_name else user.first_name + " " + user.last_name
+        username = f"@{user.username}" if user.username else ""
+
         action = data_list[2]
 
         # --- UNSUBSCRIBE ---
@@ -186,7 +191,7 @@ class Goldape(TGBFPlugin):
             msg = f"{emo.DONE} Unsubscribed"
             context.bot.answer_callback_query(update.callback_query.id, msg)
 
-            msg = f"{emo.STOP} Remove user from APE: {update.effective_user}"
+            msg = f"{emo.STOP} <b>Remove user from APE</b>\n{name} {username}"
 
             try:
                 # Notify Endogen
@@ -196,7 +201,6 @@ class Goldape(TGBFPlugin):
                 logging.error(msg)
                 self.notify(msg)
 
-            """
             try:
                 # Notify MLLR
                 context.bot.send_message(1674997512, msg)
@@ -204,7 +208,6 @@ class Goldape(TGBFPlugin):
                 msg = f"Could not notify MLLR about user leaving Ape: {e}"
                 logging.error(msg)
                 self.notify(msg)
-            """
 
         # --- SUBSCRIBE ---
         elif action == "SUB":
@@ -268,12 +271,8 @@ class Goldape(TGBFPlugin):
                 f"You will receive an invite to a listing channel in a DM.\n{ex_link}",
                 parse_mode=ParseMode.HTML)
 
-            msg = f"{emo.DONE} Subscribed and Invite sent"
-            context.bot.answer_callback_query(update.callback_query.id, msg)
+            msg = f"{emo.DONE} <b>Add user to APE</b>\n{name} {username}"
 
-            msg = f"{emo.DONE} Add new user to APE: {update.effective_user}"
-
-            # TODO: Bereite notofications auf so that direkt auf Username geklickt werden kann
             try:
                 # Notify Endogen
                 context.bot.send_message(134166731, msg)
@@ -282,7 +281,6 @@ class Goldape(TGBFPlugin):
                 logging.error(msg)
                 self.notify(msg)
 
-            """
             try:
                 # Notify MLLR
                 context.bot.send_message(1674997512, msg)
@@ -290,7 +288,6 @@ class Goldape(TGBFPlugin):
                 msg = f"Could not notify MLLR about user leaving Ape: {e}"
                 logging.error(msg)
                 self.notify(msg)
-            """
 
     def get_subscribe_button(self, user_id):
         menu = utl.build_menu([

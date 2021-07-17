@@ -157,6 +157,6 @@ class Sell(TGBFPlugin):
         tau_amount = result["result"][result["result"].find("'") + 1:result["result"].rfind("'")]
 
         message.edit_text(
-            f"{emo.DONE} Received <code>{int(float(tau_amount)):,}</code> TAU",
+            f"{emo.DONE} Received <code>{float(tau_amount):,.2f}</code> TAU",
             parse_mode=ParseMode.HTML
         )

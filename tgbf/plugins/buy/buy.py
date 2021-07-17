@@ -158,6 +158,6 @@ class Buy(TGBFPlugin):
         bought_amount = result["result"][result["result"].find("'") + 1:result["result"].rfind("'")]
 
         message.edit_text(
-            f"{emo.DONE} Received <code>{int(float(bought_amount)):,}</code> {token}",
+            f"{emo.DONE} Received <code>{float(bought_amount):,.2f}</code> {token}",
             parse_mode=ParseMode.HTML
         )

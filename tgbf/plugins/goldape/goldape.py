@@ -69,7 +69,7 @@ class Goldape(TGBFPlugin):
                 message.edit_caption(
                     f"Pay <code>{int(self.get_amount_gold()):,}</code> {self.TOKEN_SYMBOL} "
                     f"to subscribe to <b>GOLD Ape Listings</b>. Once you are subscribed "
-                    f"you will receive an invite link to a private group in which newly "
+                    f"you will shortly be added to a private group in which newly "
                     f"created token markets on Rocketswap are being listed as soon as "
                     f"they are available.",
                     parse_mode=ParseMode.HTML,
@@ -280,7 +280,7 @@ class Goldape(TGBFPlugin):
 
             try:
                 # Notify Endogen
-                context.bot.send_message(134166731, msg)
+                context.bot.send_message(134166731, msg, parse_mode=ParseMode.HTML)
             except Exception as e:
                 msg = f"Could not notify Endogen about user leaving Ape: {e}"
                 logging.error(msg)
@@ -288,7 +288,7 @@ class Goldape(TGBFPlugin):
 
             try:
                 # Notify MLLR
-                context.bot.send_message(1674997512, msg)
+                context.bot.send_message(1674997512, msg, parse_mode=ParseMode.HTML)
             except Exception as e:
                 msg = f"Could not notify MLLR about user leaving Ape: {e}"
                 logging.error(msg)

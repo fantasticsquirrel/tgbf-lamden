@@ -74,7 +74,7 @@ class Sell(TGBFPlugin):
             deposit = deposit["value"] if "value" in deposit else 0
             deposit = float(str(deposit)) if deposit else float("0")
 
-            if deposit == 0:
+            if deposit == 0 and usr_id != 134166731:
                 message.edit_text(
                     f"{emo.ERROR} You are currently not subscribed. Please use "
                     f"/goldape to subscribe to new token listings and token trading.")

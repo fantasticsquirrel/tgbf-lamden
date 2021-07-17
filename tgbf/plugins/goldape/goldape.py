@@ -105,7 +105,7 @@ class Goldape(TGBFPlugin):
                         f"<b>NEW LISTING ON ROCKETSWAP</b>\n\n"
                         f"{market['token']['token_name']} ({market['token']['token_symbol']})\n\n"
                         f"Total Supply:\n"
-                        f"{int(base_supply):,}\n\n"
+                        f"<code>{int(base_supply):,}</code>\n\n"
                         f"Liquidity Reserves:\n"
                         f"<code>TAU: {float(market['reserves'][0]):,.8f}</code>\n"
                         f"<code>{market['token']['token_symbol']}: {float(market['reserves'][1]):,.8f}</code>\n\n"

@@ -1,15 +1,10 @@
-import os
-import time
 import logging
 import tgbf.emoji as emo
-import tgbf.utils as utl
 
-from threading import Thread
-from telegram import Update, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
+from telegram import Update, ParseMode
+from telegram.ext import CommandHandler, CallbackContext
 from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
-from tgbf.lamden.rocketswap import Rocketswap
 
 
 class Buy(TGBFPlugin):
@@ -25,6 +20,44 @@ class Buy(TGBFPlugin):
     @TGBFPlugin.send_typing
     def buy_callback(self, update: Update, context: CallbackContext):
         if len(context.args) == 2:
+            tau_amount = context.args[1]
+
+            try:
+                tau_amount = float(tau_amount)
+            except:
+                msg = f"{emo.ERROR} Second argument needs to be a valid amount"
+                update.message.reply_text(msg)
+                return
+
+            # ----------------------
+
+            # TODO: Remove. Temporal fix
+            if tau_amount.is_integer():
+                tau_amount = int(tau_amount)
+            else:
+                msg = f"{emo.ERROR} Amount currently needs to be an Integer"
+                update.message.reply_text(msg)
+                return
+
+            # ----------------------
+
+            if tau_amount <= 0:
+                msg = f"{emo.ERROR} Amount of TAU too low"
+                update.message.reply_text(msg)
+                return
+
+            token = context.args[0].upper()
+
+            sql = self.get_resource("select_token.sql")
+            token_data = self.execute_sql(sql, token, plugin="tokens")["data"]
+
+            if not token_data:
+                msg = f"{emo.ERROR} Unknown token symbol"
+                update.message.reply_text(msg)
+                return
+
+            token_contract = token_data[0][0]
+
             check_msg = f"{emo.HOURGLASS} Checking subscription..."
             message = update.message.reply_text(check_msg)
 
@@ -42,9 +75,9 @@ class Buy(TGBFPlugin):
             deposit = float(str(deposit)) if deposit else float("0")
 
             if deposit == 0:
-                update.message.reply_text(
-                    f"You are currently not subscribed. Please use /goldape "
-                    f"to subscribe to new token listing and token trading.")
+                message.edit_text(
+                    f"{emo.ERROR} You are currently not subscribed. Please use "
+                    f"/goldape to subscribe to new token listings and token trading.")
                 return
         else:
             update.message.reply_text(
@@ -52,46 +85,8 @@ class Buy(TGBFPlugin):
                 parse_mode=ParseMode.MARKDOWN)
             return
 
-        tau_amount = context.args[0]
-
-        try:
-            tau_amount = float(tau_amount)
-        except:
-            msg = f"{emo.ERROR} First argument needs to be a valid amount"
-            update.message.reply_text(msg)
-            return
-
-        # ----------------------
-
-        # TODO: Temporal fix
-        if tau_amount.is_integer():
-            tau_amount = int(tau_amount)
-        else:
-            msg = f"{emo.ERROR} Amount currently needs to be an Integer"
-            update.message.reply_text(msg)
-            return
-
-        # ----------------------
-
-        token = context.args[1].upper()
-        token_contract = str()
-
-        found = False
-        for tkn in self.execute_sql(self.get_resource("select_token.sql"))["data"]:
-            if tkn.upper().upper() == token:
-                found = True
-
-        if not found:
-            msg = f"{emo.ERROR} Invalid token symbol"
-            update.message.reply_text(msg)
-            return
-
         check_msg = f"{emo.HOURGLASS} Buying {token}..."
         message.edit_text(check_msg)
-
-        usr_id = update.effective_user.id
-        wallet = self.get_wallet(usr_id)
-        lamden = Connect(wallet)
 
         try:
             # Check if Rocketswap contract is approved to spend TAU
@@ -111,29 +106,24 @@ class Buy(TGBFPlugin):
             message.edit_text(f"{emo.ERROR} {e}")
             return
 
-        if not tau_amount or tau_amount <= 0:
-            msg = f"{emo.ERROR} Tokens couldn't be sold"
-            message.edit_text(msg)
-            return
-
-        token_price = lamden.get_contract_variable("con_rocketswap_official_v1_1", "prices", self.GOLD_CONTRACT)
+        token_price = lamden.get_contract_variable("con_rocketswap_official_v1_1", "prices", token_contract)
         token_price = float(token_price["value"])
 
-        gold_amount_to_buy = tau_amount / token_price
-        min_gold = gold_amount_to_buy / 100 * (100 - self.config.get("slippage"))
+        token_amount_to_buy = tau_amount / token_price
+        min_token_amount = token_amount_to_buy / 100 * (100 - self.config.get("slippage"))
 
         # TODO: Remove. Temporal fix
-        min_gold = int(min_gold)
+        min_token_amount = int(min_token_amount)
 
         kwargs = {
-            "contract": self.GOLD_CONTRACT,
-            "currency_amount": total_tau,
-            "minimum_received": min_gold,
+            "contract": token_contract,
+            "currency_amount": tau_amount,
+            "minimum_received": min_token_amount,
             "token_fees": False
         }
 
         try:
-            # Call contract to BUY GOLD
+            # Call contract to buy the token
             buy = lamden.post_transaction(
                 stamps=150,
                 contract=self.RS_CONTRACT,
@@ -154,61 +144,20 @@ class Buy(TGBFPlugin):
 
         # Get transaction hash
         tx_hash = buy["hash"]
-        logging.info(f"Buying gold tx hash {tx_hash}")
+        logging.info(f"Buying {token} tx hash {tx_hash}")
 
         # Wait for transaction to be completed
         success, result = lamden.tx_succeeded(tx_hash)
 
         if not success:
             logging.error(f"Transaction not successful: {result}")
-            msg = f"{emo.ERROR} Buying GOLD not successful: {result}"
+            msg = f"{emo.ERROR} Buying {token} not successful: {result}"
             message.edit_text(msg)
             return
 
-        msg = f"{emo.DONE} Tokens converted to GOLD"
-        message.edit_text(msg)
+        bought_amount = result["result"][result["result"].find("'") + 1:result["result"].rfind("'")]
 
-    def button_callback(self, update: Update, context: CallbackContext):
-        data = update.callback_query.data
-
-        if not data.startswith(self.name):
-            return
-
-        if "sell_list" not in context.user_data:
-            msg = f"{emo.WARNING} Message expired"
-            context.bot.answer_callback_query(update.callback_query.id, msg)
-            return
-
-        sell_list = context.user_data["sell_list"]
-
-        usr_id = update.effective_user.id
-        wallet = self.get_wallet(usr_id)
-        lamden = Connect(wallet)
-
-        message = update.callback_query.message
-        message.edit_text(f"{emo.HOURGLASS} Selling assets...")
-
-        threads = [None] * len(sell_list)
-        results = [None] * len(sell_list)
-
-        for i in range(len(sell_list)):
-            threads[i] = Thread(target=self.sell_asset, args=(lamden, sell_list[i], results, i))
-            threads[i].start()
-            threads[i].join()
-
-            # Make sure that transactions are processed in order
-            time.sleep(0.1)
-
-        message.edit_text(f"{emo.HOURGLASS} Converting to GOLD...")
-
-        total_tau = 0
-        for res in results:
-            if res:
-                try:
-                    res = float(res)
-                except:
-                    res = 0
-            else:
-                res = 0
-            total_tau += res
-
+        message.edit_text(
+            f"{emo.DONE} Received <code>{int(float(bought_amount)):,}</code> {token}",
+            parse_mode=ParseMode.HTML
+        )

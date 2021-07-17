@@ -1,4 +1,6 @@
 {
     "category": "GOLD Token",
-    "description": "Buy tokens on Rocketswap"
+    "description": "Buy tokens on Rocketswap",
+    "contract": "con_gold_ape_004",
+    "slippage": 49
 }

@@ -67,7 +67,7 @@ class Goldape(TGBFPlugin):
                     reply_markup=self.get_unsubscribe_button(update.effective_user.id))
             else:
                 message.edit_caption(
-                    f"Pay <code>{int(self.get_amount_gold()):,}</code> {self.TOKEN_SYMBOL} "
+                    f"Stake <code>{int(self.get_amount_gold()):,}</code> {self.TOKEN_SYMBOL} "
                     f"to subscribe to <b>GOLD Ape</b>. Once you are subscribed "
                     f"you will shortly be added to a private group in which newly "
                     f"created token markets on Rocketswap are being listed as soon as "

@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 import tgbf.emoji as emo
 import tgbf.utils as utl
@@ -35,45 +34,51 @@ class Goldape(TGBFPlugin):
 
     @TGBFPlugin.send_typing
     def goldape_callback(self, update: Update, context: CallbackContext):
-        cal_msg = f"{emo.HOURGLASS} Checking subscription..."
-        gt_path = os.path.join(self.get_res_path(), "goldape.jpg")
-        message = update.message.reply_photo(open(gt_path, "rb"), caption=cal_msg)
+        if len(context.args) == 0:
+            cal_msg = f"{emo.HOURGLASS} Checking subscription..."
+            gt_path = os.path.join(self.get_res_path(), "goldape.jpg")
+            message = update.message.reply_photo(open(gt_path, "rb"), caption=cal_msg)
 
-        usr_id = update.effective_user.id
-        wallet = self.get_wallet(usr_id)
-        lamden = Connect(wallet)
+            usr_id = update.effective_user.id
+            wallet = self.get_wallet(usr_id)
+            lamden = Connect(wallet)
 
-        deposit = lamden.get_contract_variable(
-            self.config.get("contract"),
-            "data",
-            wallet.verifying_key
-        )
+            deposit = lamden.get_contract_variable(
+                self.config.get("contract"),
+                "data",
+                wallet.verifying_key
+            )
 
-        deposit = deposit["value"] if "value" in deposit else 0
-        deposit = float(str(deposit)) if deposit else float("0")
+            deposit = deposit["value"] if "value" in deposit else 0
+            deposit = float(str(deposit)) if deposit else float("0")
 
-        if deposit > 0:
-            message.edit_caption(
-                f"You are currently subscribed to <b>GOLD Ape Listings</b>. If you "
-                f"unsubscribe, you will be removed from the listing channel and get "
-                f"part of your GOLD deposit back. If you are subscribed for...\n\n"
-                f"<code>"
-                f"... less than  30 days = 30% back\n"
-                f"... less than  90 days = 50% back\n"
-                f"... less than 120 days = 70% back\n"
-                f"... more than 120 days = 80% back\n"
-                f"</code>",
-                parse_mode=ParseMode.HTML,
-                reply_markup=self.get_unsubscribe_button(update.effective_user.id))
+            if deposit > 0:
+                message.edit_caption(
+                    f"You are currently subscribed to <b>GOLD Ape Listings</b>. If you "
+                    f"unsubscribe, you will be removed from the listing channel and get "
+                    f"part of your GOLD deposit back. If you are subscribed for...\n\n"
+                    f"<code>"
+                    f"... less than  30 days = 30% back\n"
+                    f"... less than  90 days = 50% back\n"
+                    f"... less than 120 days = 70% back\n"
+                    f"... more than 120 days = 80% back\n"
+                    f"</code>",
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=self.get_unsubscribe_button(update.effective_user.id))
+            else:
+                message.edit_caption(
+                    f"Pay <code>{int(self.get_amount_gold()):,}</code> {self.TOKEN_SYMBOL} "
+                    f"to subscribe to <b>GOLD Ape Listings</b>. Once you are subscribed "
+                    f"you will receive an invite link to a private group in which newly "
+                    f"created token markets on Rocketswap are being listed as soon as "
+                    f"they are available.",
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=self.get_subscribe_button(update.effective_user.id))
         else:
-            message.edit_caption(
-                f"Pay <code>{int(self.get_amount_gold()):,}</code> {self.TOKEN_SYMBOL} "
-                f"to subscribe to <b>GOLD Ape Listings</b>. Once you are subscribed "
-                f"you will receive an invite link to a private group in which newly "
-                f"created token markets on Rocketswap are being listed as soon as "
-                f"they are available.",
-                parse_mode=ParseMode.HTML,
-                reply_markup=self.get_subscribe_button(update.effective_user.id))
+            update.message.reply_text(
+                self.get_usage(),
+                parse_mode=ParseMode.MARKDOWN)
+            return
 
     def check_tokens(self, context: CallbackContext):
         logging.info("Checking for new market on Rocketswap...")

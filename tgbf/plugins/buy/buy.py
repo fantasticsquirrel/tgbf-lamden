@@ -162,7 +162,10 @@ class Buy(TGBFPlugin):
 
         bought_amount = result["result"][result["result"].find("'") + 1:result["result"].rfind("'")]
 
+        link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
+
         message.edit_text(
-            f"{emo.DONE} Received <code>{float(bought_amount):,.2f}</code> {token}",
-            parse_mode=ParseMode.HTML
+            f"{emo.DONE} Received <code>{float(bought_amount):,.2f}</code> {token}\n{link}",
+            parse_mode=ParseMode.HTML,
+            disable_web_page_preview=True
         )

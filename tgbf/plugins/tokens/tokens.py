@@ -29,7 +29,7 @@ class Tokens(TGBFPlugin):
                     self.get_resource("insert_token.sql"),
                     token["contract_name"],
                     token["token_name"],
-                    token["token_symbol"],
+                    token["token_symbol"].upper(),
                     token["token_base64_png"],
                     token["token_base64_svg"]
                 )

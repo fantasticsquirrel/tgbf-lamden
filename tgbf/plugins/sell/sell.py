@@ -107,6 +107,11 @@ class Sell(TGBFPlugin):
             return
 
         token_price = lamden.get_contract_variable("con_rocketswap_official_v1_1", "prices", token_contract)
+
+        if not token_price["value"]:
+            message.edit_text(f"{emo.ERROR} Token not yet listed on Rocketswap")
+            return
+
         token_price = float(token_price["value"])
 
         min_total = token_price / 100 * (100 - self.config.get("slippage"))

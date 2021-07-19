@@ -26,7 +26,7 @@ class Goldape_lpc(TGBFPlugin):
                 exclusion_list.append(excl[0])
 
         new_list = list()
-        days_to_avg = self.config.get("hour_to_avg")
+        days_to_avg = self.config.get("days_to_avg")
         hours_to_avg = "-" + str(days_to_avg * 24) + " hours"
         chg_perc = self.config.get("chg_perc")
         sql = self.get_resource("ape_pc_select_large_trades.sql", plugin="trades")

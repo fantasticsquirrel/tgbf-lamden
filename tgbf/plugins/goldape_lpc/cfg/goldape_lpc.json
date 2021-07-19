@@ -1,0 +1,8 @@
+{
+    "category": "GOLD Token",
+    "description": "Check for large price changes",
+    "update_interval": 30,
+    "listing_chat_id": -1001596027953,
+    "hour_to_avg": 3,
+    "chg_perc": 20
+}

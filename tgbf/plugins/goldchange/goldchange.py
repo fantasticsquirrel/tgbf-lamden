@@ -5,18 +5,18 @@ from telegram import ParseMode
 from telegram.ext import CallbackContext
 from tgbf.plugin import TGBFPlugin
 
-class Goldape_lpc(TGBFPlugin):
+
+class Goldchange(TGBFPlugin):
 
     def load(self):
-
-        if not self.table_exists("ape_pc_list"):
+        if not self.table_exists("price_change"):
             sql = self.get_resource("create_list.sql")
             self.execute_sql(sql)
 
         update_interval = self.config.get("update_interval")
-        self.run_repeating(self.check_lpc, update_interval)
+        self.run_repeating(self.check_price_change, update_interval)
 
-    def check_lpc(self, context: CallbackContext):
+    def check_price_change(self, context: CallbackContext):
         logging.info("Checking for large price changes...")
 
         exclusion_list = list()
@@ -29,7 +29,7 @@ class Goldape_lpc(TGBFPlugin):
         days_to_avg = self.config.get("days_to_avg")
         hours_to_avg = "-" + str(days_to_avg * 24) + " hours"
         chg_perc = self.config.get("chg_perc")
-        sql = self.get_resource("ape_pc_select_large_trades.sql", plugin="trades")
+        sql = self.get_resource("select_large_trades.sql")
         new_recs = self.execute_sql(sql, hours_to_avg, chg_perc, plugin="trades")
 
         if new_recs and new_recs["data"]:
@@ -39,7 +39,6 @@ class Goldape_lpc(TGBFPlugin):
                     logging.info(f"New large price change found: {new_rec}")
 
                     try:
-                        pretty_perc = ""
                         if new_rec[3] > 0:
                             pretty_perc = "+" + str(round(new_rec[3])) + "%"
                         else:
@@ -47,10 +46,11 @@ class Goldape_lpc(TGBFPlugin):
 
                         self.bot.updater.bot.send_message(
                             self.config.get("listing_chat_id"),
-                            f"<b>LARGE PRICE CHANGE ON ROCKETSWAP</b>\n\n"
-                            f"{new_rec[0]}:<code>   {pretty_perc}</code>\n"
-                            f"<code>Average Price ({str(days_to_avg)}D):  {float(new_rec[1]):,.8f}</code>\n"
-                            f"<code>Current Price:       {float(new_rec[2]):,.8f}</code>\n",
+                            f"<b>LARGE PRICE CHANGE ON ROCKETSWAP</b>\n"
+                            f"Based on average price of last {days_to_avg}d\n\n"
+                            f"{new_rec[0]}: <code>{pretty_perc}</code>\n"
+                            f"<code>Average Price: {float(new_rec[1]):,.8f}</code>\n"
+                            f"<code>Current Price: {float(new_rec[2]):,.8f}</code>\n",
                             parse_mode=ParseMode.HTML
                         )
                         self.execute_sql(self.get_resource("insert_list.sql"), new_rec[0], new_rec[1], new_rec[2], new_rec[3], datetime.datetime.now())

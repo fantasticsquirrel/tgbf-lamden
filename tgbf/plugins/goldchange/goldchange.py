@@ -53,7 +53,13 @@ class Goldchange(TGBFPlugin):
                             f"<code>Current Price: {float(new_rec[2]):,.8f}</code>\n",
                             parse_mode=ParseMode.HTML
                         )
-                        self.execute_sql(self.get_resource("insert_list.sql"), new_rec[0], new_rec[1], new_rec[2], new_rec[3], datetime.datetime.now())
+                        self.execute_sql(
+                            self.get_resource("insert_list.sql"),
+                            new_rec[0],
+                            new_rec[1],
+                            new_rec[2],
+                            new_rec[3],
+                            datetime.datetime.now())
 
                     except Exception as e:
                         self.notify(f"Can't notify about new price change: {e}")

@@ -6,8 +6,8 @@ FROM (
               , COALESCE(MIN(t_agg.time), t_last.time) AS first_time
               , t_last.price AS last_price
               , t_last.time AS last_time
-              , IIF(t_last.price <> 0,
-                    ROUND(ROUND(1 - (COALESCE(AVG(t_agg.price), t_last.price) / t_last.price), 2) * 100), 0) AS chg_perc
+              , CASE WHEN t_last.price <> 0
+                    THEN ROUND(ROUND(1 - (COALESCE(AVG(t_agg.price), t_last.price) / t_last.price), 2) * 100) ELSE  0 END  AS chg_perc
          FROM trades t1
                   LEFT OUTER JOIN (
                                      SELECT lt1.*

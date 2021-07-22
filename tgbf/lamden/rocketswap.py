@@ -25,3 +25,15 @@ class Rocketswap:
 
     def get_market_summaries_w_token(self):
         return requests.get(self.base_url + "get_market_summaries_w_token").json()
+
+    def user_lp_balance(self, address):
+        return requests.get(self.base_url + "user_lp_balance/" + address).json()
+
+    def get_pairs(self, contract):
+        return requests.get(self.base_url + "get_pairs/" + contract).json()
+
+    def user_staking_info(self, address):
+        return requests.get(self.base_url + "user_staking_info/" + address).json()
+
+    def staking_meta(self):
+        return requests.get(self.base_url + "staking_meta").json()

@@ -48,7 +48,7 @@ class Rsprice(TGBFPlugin):
             return
 
         url = self.config.get("price_url")
-        url = f"{lamden.node_url}{url}{contract}"
+        url = f"{lamden.node_url}{url}{contract}"  # TODO: Replace that with API().get_contract_variables()
 
         try:
             res = requests.get(url)

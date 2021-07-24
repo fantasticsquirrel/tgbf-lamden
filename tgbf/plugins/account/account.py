@@ -165,15 +165,22 @@ class Account(TGBFPlugin):
         self.calculate_value(address, message)
 
     def calculate_value(self, address, message):
-        message.edit_text(f"{emo.HOURGLASS} Crunching data...")
+        message.edit_text(f"{emo.HOURGLASS} Crunching data. This will take a while. Do not "
+                          f"trigger the command again. Wait until it's finished.")
 
         rs = Rocketswap()
+
+        stake_tau = dict()
+        lp_tau = dict()
+        token_tau = dict()
+
+        msg = str()
+        total_tau_value = 0
 
         # ---- STAKING ----
 
         staking_meta = rs.staking_meta()
 
-        stake_tau = dict()
         staked_lp = dict()
         for staking_contract, staking_data in rs.user_staking_info(address).items():
             yield_info = staking_data["yield_info"]
@@ -198,69 +205,87 @@ class Account(TGBFPlugin):
                         stake_tau[stake_contract] = self.get_tau_value(stake_contract, user_staked)
                         break
 
+                tmp_msg = str()
+                total_stake_value = 0
+                for contract, tau_value in stake_tau.items():
+                    tmp_msg += f"<code>{contract}\n{tau_value:,} TAU</code>\n"
+                    total_stake_value += int(tau_value)
+                    total_tau_value += int(tau_value)
+
+                if total_stake_value > 0:
+                    msg += f"<b>Stake Value</b>\n"
+                    msg += tmp_msg
+
         # ---- LP ----
 
-        lp_tau = dict()
-        for contract, user_lp in rs.user_lp_balance(address)["points"].items():
-            for staked_contract, staked_amount in staked_lp.items():
-                if staked_contract == contract:
-                    user_lp = float(user_lp) + staked_amount
-                    break
+        try:
+            user_lp_api = rs.user_lp_balance(address)
 
-            pair_data = rs.get_pairs(contract)[contract]
+            if user_lp_api:
+                for contract, user_lp in user_lp_api["points"].items():
+                    for staked_contract, staked_amount in staked_lp.items():
+                        if staked_contract == contract:
+                            user_lp = float(user_lp) + staked_amount
+                            break
 
-            total_lp = pair_data["lp"]
-            lp_share = float(user_lp) / float(total_lp) * 100
+                    pair_data = rs.get_pairs(contract)[contract]
 
-            total_tau_value = float(pair_data["reserves"][0]) * 2
-            tau_value_share = total_tau_value / 100 * lp_share
+                    total_lp = pair_data["lp"]
+                    lp_share = float(user_lp) / float(total_lp) * 100
 
-            if int(tau_value_share) == 0:
-                continue
+                    total_tau_value = float(pair_data["reserves"][0]) * 2
+                    tau_value_share = total_tau_value / 100 * lp_share
 
-            lp_tau[contract] = int(tau_value_share)
+                    if int(tau_value_share) == 0:
+                        continue
+
+                    lp_tau[contract] = int(tau_value_share)
+
+                tmp_msg = str()
+                total_lp_value = 0
+                for contract, tau_value in lp_tau.items():
+                    tmp_msg += f"<code>{contract}\n{tau_value:,} TAU</code>\n"
+                    total_lp_value += tau_value
+                    total_tau_value += tau_value
+
+                if total_lp_value > 0:
+                    msg += "<b>LP Value</b>\n"
+                    msg += tmp_msg
+        except:
+            pass
 
         # ---- TOKENS ----
 
-        balances = rs.balances(address)
+        lamden = Connect()
 
-        token_tau = dict()
-        for contract, balance in balances["balances"].items():
-            if contract == "currency":
-                token_tau["currency"] = balance
-            else:
-                tau_price = Connect().get_contract_variable(
-                    self.config.get("rocketswap_contract"),
-                    "prices",
-                    contract
-                )
+        try:
+            balances = rs.balances(address)
 
-                tau_price = tau_price["value"] if "value" in tau_price else 0
-                tau_price = float(str(tau_price)) if tau_price else float("0")
+            for contract, balance in balances["balances"].items():
+                if contract == "currency":
+                    token_tau["currency"] = int(float(balance))
+                else:
+                    tau_price = lamden.get_contract_variable(
+                        self.config.get("rocketswap_contract"),
+                        "prices",
+                        contract
+                    )
 
-                token_tau[contract] = balance * tau_price
+                    tau_price = tau_price["value"] if "value" in tau_price else 0
+                    tau_price = float(str(tau_price)) if tau_price else float("0")
 
-        # LP
-        msg = "<b>LP Value</b>\n"
-        total_tau_value = 0
-        for contract, tau_value in lp_tau.items():
-            msg += f"<code>{contract}\n{tau_value:,} TAU</code>\n"
-            total_tau_value += tau_value
+                    token_tau[contract] = int(float(balance) * tau_price)
 
-        # Staking
-        msg += f"\n<b>Stake Value</b>\n"
-        for contract, tau_value in stake_tau.items():
-            msg += f"<code>{contract}\n{tau_value:,} TAU</code>\n"
-            total_tau_value += tau_value
+            total_token_value = 0
+            for contract, tau_value in token_tau.items():
+                total_token_value += tau_value
+                total_tau_value += tau_value
 
-        # Tokens
-        total_token_value = 0
-        msg += f"\n<b>Remaining Token Value</b>\n"
-        for contract, tau_value in stake_tau.items():
-            total_token_value += tau_value
-            total_tau_value += tau_value
-
-        msg += f"{int(total_token_value)} TAU"
+            if total_token_value > 0:
+                msg += f"\n<b>Remaining Token Value</b>\n"
+                msg += f"<code>{int(total_token_value):,} TAU</code>\n"
+        except Exception as e:
+            logging.error(e)
 
         data = CoinGeckoAPI().get_coin_by_id(self.CGID)
 
@@ -271,7 +296,7 @@ class Account(TGBFPlugin):
 
         price_msg = f"<b>Total Value</b>\n" \
                     f"<code>" \
-                    f"TAU {total_tau_value:,}\n" \
+                    f"TAU {int(total_tau_value):,}\n" \
                     f"USD {usd:,}\n" \
                     f"EUR {eur:,}\n" \
                     f"BTC {btc:,.5}\n" \

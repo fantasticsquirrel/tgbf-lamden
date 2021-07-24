@@ -62,35 +62,40 @@ class Buy(TGBFPlugin):
 
             token_contract = token_data[0][0]
 
-            check_msg = f"{emo.HOURGLASS} Checking subscription..."
-            message = update.message.reply_text(check_msg)
-
             usr_id = update.effective_user.id
             wallet = self.get_wallet(usr_id)
             lamden = Connect(wallet)
 
-            deposit = lamden.get_contract_variable(
-                self.config.get("contract"),
-                "data",
-                wallet.verifying_key
-            )
+            message = update.message
+            buying_msg = f"{emo.HOURGLASS} Buying {token}..."
 
-            deposit = deposit["value"] if "value" in deposit else 0
-            deposit = float(str(deposit)) if deposit else float("0")
+            if token_contract not in ["con_gold_contract", "con_collider_contract"]:
+                check_msg = f"{emo.HOURGLASS} Checking subscription..."
+                message.reply_text(check_msg)
 
-            if deposit == 0 and usr_id != 134166731:
-                message.edit_text(
-                    f"{emo.ERROR} You are currently not subscribed. Please use "
-                    f"/goldape to subscribe to new token listings and token trading.")
-                return
+                deposit = lamden.get_contract_variable(
+                    self.config.get("contract"),
+                    "data",
+                    wallet.verifying_key
+                )
+
+                deposit = deposit["value"] if "value" in deposit else 0
+                deposit = float(str(deposit)) if deposit else float("0")
+
+                if deposit == 0 and usr_id not in self.config.get("whitelist"):
+                    message.edit_text(
+                        f"{emo.ERROR} You are currently not subscribed. Please use "
+                        f"/goldape to subscribe to new token listings and token trading.")
+                    return
+
+                message.edit_text(buying_msg)
+            else:
+                message.reply_text(buying_msg)
         else:
             update.message.reply_text(
                 self.get_usage(),
                 parse_mode=ParseMode.MARKDOWN)
             return
-
-        check_msg = f"{emo.HOURGLASS} Buying {token}..."
-        message.edit_text(check_msg)
 
         try:
             # Check if Rocketswap contract is approved to spend TAU

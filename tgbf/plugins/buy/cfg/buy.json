@@ -2,5 +2,8 @@
     "category": "GOLD Token",
     "description": "Buy tokens on Rocketswap",
     "contract": "con_gold_ape_004",
-    "slippage": 49
+    "slippage": 49,
+    "whitelist": [
+        134166731
+    ]
 }

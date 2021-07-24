@@ -15,7 +15,6 @@ from tgbf.plugin import TGBFPlugin
 class Account(TGBFPlugin):
 
     CGID = "lamden"
-    RS_CONTRACT = "con_rocketswap_official_v1_1"
 
     def load(self):
         self.add_handler(CommandHandler(
@@ -42,20 +41,35 @@ class Account(TGBFPlugin):
                 parse_mode=ParseMode.MARKDOWN)
             return
 
-        message = update.message.reply_text(
-            f"{emo.HOURGLASS} Calculating LHC amount..."
+        cal_msg = f"{emo.HOURGLASS} Checking subscription..."
+        message = update.message.reply_text(cal_msg)
+
+        usr_id = update.effective_user.id
+        wallet = self.get_wallet(usr_id)
+        lamden = Connect(wallet)
+
+        deposit = lamden.get_contract_variable(
+            self.config.get("lhc_contract"),
+            "data",
+            wallet.verifying_key
         )
 
-        context.user_data["message"] = message
-        context.user_data["address"] = address
-        context.user_data["lhc_amount"] = int(self.get_amount_lhc())
+        deposit = deposit["value"] if "value" in deposit else 0
+        deposit = float(str(deposit)) if deposit else float("0")
 
-        message.edit_text(
-            f"Pay <code>{context.user_data['lhc_amount']}</code> LHC "
-            f"to see the total value of the provided address",
-            reply_markup=self.get_button(update.effective_user.id),
-            parse_mode=ParseMode.HTML
-        )
+        if deposit > 0 or wallet.verifying_key in self.config.get("whitelist"):
+            self.calculate_value(address, message)
+        else:
+            context.user_data["message"] = message
+            context.user_data["address"] = address
+            context.user_data["lhc_amount"] = int(self.get_amount_lhc())
+
+            message.edit_text(
+                f"Pay <code>{context.user_data['lhc_amount']}</code> LHC "
+                f"to see the total value of the provided address",
+                reply_markup=self.get_button(update.effective_user.id),
+                parse_mode=ParseMode.HTML
+            )
 
     def get_amount_lhc(self):
         lhc_price = Connect().get_contract_variable(
@@ -100,13 +114,15 @@ class Account(TGBFPlugin):
         if int(data_list[1]) != update.effective_user.id:
             return
 
-        usr_id = update.effective_user.id
-        wallet = self.get_wallet(usr_id)
-        lamden = Connect(wallet)
-
         message = context.user_data["message"]
         address = context.user_data["address"]
         lhc_amount = context.user_data["lhc_amount"]
+
+        message.reply_text(f"{emo.HOURGLASS} Paying LHC fee...")
+
+        usr_id = update.effective_user.id
+        wallet = self.get_wallet(usr_id)
+        lamden = Connect(wallet)
 
         try:
             # Send LHC
@@ -146,7 +162,14 @@ class Account(TGBFPlugin):
                 disable_web_page_preview=True)
             return
 
+        self.calculate_value(address, message)
+
+    def calculate_value(self, address, message):
+        message.edit_text(f"{emo.HOURGLASS} Crunching data...")
+
         rs = Rocketswap()
+
+        # ---- STAKING ----
 
         staking_meta = rs.staking_meta()
 
@@ -175,6 +198,8 @@ class Account(TGBFPlugin):
                         stake_tau[stake_contract] = self.get_tau_value(stake_contract, user_staked)
                         break
 
+        # ---- LP ----
+
         lp_tau = dict()
         for contract, user_lp in rs.user_lp_balance(address)["points"].items():
             for staked_contract, staked_amount in staked_lp.items():
@@ -195,16 +220,47 @@ class Account(TGBFPlugin):
 
             lp_tau[contract] = int(tau_value_share)
 
+        # ---- TOKENS ----
+
+        balances = rs.balances(address)
+
+        token_tau = dict()
+        for contract, balance in balances["balances"].items():
+            if contract == "currency":
+                token_tau["currency"] = balance
+            else:
+                tau_price = Connect().get_contract_variable(
+                    self.config.get("rocketswap_contract"),
+                    "prices",
+                    contract
+                )
+
+                tau_price = tau_price["value"] if "value" in tau_price else 0
+                tau_price = float(str(tau_price)) if tau_price else float("0")
+
+                token_tau[contract] = balance * tau_price
+
+        # LP
         msg = "<b>LP Value</b>\n"
         total_tau_value = 0
         for contract, tau_value in lp_tau.items():
             msg += f"<code>{contract}\n{tau_value:,} TAU</code>\n"
             total_tau_value += tau_value
 
+        # Staking
         msg += f"\n<b>Stake Value</b>\n"
         for contract, tau_value in stake_tau.items():
             msg += f"<code>{contract}\n{tau_value:,} TAU</code>\n"
             total_tau_value += tau_value
+
+        # Tokens
+        total_token_value = 0
+        msg += f"\n<b>Remaining Token Value</b>\n"
+        for contract, tau_value in stake_tau.items():
+            total_token_value += tau_value
+            total_tau_value += tau_value
+
+        msg += f"{int(total_token_value)} TAU"
 
         data = CoinGeckoAPI().get_coin_by_id(self.CGID)
 

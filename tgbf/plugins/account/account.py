@@ -214,7 +214,7 @@ class Account(TGBFPlugin):
 
                 if total_stake_value > 0:
                     msg += f"<b>Stake Value</b>\n"
-                    msg += tmp_msg
+                    msg += f"{tmp_msg}\n"
 
         # ---- LP ----
 
@@ -250,7 +250,7 @@ class Account(TGBFPlugin):
 
                 if total_lp_value > 0:
                     msg += "<b>LP Value</b>\n"
-                    msg += tmp_msg
+                    msg += f"{tmp_msg}\n"
         except:
             pass
 
@@ -282,7 +282,7 @@ class Account(TGBFPlugin):
                 total_tau_value += tau_value
 
             if total_token_value > 0:
-                msg += f"\n<b>Remaining Token Value</b>\n"
+                msg += f"<b>Token Value</b>\n"
                 msg += f"<code>{int(total_token_value):,} TAU</code>\n"
         except Exception as e:
             logging.error(e)

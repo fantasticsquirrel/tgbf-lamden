@@ -66,13 +66,12 @@ class Buy(TGBFPlugin):
             wallet = self.get_wallet(usr_id)
             lamden = Connect(wallet)
 
-            message = update.message
+            check_msg = f"{emo.HOURGLASS} Checking subscription..."
+            message = update.message.reply_text(check_msg)
+
             buying_msg = f"{emo.HOURGLASS} Buying {token}..."
 
             if token_contract not in ["con_gold_contract", "con_collider_contract"]:
-                check_msg = f"{emo.HOURGLASS} Checking subscription..."
-                message.reply_text(check_msg)
-
                 deposit = lamden.get_contract_variable(
                     self.config.get("contract"),
                     "data",
@@ -90,7 +89,7 @@ class Buy(TGBFPlugin):
 
                 message.edit_text(buying_msg)
             else:
-                message.reply_text(buying_msg)
+                message.edit_text(buying_msg)
         else:
             update.message.reply_text(
                 self.get_usage(),

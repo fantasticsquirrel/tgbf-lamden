@@ -3,6 +3,6 @@
     "description": "Determine total value of an address",
     "rocketswap_contract": "con_rocketswap_official_v1_1",
     "lhc_contract": "con_collider_contract",
-    "tau_price": 5,
+    "tau_amount": 5,
     "send_lhc_to": "f1157473870bd3ebc4cd4d23fca464423c1dd6acef7148ea40ad4b2d840204cd"
 }

@@ -4,6 +4,7 @@ import datetime
 from telegram import ParseMode
 from telegram.ext import CallbackContext
 from tgbf.plugin import TGBFPlugin
+from time import sleep
 
 
 class Goldchange(TGBFPlugin):
@@ -30,7 +31,20 @@ class Goldchange(TGBFPlugin):
         hours_to_avg = "-" + str(days_to_avg * 24) + " hours"
         chg_perc = self.config.get("chg_perc")
         sql = self.get_resource("select_large_trades.sql")
-        new_recs = self.execute_sql(sql, hours_to_avg, chg_perc, plugin="trades")
+
+        sleep_time = 2
+        retry_cnt = 3
+        new_recs = None
+
+        for x in range(0, retry_cnt):
+            if not new_recs:
+                try:
+                    new_recs = self.execute_sql(sql, hours_to_avg, chg_perc, plugin="trades")
+                except Exception as e:
+                    logging.info("GoldChange exception attempting to query trades: " + str(e))
+                    logging.info("GoldChange pause and try again... pass: " + str(x))
+                    sleep(sleep_time)
+                    pass
 
         if new_recs and new_recs["data"]:
             for new_rec in new_recs["data"]:

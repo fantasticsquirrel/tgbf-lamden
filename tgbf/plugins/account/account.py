@@ -276,14 +276,16 @@ class Account(TGBFPlugin):
 
                     token_tau[contract] = int(float(balance) * tau_price)
 
+            tmp_msg = str()
             total_token_value = 0
             for contract, tau_value in token_tau.items():
+                tmp_msg += f"<code>{contract}\n{tau_value:,} TAU</code>\n"
                 total_token_value += int(tau_value)
                 total_tau_value += int(tau_value)
 
             if total_token_value > 0:
                 msg += f"<b>Remaining Token Value</b>\n"
-                msg += f"<code>{int(total_token_value):,} TAU</code>\n"
+                msg += f"{tmp_msg}\n"
         except:
             pass
 

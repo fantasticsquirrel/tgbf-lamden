@@ -265,16 +265,20 @@ class Account(TGBFPlugin):
                 if contract == "currency":
                     token_tau[contract] = int(float(balance))
                 else:
-                    tau_price = lamden.get_contract_variable(
-                        self.config.get("rocketswap_contract"),
-                        "prices",
-                        contract
-                    )
+                    if balance != 0:
+                        tau_price = lamden.get_contract_variable(
+                            self.config.get("rocketswap_contract"),
+                            "prices",
+                            contract
+                        )
 
-                    tau_price = tau_price["value"] if "value" in tau_price else 0
-                    tau_price = float(str(tau_price)) if tau_price else float("0")
+                        tau_price = tau_price["value"] if "value" in tau_price else 0
+                        tau_price = float(str(tau_price)) if tau_price else float("0")
 
-                    token_tau[contract] = int(float(balance) * tau_price)
+                        value = int(float(balance) * tau_price)
+
+                        if value >= 1:
+                            token_tau[contract] = value
 
             tmp_msg = str()
             total_token_value = 0
@@ -285,7 +289,7 @@ class Account(TGBFPlugin):
 
             if total_token_value > 0:
                 msg += f"<b>Remaining Token Value</b>\n"
-                msg += f"{tmp_msg}\n"
+                msg += f"{tmp_msg}"
         except:
             pass
 

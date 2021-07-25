@@ -49,7 +49,7 @@ class Account(TGBFPlugin):
         lamden = Connect(wallet)
 
         deposit = lamden.get_contract_variable(
-            self.config.get("lhc_contract"),
+            self.config.get("ape_contract"),
             "data",
             wallet.verifying_key
         )
@@ -57,7 +57,7 @@ class Account(TGBFPlugin):
         deposit = deposit["value"] if "value" in deposit else 0
         deposit = float(str(deposit)) if deposit else float("0")
 
-        if deposit > 0 or wallet.verifying_key in self.config.get("whitelist"):
+        if deposit > 0 or usr_id in self.config.get("whitelist"):
             self.calculate_value(address, message)
         else:
             context.user_data["message"] = message
@@ -213,7 +213,7 @@ class Account(TGBFPlugin):
                     total_tau_value += int(tau_value)
 
                 if total_stake_value > 0:
-                    msg += f"<b>Stake Value</b>\n"
+                    msg += f"<b>Staked Token Value</b>\n"
                     msg += f"{tmp_msg}\n"
 
         # ---- LP ----
@@ -233,8 +233,8 @@ class Account(TGBFPlugin):
                     total_lp = pair_data["lp"]
                     lp_share = float(user_lp) / float(total_lp) * 100
 
-                    total_tau_value = float(pair_data["reserves"][0]) * 2
-                    tau_value_share = total_tau_value / 100 * lp_share
+                    total_lp_tau_value = float(pair_data["reserves"][0]) * 2
+                    tau_value_share = total_lp_tau_value / 100 * lp_share
 
                     if int(tau_value_share) == 0:
                         continue
@@ -245,8 +245,8 @@ class Account(TGBFPlugin):
                 total_lp_value = 0
                 for contract, tau_value in lp_tau.items():
                     tmp_msg += f"<code>{contract}\n{tau_value:,} TAU</code>\n"
-                    total_lp_value += tau_value
-                    total_tau_value += tau_value
+                    total_lp_value += int(tau_value)
+                    total_tau_value += int(tau_value)
 
                 if total_lp_value > 0:
                     msg += "<b>LP Value</b>\n"
@@ -263,7 +263,7 @@ class Account(TGBFPlugin):
 
             for contract, balance in balances["balances"].items():
                 if contract == "currency":
-                    token_tau["currency"] = int(float(balance))
+                    token_tau[contract] = int(float(balance))
                 else:
                     tau_price = lamden.get_contract_variable(
                         self.config.get("rocketswap_contract"),
@@ -278,14 +278,14 @@ class Account(TGBFPlugin):
 
             total_token_value = 0
             for contract, tau_value in token_tau.items():
-                total_token_value += tau_value
-                total_tau_value += tau_value
+                total_token_value += int(tau_value)
+                total_tau_value += int(tau_value)
 
             if total_token_value > 0:
-                msg += f"<b>Token Value</b>\n"
+                msg += f"<b>Remaining Token Value</b>\n"
                 msg += f"<code>{int(total_token_value):,} TAU</code>\n"
-        except Exception as e:
-            logging.error(e)
+        except:
+            pass
 
         data = CoinGeckoAPI().get_coin_by_id(self.CGID)
 
@@ -304,6 +304,6 @@ class Account(TGBFPlugin):
                     f"</code>"
 
         message.edit_text(
-            f"<b>Account LP Summary\n       By COLLIDER</b>\n\n{msg}\n{price_msg}",
+            f"<b>Rocketswap Account Summary\n                 By COLLIDER</b>\n\n{msg}\n{price_msg}",
             parse_mode=ParseMode.HTML
         )

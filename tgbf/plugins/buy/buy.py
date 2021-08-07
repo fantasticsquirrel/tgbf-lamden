@@ -7,6 +7,7 @@ from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
 
+# TODO: Feature: Sell based on entered % of coin in your possession
 class Buy(TGBFPlugin):
 
     RS_CONTRACT = "con_rocketswap_official_v1_1"

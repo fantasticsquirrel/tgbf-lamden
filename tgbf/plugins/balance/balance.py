@@ -51,7 +51,7 @@ class Balance(TGBFPlugin):
             return
 
         # Find longest token symbol
-        max_length = max([len(t[0]) for t in balances_list if float(t[1]) > min_limit])
+        max_length = max([len(t[0]) for t in balances_list if float(t[1]) > min_limit], default=0)
 
         msg = str()
         for entry in balances_list:
@@ -65,7 +65,10 @@ class Balance(TGBFPlugin):
             symbol = f"{entry[0]}:"
             msg += f"{symbol:<{max_length + 1}} {b}\n"
 
-        update.message.reply_text(
-            text=f"<code>{msg}</code>",
-            parse_mode=ParseMode.HTML
-        )
+        if not msg:
+            update.message.reply_text(
+                text=f"{emo.INFO} You don't own any tokens")
+        else:
+            update.message.reply_text(
+                text=f"<code>{msg}</code>",
+                parse_mode=ParseMode.HTML)

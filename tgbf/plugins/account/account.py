@@ -26,6 +26,7 @@ class Account(TGBFPlugin):
             self.button_callback,
             run_async=True))
 
+    @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def account_callback(self, update: Update, context: CallbackContext):
         if len(context.args) == 1:
@@ -196,14 +197,18 @@ class Account(TGBFPlugin):
             if staking_contract.startswith("con_liq_mining_"):
                 for staking_meta_data in staking_meta["ents"]:
                     if staking_meta_data["contract_name"] == staking_contract:
-                        staked_lp[staking_meta_data["STAKING_TOKEN"]] = user_staked
-                        break
+                        if staking_meta_data["STAKING_TOKEN"] not in staked_lp:
+                            staked_lp[staking_meta_data["STAKING_TOKEN"]] = user_staked
+                        else:
+                            staked_lp[staking_meta_data["STAKING_TOKEN"]] += user_staked
             else:
                 for staking_meta_data in staking_meta["ents"]:
                     if staking_meta_data["contract_name"] == staking_contract:
                         stake_contract = staking_meta_data["STAKING_TOKEN"]
-                        stake_tau[stake_contract] = self.get_tau_value(stake_contract, user_staked)
-                        break
+                        if stake_contract not in stake_tau:
+                            stake_tau[stake_contract] = self.get_tau_value(stake_contract, user_staked)
+                        else:
+                            stake_tau[stake_contract] += self.get_tau_value(stake_contract, user_staked)
 
                 tmp_msg = str()
                 total_stake_value = 0
@@ -310,6 +315,10 @@ class Account(TGBFPlugin):
                     f"</code>"
 
         message.edit_text(
-            f"<b>Rocketswap Account Summary\n                 By COLLIDER</b>\n\n{msg}\n{price_msg}",
+            f"<b>Rocketswap Account Summary\n"
+            f"                 By COLLIDER</b>\n\n"
+            f"{msg}\n"
+            f"{price_msg}\n\n"
+            f"This calculation is a theoretical value and assumes no slippage",
             parse_mode=ParseMode.HTML
         )

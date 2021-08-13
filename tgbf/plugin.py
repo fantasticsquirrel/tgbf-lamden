@@ -485,6 +485,11 @@ class TGBFPlugin:
             plugin = self.name
         return os.path.join(c.DIR_SRC, c.DIR_PLG, plugin)
 
+    def get_plugin(self, name):
+        for plugin in self.plugins:
+            if plugin.name == name:
+                return plugin
+
     def plugin_available(self, plugin_name):
         """ Return TRUE if the given plugin is enabled or FALSE otherwise """
         for plugin in self.plugins:

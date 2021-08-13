@@ -94,6 +94,8 @@ class Goldape(TGBFPlugin):
                 token_info = rs.token(market["contract_name"])
                 base_supply = token_info["token"]["base_supply"]
 
+                tkn_price = float(market['reserves'][0]) / float(market['reserves'][1])
+
                 try:
                     self.bot.updater.bot.send_message(
                         self.config.get("listing_chat_id"),
@@ -105,7 +107,7 @@ class Goldape(TGBFPlugin):
                         f"<code>TAU: {float(market['reserves'][0]):,.8f}</code>\n"
                         f"<code>{market['token']['token_symbol']}: {float(market['reserves'][1]):,.8f}</code>\n\n"
                         f"Current Price:\n"
-                        f"<code>{float(market['Last']):,.8f} TAU</code>",
+                        f"<code>{tkn_price:,.8f} TAU</code>",
                         parse_mode=ParseMode.HTML
                     )
 

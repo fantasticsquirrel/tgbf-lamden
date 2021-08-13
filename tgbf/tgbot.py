@@ -287,6 +287,10 @@ class TelegramBot:
         tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
         tb_string = ''.join(tb_list)
 
+        if not update:
+            logging.error(f'<pre>{html.escape(tb_string)}</pre>')
+            return
+
         # Build the message with some markup and additional information about what happened.
         # You might need to add some logic to deal with messages longer than the 4096 character limit.
         message = (
@@ -301,9 +305,6 @@ class TelegramBot:
         for admin in self.config.get("admin", "ids"):
             # Finally, send the message
             context.bot.send_message(chat_id=admin, text=message, parse_mode=ParseMode.HTML)
-
-        if not update:
-            return
 
         error_msg = f"{emo.ERROR} *Telegram ERROR*: {context.error}"
 

@@ -1,13 +1,13 @@
+import logging
 import tgbf.emoji as emo
 import tgbf.utils as utl
 
 from telegram import Update, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import CommandHandler, CallbackContext
+from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
+from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
 
-# TODO: Check DB of trades plugin and save last price of all tokens in dict
-# TODO: How do we handle . and , in prices
 class Alert(TGBFPlugin):
 
     def load(self):
@@ -15,17 +15,29 @@ class Alert(TGBFPlugin):
             sql = self.get_resource("create_alerts.sql")
             self.execute_sql(sql)
 
+        if not self.table_exists("payed"):
+            sql = self.get_resource("create_payed.sql")
+            self.execute_sql(sql)
+
         self.add_handler(CommandHandler(
             self.name,
             self.alert_callback,
             run_async=True))
 
+        self.add_handler(CallbackQueryHandler(
+            self.button_callback,
+            run_async=True))
+
+        update_interval = self.config.get("update_interval")
+        self.run_repeating(self.check_alerts, update_interval)
+
+    @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def alert_callback(self, update: Update, context: CallbackContext):
         if len(context.args) == 2:
             token = context.args[0].upper()
 
-            sql = self.get_resource("select_token.sql")
+            sql = self.get_resource("select_contract.sql", plugin="tokens")
             token_data = self.execute_sql(sql, token, plugin="tokens")["data"]
 
             if not token_data:
@@ -33,43 +45,95 @@ class Alert(TGBFPlugin):
                 update.message.reply_text(msg)
                 return
 
-            # TODO: Needed?
-            token_contract = token_data[0][0]
-
-            price = context.args[1]
+            lhc_price = context.args[1]
 
             try:
-                price = float(price)
+                lhc_price = float(lhc_price)
 
-                if price <= 0:
+                if lhc_price <= 0:
                     raise ValueError()
             except:
                 msg = f"{emo.ERROR} Price not valid"
                 update.message.reply_text(msg)
                 return
 
-        elif len(context.args) == 1 and context.args[0].lower() == "list":
-            alerts = self.get_resource(
-                self.execute_sql("select_alerts.sql"),
-                update.effective_user.id)
+            # Check payment
+            sql = self.get_resource("select_payed.sql")
+            res = self.execute_sql(sql, update.effective_user.id)
+            if len(res["data"]) != 1:
+                usr_id = update.effective_user.id
+                wallet = self.get_wallet(usr_id)
+                lamden = Connect(wallet)
 
-            for alert in alerts:
-                update.message.reply_text(
-                    f"{emo.ALERT} when {alert[0][1]} price at {alert[0][2]}",
-                    reply_markup=self.get_button(update.effective_user.id, alert[0])
+                check_msg = f"{emo.HOURGLASS} Calculating one-time payment..."
+                message = update.message.reply_text(check_msg)
+
+                deposit = lamden.get_contract_variable(
+                    self.config.get("ape_contract"),
+                    "data",
+                    wallet.verifying_key
+                )
+
+                deposit = deposit["value"] if "value" in deposit else 0
+                deposit = float(str(deposit)) if deposit else float("0")
+
+                if deposit == 0 and usr_id not in self.config.get("whitelist"):
+                    tau_amount = self.config.get("tau_price")
+                else:
+                    tau_amount = self.config.get("tau_price") / 2
+
+                lhc_price = Connect().get_contract_variable(
+                    self.config.get("rocketswap_contract"),
+                    "prices",
+                    self.config.get("lhc_contract")
+                )
+
+                lhc_price = lhc_price["value"] if "value" in lhc_price else 0
+                lhc_price = float(str(lhc_price)) if lhc_price else float("0")
+
+                lhc_amount = int(tau_amount / lhc_price)
+
+                message.edit_text(
+                    f"Pay <code>{lhc_amount}</code> LHC once to "
+                    f"be able to use /alert for a lifetime",
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=self.get_pay_button(update.effective_user.id, lhc_amount),
                 )
                 return
+
+        elif len(context.args) == 1 and context.args[0].lower() == "list":
+            alerts = self.execute_sql(
+                self.get_resource("select_alerts.sql"),
+                update.effective_user.id)
+
+            if alerts["data"]:
+                for alert in alerts["data"]:
+                    update.message.reply_text(
+                        f"<code>{alert[1]}</code> price at <code>{alert[2]}</code>",
+                        reply_markup=self.get_remove_button(update.effective_user.id, alert[0]),
+                        parse_mode=ParseMode.HTML
+                    )
+            else:
+                update.message.reply_text(f"{emo.ERROR} No alert found")
+            return
         else:
             update.message.reply_text(
                 self.get_usage(),
                 parse_mode=ParseMode.MARKDOWN)
             return
 
+        sql = self.get_resource("select_alerts.sql")
+        res = self.execute_sql(sql, update.effective_user.id)
+        if len(res["data"]) >= self.config.get("max_alerts_per_user"):
+            msg = f"{emo.ERROR} Max amount of alerts reached"
+            update.message.reply_text(msg)
+            return
+
         self.execute_sql(
             self.get_resource("insert_alert.sql"),
             update.effective_user.id,
             token,
-            price)
+            lhc_price)
 
         update.message.reply_text(f"{emo.DONE} Alert added")
 
@@ -84,17 +148,109 @@ class Alert(TGBFPlugin):
         if not data_list:
             return
 
-        if len(data_list) != 3:
-            return
+        # Remove alert
+        if len(data_list) == 3:
+            if int(data_list[1]) != update.effective_user.id:
+                return
 
-        if int(data_list[1]) != update.effective_user.id:
-            return
+            sql = self.get_resource("delete_alert.sql")
+            self.execute_sql(sql, data_list[2])
 
-        sql = self.get_resource("delete_alarm.sql")
-        self.execute_sql(sql, data_list[2])
+            context.bot.delete_message(
+                update.effective_user.id,
+                update.callback_query.message.message_id
+            )
 
-    def get_button(self, user_id, alert_id):
+            context.bot.answer_callback_query(update.callback_query.id, "Alert removed")
+
+        # Pay LHC fee
+        elif len(data_list) == 4:
+            update.callback_query.message.edit_text(f"{emo.HOURGLASS} Paying LHC fee...")
+
+            usr_id = update.effective_user.id
+            wallet = self.get_wallet(usr_id)
+            lamden = Connect(wallet)
+
+            try:
+                # Send LHC
+                send = lamden.send(
+                    int(data_list[2]),
+                    self.config.get("send_lhc_to"),
+                    token="con_collider_contract")
+            except Exception as e:
+                msg = f"Could not send transaction: {e}"
+                update.callback_query.message.edit_text(f"{emo.ERROR} {e}")
+                logging.error(msg)
+                return
+
+            if "error" in send:
+                msg = f"Transaction replied error: {send['error']}"
+                update.callback_query.message.edit_text(f"{emo.ERROR} {send['error']}")
+                logging.error(msg)
+                return
+
+            # Get transaction hash
+            tx_hash = send["hash"]
+
+            logging.info(f"Sent {data_list[2]} LHC from {wallet.verifying_key} "
+                         f"to {self.config.get('send_lhc_to')}: {send}")
+
+            # Wait for transaction to be completed
+            success, result = lamden.tx_succeeded(tx_hash)
+
+            if not success:
+                logging.error(f"Transaction not successful: {result}")
+
+                link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">TRANSACTION FAILED</a>'
+
+                update.callback_query.message.edit_text(
+                    f"{emo.STOP} Could not send <code>{data_list[2]}</code> LHC\n{link}",
+                    parse_mode=ParseMode.HTML,
+                    disable_web_page_preview=True)
+                return
+            else:
+                if result["result"].startswith("AssertionError"):
+                    update.callback_query.message.edit_text(f"{emo.ERROR} {result['result']}")
+                else:
+                    sql = self.get_resource("insert_payed.sql")
+                    self.execute_sql(sql, update.callback_query.from_user.id)
+
+                    update.callback_query.message.edit_text(f"{emo.DONE} You can now use /alert")
+
+    def get_pay_button(self, user_id, amount):
         menu = utl.build_menu([
-            InlineKeyboardButton(f"{emo.STOP} Remove", callback_data=f"{self.name}|{user_id}|{alert_id}")
+            InlineKeyboardButton(
+                f"Pay {amount} LHC", callback_data=f"{self.name}|{user_id}|{amount}|PAY")
         ])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
+
+    def get_remove_button(self, user_id, alert_id):
+        menu = utl.build_menu([
+            InlineKeyboardButton(f"{emo.STOP} Remove alert", callback_data=f"{self.name}|{user_id}|{alert_id}")
+        ])
+        return InlineKeyboardMarkup(menu, resize_keyboard=True)
+
+    def check_alerts(self, context: CallbackContext):
+        if self.plugin_available("trades"):
+            alerts = self.execute_sql(self.get_resource("select_all_alerts.sql"))["data"]
+            snapshot = self.get_plugin("trades").get_snapshot()
+
+            for alert in alerts:
+                if alert[0] in snapshot:
+                    alert_price = alert[1]
+                    current, previous = snapshot[alert[0]]
+
+                    if not previous:
+                        continue
+
+                    current = float(current)
+                    previous = float(previous)
+
+                    if previous <= alert_price <= current:
+                        self.execute_sql(self.get_resource("delete_alert.sql"), alert[3])
+                        context.bot.send_message(alert[2], f"{emo.GREEN} {alert[0]} crossed {alert[1]}")
+                        continue
+
+                    if previous >= alert_price >= current:
+                        self.execute_sql(self.get_resource("delete_alert.sql"), alert[3])
+                        context.bot.send_message(alert[2], f"{emo.RED} {alert[0]} crossed {alert[1]}")

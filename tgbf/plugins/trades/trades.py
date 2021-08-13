@@ -7,6 +7,8 @@ from tgbf.lamden.rocketswap import Rocketswap
 
 class Trades(TGBFPlugin):
 
+    snapshot = dict()
+
     def load(self):
         if not self.table_exists("trades"):
             sql = self.get_resource("create_trades.sql")
@@ -48,6 +50,7 @@ class Trades(TGBFPlugin):
                         ]
 
                         trades.append(tx)
+                        self.set_snapshot(trade)
                         self.execute_sql(insert_sql, *trade)
                         logging.info(f"NEW TRADE: {tx}")
                 else:
@@ -57,3 +60,10 @@ class Trades(TGBFPlugin):
                 return
 
             skip += take
+
+    def set_snapshot(self, trade):
+        last = self.snapshot.get(trade[1], [None, None])
+        self.snapshot[trade[1]] = [trade[2], last[0]]
+
+    def get_snapshot(self):
+        return self.snapshot

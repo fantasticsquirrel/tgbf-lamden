@@ -1,5 +1,14 @@
 {
     "cateogry": "Lamden Tokens",
     "description": "Create price alerts",
-    "max_alerts_per_user": 10
+    "rocketswap_contract": "con_rocketswap_official_v1_1",
+    "lhc_contract": "con_collider_contract",
+    "ape_contract": "con_gold_ape_004",
+    "max_alerts_per_user": 10,
+    "update_interval": 15,
+    "tau_price": 1500,
+    "send_lhc_to": "f1157473870bd3ebc4cd4d23fca464423c1dd6acef7148ea40ad4b2d840204cd",
+    "whitelist": [
+        134166731
+    ]
 }

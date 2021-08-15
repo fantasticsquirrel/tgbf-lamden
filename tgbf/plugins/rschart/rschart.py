@@ -73,29 +73,36 @@ class Rschart(TGBFPlugin):
         if not data_list:
             return
 
-        if len(data_list) < 2:
+        if len(data_list) < 3:
             return
 
-        token = data_list[0]
-        timeframe = data_list[1]
+        token = data_list[1]
+        timeframe = data_list[2]
 
-        result = self.get_image(token, timeframe)
+        result = self.get_image(token, float(timeframe))
 
         if not result["success"]:
             update.callback_query.message.reply_text(result["data"])
             return
 
-        update.callback_query.message.edit_media(
-            media=InputMediaPhoto(
-                media=io.BufferedReader(BytesIO(pio.to_image(result['data'], format="png")))),
-            reply_markup=self.get_button(token, timeframe))
+        try:
+            update.callback_query.message.edit_media(
+                media=InputMediaPhoto(
+                    media=io.BufferedReader(BytesIO(pio.to_image(result['data'], format="png")))),
+                reply_markup=self.get_button(token, timeframe))
 
-        msg = f"{emo.DONE} Updated"
-        context.bot.answer_callback_query(update.callback_query.id, msg)
+            msg = f"Chart updated"
+            context.bot.answer_callback_query(update.callback_query.id, msg)
+        except Exception as e:
+            error_str = f"{e}"
+
+            if error_str.startswith("Message is not modified"):
+                msg = f"No change"
+                context.bot.answer_callback_query(update.callback_query.id, msg)
 
     def get_button(self, token, timeframe):
         menu = utl.build_menu([
-            InlineKeyboardButton("Update Chart", callback_data=f"{token}||{timeframe}")
+            InlineKeyboardButton("Update Chart", callback_data=f"{self.name}|{token}|{timeframe}")
         ])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 

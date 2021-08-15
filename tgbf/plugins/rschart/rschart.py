@@ -8,11 +8,12 @@ import plotly.io as pio
 import plotly.graph_objs as go
 
 import tgbf.emoji as emo
+import tgbf.utils as utl
 
 from io import BytesIO
 from pandas import DataFrame
-from telegram import ParseMode, Update
-from telegram.ext import CommandHandler, CallbackContext
+from telegram import ParseMode, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from tgbf.plugin import TGBFPlugin
 
 
@@ -26,6 +27,10 @@ class Rschart(TGBFPlugin):
             self.rschart_callback,
             run_async=True))
 
+        self.add_handler(CallbackQueryHandler(
+            self.button_callback,
+            run_async=True))
+
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def rschart_callback(self, update: Update, context: CallbackContext):
@@ -35,7 +40,7 @@ class Rschart(TGBFPlugin):
                 parse_mode=ParseMode.MARKDOWN_V2)
             return
 
-        token_symbol = context.args[0].strip().upper()
+        token = context.args[0].strip().upper()
 
         if len(context.args) == 2:
             try:
@@ -47,15 +52,66 @@ class Rschart(TGBFPlugin):
         else:
             timeframe = 3  # days
 
+        result = self.get_image(token, timeframe)
+
+        if not result["success"]:
+            update.message.reply_text(result["data"])
+            return
+
+        update.message.reply_photo(
+            photo=io.BufferedReader(BytesIO(pio.to_image(result['data'], format="png"))),
+            reply_markup=self.get_button(token, timeframe))
+
+    def button_callback(self, update: Update, context: CallbackContext):
+        data = update.callback_query.data
+
+        if not data.startswith(self.name):
+            return
+
+        data_list = data.split("|")
+
+        if not data_list:
+            return
+
+        if len(data_list) < 2:
+            return
+
+        token = data_list[0]
+        timeframe = data_list[1]
+
+        result = self.get_image(token, timeframe)
+
+        if not result["success"]:
+            update.callback_query.message.reply_text(result["data"])
+            return
+
+        update.callback_query.message.edit_media(
+            media=InputMediaPhoto(
+                media=io.BufferedReader(BytesIO(pio.to_image(result['data'], format="png")))),
+            reply_markup=self.get_button(token, timeframe))
+
+        msg = f"{emo.DONE} Updated"
+        context.bot.answer_callback_query(update.callback_query.id, msg)
+
+    def get_button(self, token, timeframe):
+        menu = utl.build_menu([
+            InlineKeyboardButton("Update Chart", callback_data=f"{token}||{timeframe}")
+        ])
+        return InlineKeyboardMarkup(menu, resize_keyboard=True)
+
+    def get_image(self, token, timeframe):
+        result = {"success": True, "data": None}
+
         end_secs = int(time.time() - (timeframe * 24 * 60 * 60))
 
         sql = self.get_resource("select_trades.sql", plugin="trades")
-        res = self.execute_sql(sql, token_symbol, end_secs, plugin="trades")
+        res = self.execute_sql(sql, token, end_secs, plugin="trades")
 
         if not res["data"]:
             msg = f"{emo.ERROR} No trades found"
-            update.message.reply_text(msg)
-            return
+            result["success"] = False
+            result["data"] = msg
+            return result
 
         """
         try:
@@ -81,7 +137,7 @@ class Rschart(TGBFPlugin):
 
         layout = go.Layout(
             title=dict(
-                text=f"{token_symbol}-TAU",
+                text=f"{token}-TAU",
                 x=0.5,
                 font=dict(
                     size=24
@@ -126,13 +182,12 @@ class Rschart(TGBFPlugin):
         """
 
         try:
-            fig = go.Figure(data=[price], layout=layout)
+            result["data"] = go.Figure(data=[price], layout=layout)
+            return result
         except Exception as e:
-            update.message.reply_text(str(e))
             logging.error(e)
             self.notify(e)
-            return
 
-        update.message.reply_photo(
-            photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="png"))),
-            quote=False)
+            result["success"] = False
+            result["data"] = str(e)
+            return result

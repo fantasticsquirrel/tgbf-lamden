@@ -181,7 +181,7 @@ class API:
         kwargs = {"amount": int(amount), "to": contract}
         # --- TEMP ---
 
-        return self.post_transaction(30, token, "approve", kwargs)
+        return self.post_transaction(45, token, "approve", kwargs)
 
     def get_approved_amount(self, contract: str, token: str = "currency"):
         """ Get amount of TAU that is approved to be spent by smart contract """

@@ -12,6 +12,7 @@ from tgbf.plugin import TGBFPlugin
 class Rain(TGBFPlugin):
 
     STAMPS = [28, 22, 19, 18, 17, 16]
+    STAMPS_NEB = [56, 50, 47, 46, 45]
 
     def load(self):
         if not self.table_exists("rain"):
@@ -187,9 +188,15 @@ class Rain(TGBFPlugin):
             stamps_to_use = 0
             for a in range(len(addresses)):
                 try:
-                    stamps_to_use += self.STAMPS[a]
+                    if token_name == "NEB":
+                        stamps_to_use += self.STAMPS_NEB[a]
+                    else:
+                        stamps_to_use += self.STAMPS[a]
                 except IndexError:
-                    stamps_to_use += self.STAMPS[-1]
+                    if token_name == "NEB":
+                        stamps_to_use += self.STAMPS_NEB[a]
+                    else:
+                        stamps_to_use += self.STAMPS[-1]
 
             res = lamden.post_transaction(
                 stamps_to_use,

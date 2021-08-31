@@ -45,9 +45,7 @@ class Connect(API):
     @staticmethod
     def ping(host: str, port: int):
         node = host if port is None else f"{host}:{port}"
-        res = requests.get(f"{node}/ping").json()
-
-        if "status" not in res or res["status"] != "online":
-            raise ConnectionError(f"Unexpected result: {res}")
-
-        return res
+        with requests.get(f"{node}/ping").json() as res:
+            if "status" not in res or res["status"] != "online":
+                raise ConnectionError(f"Unexpected result: {res}")
+            return res

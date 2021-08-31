@@ -13,6 +13,7 @@ from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
 
+# TODO: Contract variables are retrieved manually. Switched to rocketswap.get_contract_variable()
 class Otc(TGBFPlugin):
 
     # Workflow Stages
@@ -96,8 +97,8 @@ class Otc(TGBFPlugin):
 
         try:
             url = f"{node_url}/contracts/{offer_token}/metadata"
-            res = requests.get(url, params={"key": "token_symbol"})
-            context.user_data["offer_token_symbol"] = res.json()["value"]
+            with requests.get(url, params={"key": "token_symbol"}) as res:
+                context.user_data["offer_token_symbol"] = res.json()["value"]
         except Exception as e:
             msg = f"{emo.ERROR} Can't retrieve token info. Enter contract name again"
             logging.error(f"Can't retrieve token info for '{offer_token}': {e}")
@@ -139,8 +140,8 @@ class Otc(TGBFPlugin):
 
         try:
             url = f"{node_url}/contracts/{take_token}/metadata"
-            res = requests.get(url, params={"key": "token_symbol"})
-            context.user_data["take_token_symbol"] = res.json()["value"]
+            with requests.get(url, params={"key": "token_symbol"}) as res:
+                context.user_data["take_token_symbol"] = res.json()["value"]
         except Exception as e:
             msg = f"{emo.ERROR} Can't retrieve token info. Enter contract name again"
             logging.error(f"Can't retrieve token info for '{take_token}': {e}")
@@ -197,29 +198,28 @@ class Otc(TGBFPlugin):
         url = f"{node_url}/contracts/{contract}/fee"
 
         try:
-            res = requests.get(url)
+            with requests.get(url) as res:
+                if "error" in res.json():
+                    msg = f"{emo.ERROR} Can't retrieve fee details: {res.json()['error']}"
+                    update.message.reply_text(msg)
+                    return
+
+                fee = res.json()["value"]["__fixed__"]
+                context.user_data["fee"] = fee
+
+                fee_int = int(float(fee)) if float(fee).is_integer() else fee
+                confirm = f"5) Confirm to send {offer_amount} {offer_symbol} + {fee_int}% fee"
+
+                update.message.reply_text(
+                    f"<code>{msg}</code>\n{confirm}",
+                    reply_markup=self.confirm_keyboard(),
+                    parse_mode=ParseMode.HTML)
+
+                return self.SUMMARY
         except Exception as e:
             logging.error(f"Error retrieving OTC fee: {e}")
             update.message.reply_text(f"{emo.ERROR} {e}")
             return
-
-        if "error" in res.json():
-            msg = f"{emo.ERROR} Can't retrieve fee details: {res.json()['error']}"
-            update.message.reply_text(msg)
-            return
-
-        fee = res.json()["value"]["__fixed__"]
-        context.user_data["fee"] = fee
-
-        fee_int = int(float(fee)) if float(fee).is_integer() else fee
-        confirm = f"5) Confirm to send {offer_amount} {offer_symbol} + {fee_int}% fee"
-
-        update.message.reply_text(
-            f"<code>{msg}</code>\n{confirm}",
-            reply_markup=self.confirm_keyboard(),
-            parse_mode=ParseMode.HTML)
-
-        return self.SUMMARY
 
     def summary(self, update: Update, context: CallbackContext):
         msg = f"{emo.HOURGLASS} Submitting OTC trade..."
@@ -357,7 +357,8 @@ class Otc(TGBFPlugin):
         url = f"{lamden.node_url}/contracts/{contract}/data"
 
         try:
-            res = requests.get(url, params={"key": otc_id})
+            with requests.get(url, params={"key": otc_id}) as r:
+                res = r
         except Exception as e:
             logging.error(f"Error retrieving OTC {otc_id}: {e}")
             update.message.reply_text(f"{emo.ERROR} {e}")
@@ -400,7 +401,8 @@ class Otc(TGBFPlugin):
 
         try:
             url = f"{node_url}/contracts/{otc['take_token']}/metadata"
-            res = requests.get(url, params={"key": "token_symbol"})
+            with requests.get(url, params={"key": "token_symbol"}) as r:
+                res = r
             take_symbol = res.json()["value"]
         except Exception as e:
             logging.error(f"Can't retrieve token info for '{otc['take_token']}': {e}")
@@ -410,7 +412,8 @@ class Otc(TGBFPlugin):
 
         try:
             url = f"{node_url}/contracts/{otc['offer_token']}/metadata"
-            res = requests.get(url, params={"key": "token_symbol"})
+            with requests.get(url, params={"key": "token_symbol"}) as r:
+                res = r
             offer_symbol = res.json()["value"]
         except Exception as e:
             logging.error(f"Can't retrieve token info for '{otc['offer_token']}': {e}")

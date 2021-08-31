@@ -9,31 +9,38 @@ class Rocketswap:
         self.base_url = base_url if base_url else self.base_url
 
     def balances(self, address):
-        return requests.get(self.base_url + "balances/" + address).json()
+        with requests.get(self.base_url + "balances/" + address) as res:
+            return res.json()
 
     def token_list(self):
-        return requests.get(self.base_url + "token_list").json()
+        with requests.get(self.base_url + "token_list") as res:
+            return res.json()
 
     def token(self, contract):
-        return requests.get(self.base_url + "token/" + contract).json()
+        with requests.get(self.base_url + "token/" + contract) as res:
+            return res.json()
 
     def trade_history(self, take, skip):
-        return requests.get(
-            self.base_url + "get_trade_history/",
-            params={"take": take, "skip": skip},
-        ).json()
+        params = {"take": take, "skip": skip}
+        with requests.get(self.base_url + "get_trade_history/", params=params) as res:
+            return res.json()
 
     def get_market_summaries_w_token(self):
-        return requests.get(self.base_url + "get_market_summaries_w_token").json()
+        with requests.get(self.base_url + "get_market_summaries_w_token") as res:
+            return res.json()
 
     def user_lp_balance(self, address):
-        return requests.get(self.base_url + "user_lp_balance/" + address).json()
+        with requests.get(self.base_url + "user_lp_balance/" + address) as res:
+            return res.json()
 
     def get_pairs(self, contract):
-        return requests.get(self.base_url + "get_pairs/" + contract).json()
+        with requests.get(self.base_url + "get_pairs/" + contract) as res:
+            return res.json()
 
     def user_staking_info(self, address):
-        return requests.get(self.base_url + "user_staking_info/" + address).json()
+        with requests.get(self.base_url + "user_staking_info/" + address) as res:
+            return res.json()
 
     def staking_meta(self):
-        return requests.get(self.base_url + "staking_meta").json()
+        with requests.get(self.base_url + "staking_meta") as res:
+            return res.json()

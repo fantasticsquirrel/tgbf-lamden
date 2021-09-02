@@ -82,7 +82,7 @@ class Sell(TGBFPlugin):
             if deposit == 0 and usr_id != 134166731:
                 message.edit_text(
                     f"{emo.ERROR} You are currently not subscribed. Please use "
-                    f"/goldape to subscribe to new token listings and token trading.")
+                    f"/nebape to subscribe to new token listings and token trading.")
                 return
         else:
             update.message.reply_text(

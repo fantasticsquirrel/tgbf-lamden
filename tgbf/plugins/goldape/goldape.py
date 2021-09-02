@@ -29,8 +29,13 @@ class Goldape(TGBFPlugin):
             self.button_callback,
             run_async=True))
 
+        """
+        # Removed since plugin 'nebape' will cover that now
+        # Still leaving this plugin active so that users can unsubscribe
+        
         update_interval = self.config.get("update_interval")
         self.run_repeating(self.check_tokens, update_interval)
+        """
 
     @TGBFPlugin.send_typing
     def goldape_callback(self, update: Update, context: CallbackContext):

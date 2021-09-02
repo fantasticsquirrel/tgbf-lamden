@@ -1,7 +1,7 @@
 {
-    "category": "GOLD Token",
+    "category": "Nebula (NEB) Token",
     "description": "Buy tokens on Rocketswap",
-    "contract": "con_gold_ape_004",
+    "contract": "con_neb_ape",
     "slippage": 49,
     "whitelist": [
         134166731

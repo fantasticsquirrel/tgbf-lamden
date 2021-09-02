@@ -1,5 +1,5 @@
 Allows you to buy any listed token on Rocketswap DEX.
 
 Example:  
-Buy APE token for 500 TAU  
-`/{{handle}} ape 500`
+Buy NEB token for 500 TAU  
+`/{{handle}} neb 500`

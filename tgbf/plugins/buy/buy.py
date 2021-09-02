@@ -72,7 +72,7 @@ class Buy(TGBFPlugin):
 
             buying_msg = f"{emo.HOURGLASS} Buying {token}..."
 
-            if token_contract not in ["con_gold_contract", "con_collider_contract"]:
+            if token_contract not in ["con_nebula", "con_collider_contract"]:
                 deposit = lamden.get_contract_variable(
                     self.config.get("contract"),
                     "data",
@@ -85,7 +85,7 @@ class Buy(TGBFPlugin):
                 if deposit == 0 and usr_id not in self.config.get("whitelist"):
                     message.edit_text(
                         f"{emo.ERROR} You are currently not subscribed. Please use "
-                        f"/goldape to subscribe to new token listings and token trading.")
+                        f"/nebape to subscribe to new token listings and token trading.")
                     return
 
                 message.edit_text(buying_msg)

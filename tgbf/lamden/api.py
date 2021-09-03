@@ -130,7 +130,7 @@ class API:
     def send(self, amount: Union[int, float], to_address: str, token: str = "currency"):
         """ Send TAU to given address by triggering 'currency' smart contract """
         kwargs = {"amount": amount, "to": to_address}
-        return self.post_transaction(40, token, "transfer", kwargs)
+        return self.post_transaction(50, token, "transfer", kwargs)
 
     def post_transaction(self, stamps: int, contract: str, function: str, kwargs: dict):
         """ Post a transaction to the chain and trigger given smart contract """

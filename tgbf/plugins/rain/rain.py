@@ -194,7 +194,7 @@ class Rain(TGBFPlugin):
                         stamps_to_use += self.STAMPS[a]
                 except IndexError:
                     if token_name == "NEB":
-                        stamps_to_use += self.STAMPS_NEB[a]
+                        stamps_to_use += self.STAMPS[-1]
                     else:
                         stamps_to_use += self.STAMPS[-1]
 

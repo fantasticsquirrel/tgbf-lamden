@@ -238,7 +238,7 @@ class Nebape(TGBFPlugin):
             try:
                 # Call contract
                 ape = lamden.post_transaction(
-                    stamps=70,
+                    stamps=85,
                     contract=contract,
                     function="subscribe",
                     kwargs={}

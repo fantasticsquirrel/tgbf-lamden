@@ -1,7 +1,7 @@
 {
     "category": "Nebula (NEB) Token",
     "description": "Stake NEB and mint KEY",
-    "key_contract": "con_neb_key",
+    "key_contract": "con_neb_key001",
     "neb_contract": "con_nebula",
     "neb_amount": 1000000
 }

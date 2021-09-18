@@ -44,14 +44,14 @@ class Nebkey(TGBFPlugin):
 
         if staked:
             message.edit_caption(
-                f"You are currently staking NEB. Hit the 'Unstake' button to get your NEB back "
+                f"You are currently staking NEB. Hit the unstake button to get your NEB back "
                 f"and mint a KEY token.\n\nBut make sure to be staked at least three weeks or "
                 f"otherwise you will get only 99% of your staked NEB back and no KEY token.",
                 parse_mode=ParseMode.HTML,
                 reply_markup=self.get_unstake_button(update.effective_user.id))
         else:
             message.edit_caption(
-                f"<b>Stake 1 million NEB to earn 1 KEY token.</b>\n\n"
+                f"<b>Stake 1 million NEB to earn 1 KEY token</b>\n\n"
                 f"If you stake 1 million NEB for at least three weeks you will get back 100% of "
                 f"your staked NEB and additionally also mint 1 KEY token. If you unstake earlier, "
                 f"you will get 99% of your staked NEB back and no KEY token.\n\n"
@@ -144,7 +144,7 @@ class Nebkey(TGBFPlugin):
             ex_link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
 
             message.edit_caption(
-                f"{result}\n{ex_link}",
+                f"Successfully staked NEB\n{ex_link}",
                 parse_mode=ParseMode.HTML)
 
             msg = f"NEB staked"
@@ -187,8 +187,10 @@ class Nebkey(TGBFPlugin):
 
             ex_link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
 
+            result_msg = result["result"].replace("'", "")
+
             message.edit_caption(
-                f"{result}\n{ex_link}",
+                f"{result_msg}\n{ex_link}",
                 parse_mode=ParseMode.HTML)
 
             msg = f"NEB unstaked"

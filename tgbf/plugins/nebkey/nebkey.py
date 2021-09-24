@@ -44,17 +44,20 @@ class Nebkey(TGBFPlugin):
 
         if staked:
             message.edit_caption(
-                f"You are currently staking NEB. Hit the unstake button to get your NEB back "
-                f"and mint a KEY token.\n\nBut make sure to be staked at least three weeks or "
-                f"otherwise you will get only 99% of your staked NEB back and no KEY token.",
+                f"You are currently staking NEB. You can unstake at anytime.\n\n"
+                f"If you unstake before 21-10-13 2:50 AM CEST you will be taxed 1% "
+                f"(get 99% back) and forfeit your Nebula Key.\n\n"
+                f"If you successfully stake until 21-10-13 2:50 AM CEST you will get "
+                f"100% of your staked NEB back plus mint 1 KEY token.",
                 parse_mode=ParseMode.HTML,
                 reply_markup=self.get_unstake_button(update.effective_user.id))
         else:
             message.edit_caption(
                 f"<b>Stake 1 million NEB to earn 1 KEY token</b>\n\n"
-                f"If you stake 1 million NEB for at least three weeks you will get back 100% of "
-                f"your staked NEB and additionally also mint 1 KEY token. If you unstake earlier, "
-                f"you will get 99% of your staked NEB back and no KEY token.\n\n"
+                f"If you stake 1 million NEB before 21-09-22 2:50 AM CEST and leave it staked for "
+                f"three weeks you will get back 100% of your staked NEB and mint 1 KEY token.\n\n"
+                f"If you unstake earlier, you will get 99% of your staked NEB back and "
+                f"no KEY token.\n\n"
                 f'<a href="{self.NEB_KEY_URL}">Read more about what KEY token is</a>',
                 reply_markup=self.get_stake_button(update.effective_user.id),
                 parse_mode=ParseMode.HTML)

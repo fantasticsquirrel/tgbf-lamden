@@ -35,71 +35,57 @@ class Alert(TGBFPlugin):
     @TGBFPlugin.send_typing
     def alert_callback(self, update: Update, context: CallbackContext):
         if len(context.args) == 2:
-            token = context.args[0].upper()
+            token_symbol = context.args[0].upper()
 
             sql = self.get_resource("select_contract.sql", plugin="tokens")
-            token_data = self.execute_sql(sql, token, plugin="tokens")["data"]
+            token_data = self.execute_sql(sql, token_symbol, plugin="tokens")["data"]
 
             if not token_data:
                 msg = f"{emo.ERROR} Unknown token symbol"
                 update.message.reply_text(msg)
                 return
 
-            lhc_price = context.args[1]
+            token_price = context.args[1]
 
             try:
-                lhc_price = float(lhc_price)
+                token_price = float(token_price)
 
-                if lhc_price <= 0:
+                # TODO: Workaround for not being able to send fractions
+                if token_price <= 0:
                     raise ValueError()
             except:
                 msg = f"{emo.ERROR} Price not valid"
                 update.message.reply_text(msg)
                 return
 
-            # Check payment
-            sql = self.get_resource("select_payed.sql")
-            res = self.execute_sql(sql, update.effective_user.id)
-            if len(res["data"]) != 1:
-                usr_id = update.effective_user.id
-                wallet = self.get_wallet(usr_id)
-                lamden = Connect(wallet)
+            user_id = update.effective_user.id
 
-                check_msg = f"{emo.HOURGLASS} Calculating one-time payment..."
-                message = update.message.reply_text(check_msg)
+            if user_id not in self.config.get("whitelist"):
+                # Check payment
+                sql = self.get_resource("select_payed.sql")
+                res = self.execute_sql(sql, update.effective_user.id)
+                if len(res["data"]) != 1:
+                    check_msg = f"{emo.HOURGLASS} Calculating one-time payment..."
+                    message = update.message.reply_text(check_msg)
 
-                deposit = lamden.get_contract_variable(
-                    self.config.get("ape_contract"),
-                    "data",
-                    wallet.verifying_key
-                )
+                    lhc_price = Connect().get_contract_variable(
+                        self.config.get("rocketswap_contract"),
+                        "prices",
+                        self.config.get("lhc_contract")
+                    )
 
-                deposit = deposit["value"] if "value" in deposit else 0
-                deposit = float(str(deposit)) if deposit else float("0")
+                    lhc_price = lhc_price["value"] if "value" in lhc_price else 0
+                    lhc_price = float(str(lhc_price)) if lhc_price else float("0")
 
-                if deposit == 0 and usr_id not in self.config.get("whitelist"):
-                    tau_amount = self.config.get("tau_price")
-                else:
-                    tau_amount = self.config.get("tau_price") / 2
+                    lhc_amount = int(self.config.get("tau_price") / lhc_price)
 
-                lhc_price = Connect().get_contract_variable(
-                    self.config.get("rocketswap_contract"),
-                    "prices",
-                    self.config.get("lhc_contract")
-                )
+                    message.edit_text(
+                        f"Pay <code>{lhc_amount}</code> LHC once to "
+                        f"be able to use /alert for a lifetime",
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=self.get_pay_button(user_id, lhc_amount))
 
-                lhc_price = lhc_price["value"] if "value" in lhc_price else 0
-                lhc_price = float(str(lhc_price)) if lhc_price else float("0")
-
-                lhc_amount = int(tau_amount / lhc_price)
-
-                message.edit_text(
-                    f"Pay <code>{lhc_amount}</code> LHC once to "
-                    f"be able to use /alert for a lifetime",
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=self.get_pay_button(update.effective_user.id, lhc_amount),
-                )
-                return
+                    return
 
         elif len(context.args) == 1 and context.args[0].lower() == "list":
             alerts = self.execute_sql(
@@ -132,8 +118,8 @@ class Alert(TGBFPlugin):
         self.execute_sql(
             self.get_resource("insert_alert.sql"),
             update.effective_user.id,
-            token,
-            lhc_price)
+            token_symbol,
+            token_price)
 
         update.message.reply_text(f"{emo.DONE} Alert added")
 

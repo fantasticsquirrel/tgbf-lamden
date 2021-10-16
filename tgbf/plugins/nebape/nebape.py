@@ -92,7 +92,14 @@ class Nebape(TGBFPlugin):
                 logging.info(f"New listing on Rocketswap found: {market}")
 
                 token_info = rs.token(market["contract_name"])
+                logging.info(f"Token info: {token_info}")
+
                 base_supply = token_info["token"]["base_supply"]
+
+                try:
+                    base_supply = f"{int(float(base_supply)):,}"
+                except:
+                    pass
 
                 tkn_price = float(market['reserves'][0]) / float(market['reserves'][1])
 
@@ -102,7 +109,7 @@ class Nebape(TGBFPlugin):
                         f"<b>NEW LISTING ON ROCKETSWAP</b>\n\n"
                         f"{market['token']['token_name']} ({market['token']['token_symbol']})\n\n"
                         f"Total Supply:\n"
-                        f"<code>{int(float(base_supply)):,}</code>\n\n"
+                        f"<code>{base_supply}</code>\n\n"
                         f"Liquidity Reserves:\n"
                         f"<code>TAU: {float(market['reserves'][0]):,.8f}</code>\n"
                         f"<code>{market['token']['token_symbol']}: {float(market['reserves'][1]):,.8f}</code>\n\n"

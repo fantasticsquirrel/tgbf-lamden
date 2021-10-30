@@ -1,0 +1,159 @@
+import logging
+import tgbf.emoji as emo
+
+from telegram import Update, ParseMode
+from telegram.ext import CommandHandler, CallbackContext
+from telegram.utils.helpers import escape_markdown as esc_mk
+from tgbf.lamden.connect import Connect
+from tgbf.plugin import TGBFPlugin
+
+
+class Mobdice(TGBFPlugin):
+
+    def load(self):
+        self.add_handler(CommandHandler(
+            self.handle,
+            self.dice_callback,
+            run_async=True))
+
+    @TGBFPlugin.blacklist
+    @TGBFPlugin.send_typing
+    def dice_callback(self, update: Update, context: CallbackContext):
+        if len(context.args) == 1 and context.args[0].lower() == "balance":
+            contract = self.config.get("contract")
+
+            b = Connect().get_balance(contract=contract)
+            b = b["value"] if "value" in b else 0
+            b = float(str(b)) if b else float("0")
+            b = str(int(b)) if b.is_integer() else f"{b:.2f}"
+
+            update.message.reply_text(
+                text=f"`Balance of {contract}\n{b} MOB`",
+                parse_mode=ParseMode.MARKDOWN_V2
+            )
+
+            return
+
+        if len(context.args) != 2:
+            min = self.config.get("min_amount")
+            max = self.config.get("max_amount")
+
+            update.message.reply_text(
+                self.get_usage({"{{min}}": min, "{{max}}": max}),
+                parse_mode=ParseMode.MARKDOWN)
+            return
+
+        amount = context.args[0]
+        number = context.args[1]
+
+        try:
+            amount = float(amount)
+        except:
+            # Validate amount of TAU to bet
+            msg = f"{emo.ERROR} Amount (first argument) not valid"
+            update.message.reply_text(msg)
+            return
+
+        # Check that amount is an Integer
+        if not amount.is_integer():
+            msg = f"{emo.ERROR} Amount (first argument) needs to be a whole number"
+            update.message.reply_text(msg)
+            return
+
+        amount = int(amount)
+
+        try:
+            # Validate dice number
+            number = int(number)
+            if number < 1 or number > 6:
+                raise ValueError()
+        except:
+            # Validate number of points to bet on
+            msg = f"{emo.ERROR} Number of points not valid. " \
+                  f"Provide a whole number between 1 and 6 (as second argument)"
+            update.message.reply_text(msg)
+            return
+
+        contract = self.config.get("contract")
+        function = self.config.get("function")
+
+        bet_msg = esc_mk(f"You bet {amount} MOB to roll a {number}", version=2)
+        con_msg = f"{emo.HOURGLASS} Calling contract"
+
+        logging.info(f"{bet_msg} - {update}")
+
+        message = update.message.reply_text(
+            f"{bet_msg}\n{con_msg}",
+            parse_mode=ParseMode.MARKDOWN_V2)
+
+        usr_id = update.effective_user.id
+        wallet = self.get_wallet(usr_id)
+        lamden = Connect(wallet)
+
+        try:
+            # Check if dice contract is approved to spend TAU
+            approved = lamden.get_approved_amount(contract, token="con_mintorburn")
+            approved = approved["value"] if "value" in approved else 0
+            approved = approved if approved is not None else 0
+
+            msg = f"Approved amount of MOB for {contract}: {approved}"
+            logging.info(msg)
+
+            if amount > float(approved):
+                app = lamden.approve_contract(contract, token="con_mintorburn")
+                msg = f"Approved {contract}: {app}"
+                logging.info(msg)
+        except Exception as e:
+            logging.error(f"Error approving MOB dice contract: {e}")
+            msg = f"{bet_msg}\n{emo.ERROR} {esc_mk(str(e), version=2)}"
+            message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+            return
+
+        try:
+            # Call dice contract
+            dice = lamden.post_transaction(
+                stamps=85,
+                contract=contract,
+                function=function,
+                kwargs={"guess": number, "amount": amount})
+        except Exception as e:
+            logging.error(f"Error calling MOB dice contract: {e}")
+            msg = f"{bet_msg}\n{emo.ERROR} {esc_mk(str(e), version=2)}"
+            message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+            return
+
+        logging.info(f"Executed MOB dice contract: {dice}")
+
+        if "error" in dice:
+            logging.error(f"Dice contract returned error: {dice['error']}")
+            msg = f"{bet_msg}\n{emo.ERROR} {esc_mk(dice['error'], version=2)}"
+            message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+            return
+
+        # Get transaction hash
+        tx_hash = dice["hash"]
+
+        # Wait for transaction to be completed
+        success, result = lamden.tx_succeeded(tx_hash)
+
+        if not success:
+            logging.error(f"Transaction not successful: {result}")
+            msg = f"{bet_msg}\n{emo.ERROR} {esc_mk(result, version=2)}"
+            message.edit_text(msg, parse_mode=ParseMode.MARKDOWN_V2)
+            return
+
+        ex_url = f"{lamden.explorer_url}/transactions/{tx_hash}"
+        con_msg = f"{emo.DONE} [Contract executed]({ex_url})"
+
+        link_msg = f"Learn more about $MOB on mintorburn.com"
+
+        if int(result["result"]) == int(number):
+            res_msg = f"YOU WON {amount * 5} MOB!! {emo.MONEY_FACE}\n\n{link_msg}"
+            logging.info(f"User WON {amount * 5} MOB")
+        else:
+            res_msg = f"You rolled a {result['result']} and lost {emo.SAD}\n\n{link_msg}"
+            logging.info(f"User LOST")
+
+        message.edit_text(
+            f"{bet_msg}\n{con_msg}\n\n{esc_mk(res_msg, version=2)}",
+            parse_mode=ParseMode.MARKDOWN_V2)

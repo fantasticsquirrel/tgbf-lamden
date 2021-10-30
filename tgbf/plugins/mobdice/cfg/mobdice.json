@@ -1,0 +1,11 @@
+{
+    "handle": "mob_dice",
+    "category": "Mint or Burn (MOB) Token",
+    "description": "Returns random number between 1-6",
+    "contract": "con_mob_dice002",
+    "function": "roll",
+    "blacklist": [],
+    "blacklist_msg": "Command not allowed in this group",
+    "min_amount": 50000,
+    "max_amount": 1000000
+}

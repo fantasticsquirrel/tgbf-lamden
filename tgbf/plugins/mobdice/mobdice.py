@@ -22,7 +22,7 @@ class Mobdice(TGBFPlugin):
         if len(context.args) == 1 and context.args[0].lower() == "balance":
             contract = self.config.get("contract")
 
-            b = Connect().get_balance(contract=contract)
+            b = Connect().get_balance(contract=contract, token="con_mintorburn")
             b = b["value"] if "value" in b else 0
             b = float(str(b)) if b else float("0")
             b = str(int(b)) if b.is_integer() else f"{b:.2f}"

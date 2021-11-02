@@ -49,10 +49,6 @@ class Alert(TGBFPlugin):
 
             try:
                 token_price = float(token_price)
-
-                # TODO: Workaround for not being able to send fractions
-                if token_price <= 0:
-                    raise ValueError()
             except:
                 msg = f"{emo.ERROR} Price not valid"
                 update.message.reply_text(msg)

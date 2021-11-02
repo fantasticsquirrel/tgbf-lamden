@@ -1,3 +1,4 @@
+import decimal
 import logging
 import tgbf.emoji as emo
 
@@ -29,18 +30,6 @@ class Sell(TGBFPlugin):
                 msg = f"{emo.ERROR} Second argument needs to be a valid amount"
                 update.message.reply_text(msg)
                 return
-
-            # ----------------------
-
-            # TODO: Remove. Temporal fix
-            if token_amount.is_integer():
-                token_amount = int(token_amount)
-            else:
-                msg = f"{emo.ERROR} Amount currently needs to be an Integer"
-                update.message.reply_text(msg)
-                return
-
-            # ----------------------
 
             if token_amount <= 0:
                 msg = f"{emo.ERROR} Token amount too low"
@@ -126,8 +115,8 @@ class Sell(TGBFPlugin):
 
         kwargs = {
             "contract": token_contract,
-            "token_amount": token_amount,
-            "minimum_received": min_total,
+            "token_amount": decimal.Decimal(str(token_amount)),
+            "minimum_received": decimal.Decimal(str(min_total)),
             "token_fees": False
         }
 

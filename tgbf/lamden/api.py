@@ -1,3 +1,4 @@
+import decimal
 import time
 import logging
 import requests
@@ -127,9 +128,9 @@ class API:
                 return False, tx["result"]
         return False, "Timeout reached"
 
-    def send(self, amount: Union[int, float], to_address: str, token: str = "currency"):
+    def send(self, amount: Union[int, float, str], to_address: str, token: str = "currency"):
         """ Send TAU to given address by triggering 'currency' smart contract """
-        kwargs = {"amount": amount, "to": to_address}
+        kwargs = {"amount": decimal.Decimal(str(amount)), "to": to_address}
         return self.post_transaction(100, token, "transfer", kwargs)
 
     def post_transaction(self, stamps: int, contract: str, function: str, kwargs: dict):
@@ -174,12 +175,7 @@ class API:
 
     def approve_contract(self, contract: str, token: str = "currency", amount: float = 900000000000):
         """ Approve smart contract to spend a specific amount of TAU """
-
-        # --- TEMP ---
-        # kwargs = {"amount": float(amount), "to": contract}
-        # TODO: Remove temporal fix
-        kwargs = {"amount": int(amount), "to": contract}
-        # --- TEMP ---
+        kwargs = {"amount": decimal.Decimal(str(amount)), "to": contract}
 
         return self.post_transaction(45, token, "approve", kwargs)
 

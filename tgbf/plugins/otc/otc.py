@@ -1,3 +1,4 @@
+import decimal
 import json
 import logging
 import requests
@@ -120,14 +121,6 @@ class Otc(TGBFPlugin):
             update.message.reply_text(msg)
             return
 
-        # --- TEMP ---
-        # TODO: Remove temporal fix
-        if not float(update.message.text).is_integer():
-            msg = f"{emo.ERROR} Sorry for the inconvenience but currently the amount needs to be an Integer"
-            update.message.reply_text(msg)
-            return
-        # --- TEMP ---
-
         msg = "3) Enter <b>contract name</b> of token to <b>RECEIVE</b>"
         update.message.reply_text(msg, parse_mode=ParseMode.HTML, reply_markup=self.cancel_keyboard())
         return self.TAKE_TOKEN
@@ -162,14 +155,6 @@ class Otc(TGBFPlugin):
             msg = f"{emo.ERROR} Provided amount not valid, try again"
             update.message.reply_text(msg)
             return
-
-        # --- TEMP ---
-        # TODO: Remove temporal fix
-        if not float(update.message.text).is_integer():
-            msg = f"{emo.ERROR} Sorry for the inconvenience but currently the amount needs to be an Integer"
-            update.message.reply_text(msg)
-            return
-        # --- TEMP ---
 
         offer_amount = context.user_data["offer_amount"]
         offer_amount = int(offer_amount) if offer_amount.is_integer() else offer_amount
@@ -232,20 +217,10 @@ class Otc(TGBFPlugin):
 
         kwargs = {
             "offer_token": context.user_data["offer_token"],
-            "offer_amount": context.user_data["offer_amount"],
+            "offer_amount": round(decimal.Decimal(context.user_data["offer_amount"]), 8),
             "take_token": context.user_data["take_token"],
-            "take_amount": context.user_data["take_amount"]
+            "take_amount": round(decimal.Decimal(context.user_data["take_amount"]), 8)
         }
-
-        # --- TEMP ---
-        # TODO: Remove temporal fix
-        kwargs = {
-            "offer_token": context.user_data["offer_token"],
-            "offer_amount": int(context.user_data["offer_amount"]),
-            "take_token": context.user_data["take_token"],
-            "take_amount": int(context.user_data["take_amount"])
-        }
-        # --- TEMP ---
 
         try:
             # Check if contract is approved to spend users token
@@ -565,7 +540,7 @@ class Otc(TGBFPlugin):
                     fee = float(otc["fee"]['__fixed__'])
 
                     if isinstance(otc["take_amount"], dict):
-                        if ['__fixed__'] in otc["take_amount"]:
+                        if '__fixed__' in otc["take_amount"]:
                             amount = float(otc["take_amount"]['__fixed__'])
                     else:
                         amount = int(otc["take_amount"])
@@ -589,7 +564,7 @@ class Otc(TGBFPlugin):
                 try:
                     # Call OTC contract
                     ret = lamden.post_transaction(
-                        stamps=80,
+                        stamps=120,
                         contract=contract,
                         function="take_offer",
                         kwargs={"offer_id": otc_id})

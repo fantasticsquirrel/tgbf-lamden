@@ -1,3 +1,4 @@
+import decimal
 import logging
 import tgbf.emoji as emo
 
@@ -29,18 +30,6 @@ class Buy(TGBFPlugin):
                 msg = f"{emo.ERROR} Second argument needs to be a valid amount"
                 update.message.reply_text(msg)
                 return
-
-            # ----------------------
-
-            # TODO: Remove. Temporal fix
-            if tau_amount.is_integer():
-                tau_amount = int(tau_amount)
-            else:
-                msg = f"{emo.ERROR} Amount currently needs to be an Integer"
-                update.message.reply_text(msg)
-                return
-
-            # ----------------------
 
             if tau_amount <= 0:
                 msg = f"{emo.ERROR} Amount of TAU too low"
@@ -126,13 +115,10 @@ class Buy(TGBFPlugin):
         token_amount_to_buy = tau_amount / token_price
         min_token_amount = token_amount_to_buy / 100 * (100 - self.config.get("slippage"))
 
-        # TODO: Remove. Temporal fix
-        min_token_amount = int(min_token_amount)
-
         kwargs = {
             "contract": token_contract,
-            "currency_amount": tau_amount,
-            "minimum_received": min_token_amount,
+            "currency_amount": decimal.Decimal(str(tau_amount)),
+            "minimum_received": decimal.Decimal(str(min_token_amount)),
             "token_fees": False
         }
 

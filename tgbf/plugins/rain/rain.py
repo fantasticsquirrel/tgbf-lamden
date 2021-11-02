@@ -1,3 +1,4 @@
+import decimal
 import html
 import logging
 import tgbf.emoji as emo
@@ -125,15 +126,6 @@ class Rain(TGBFPlugin):
         if amount_single.is_integer():
             amount_single = int(amount_single)
 
-        # --- TEMP ---
-        # TODO: Remove temporal fix
-        amount_single = int(amount_single)
-        if amount_single == 0:
-            msg = f"{emo.ERROR} Individual amount too low"
-            message.edit_text(msg)
-            return
-        # --- TEMP ---
-
         if token_name == "CORN":
             msg = f"DAAAMN! <code>{amount_single}</code> 🌽 RAINED ON FOLLOWING USERS:"
         else:
@@ -202,7 +194,11 @@ class Rain(TGBFPlugin):
                 stamps_to_use,
                 contract,
                 function,
-                {"addresses": addresses, "amount": amount_single, "contract": token_contract})
+                {
+                    "addresses": addresses,
+                    "amount": decimal.Decimal(str(amount_single)),
+                    "contract": token_contract
+                })
 
             logging.info(f"Rained {amount_total} {token_name} from {from_username} on {len(user_data)} users: {res}")
         except Exception as e:

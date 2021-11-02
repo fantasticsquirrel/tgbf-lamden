@@ -79,15 +79,6 @@ class Tip(TGBFPlugin):
         if amount.is_integer():
             amount = int(amount)
 
-        # --- TEMP ---
-        # TODO: Remove temporal fix
-        amount = int(amount)
-        if amount == 0:
-            msg = f"{emo.ERROR} Amount needs to be an Integer"
-            update.message.reply_text(msg)
-            return
-        # --- TEMP ---
-
         # Get address to which we want to tip
         to_address = self.get_wallet(to_user_id).verifying_key
 

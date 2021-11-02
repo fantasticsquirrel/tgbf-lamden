@@ -200,7 +200,7 @@ class Rain(TGBFPlugin):
                     "contract": token_contract
                 })
 
-            logging.info(f"Rained {amount_total} {token_name} from {from_username} on {len(user_data)} users: {res}")
+            logging.info(f"Rained {amount_total} {token_name} from {html.escape(from_username)} on {len(user_data)} users: {res}")
         except Exception as e:
             msg = f"Error on posting transaction: {e}"
             message.edit_text(f"{emo.ERROR} {e}")

@@ -1,3 +1,4 @@
+import html
 import logging
 import tgbf.emoji as emo
 
@@ -115,7 +116,7 @@ class Tip(TGBFPlugin):
             from_user = update.effective_user.first_name
 
         message.edit_text(
-            f"{emo.MONEY} {to_user} received <code>{amount}</code> {token_name}\n{link}",
+            f"{emo.MONEY} {html.escape(to_user)} received <code>{amount}</code> {token_name}\n{link}",
             parse_mode=ParseMode.HTML,
             disable_web_page_preview=True)
 

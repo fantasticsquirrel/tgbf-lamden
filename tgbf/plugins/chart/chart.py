@@ -32,7 +32,7 @@ class Chart(TGBFPlugin):
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def chart_callback(self, update: Update, context: CallbackContext):
-        base = "btc"  # vs-currency
+        base = "eth"  # vs-currency
         time = 3      # days
 
         if context.args:

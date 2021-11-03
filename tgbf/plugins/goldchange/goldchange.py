@@ -122,6 +122,10 @@ class Goldchange(TGBFPlugin):
                         except Exception as e:
                             self.notify(f"Can't notify about new price change: {e}")
 
+                        # FIXME: Charts are super weird. Need to be reworked
+
+                        """
+
                         # Chart from rschart:
                         df_price = DataFrame(curr_dict["data"], columns=["DateTime", "Price"])
                         df_price["DateTime"] = pd.to_datetime(df_price["DateTime"], unit="s")
@@ -172,6 +176,9 @@ class Goldchange(TGBFPlugin):
                         self.bot.updater.bot.sendPhoto(
                             self.config.get("listing_chat_id"),
                             photo=io.BufferedReader(BytesIO(pio.to_image(fig, format="png"))))
+                            
+                        """
+
                     # else:
                     #    logging.info(f"{token_working} in exclusion list... skipping...")
                 else:

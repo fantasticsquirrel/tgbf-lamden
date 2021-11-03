@@ -110,9 +110,6 @@ class Sell(TGBFPlugin):
 
         min_total = token_price / 100 * (100 - self.config.get("slippage"))
 
-        # TODO: Remove. Temporal fix
-        min_total = int(min_total)
-
         kwargs = {
             "contract": token_contract,
             "token_amount": decimal.Decimal(str(token_amount)),

@@ -5,6 +5,6 @@
     "function": "roll",
     "blacklist": [],
     "blacklist_msg": "Execute in [Trading Group](https://t.me/Tradetau) or [Rocketswap Group](https://t.me/rocketswap) or [LamDegen Lounge Group](https://t.me/TheLamdenLounge)",
-    "min_amount": 10,
+    "min_amount": 5,
     "max_amount": 100
 }

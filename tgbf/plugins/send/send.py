@@ -19,7 +19,6 @@ class Send(TGBFPlugin):
             self.send_callback,
             run_async=True))
 
-    @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def send_callback(self, update: Update, context: CallbackContext):
         if len(context.args) != 3:

@@ -8,7 +8,7 @@ from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
 
-class Collidertau(TGBFPlugin):
+class Moblottery(TGBFPlugin):
 
     TOKEN_CONTRACT = "con_mintorburn"
 
@@ -24,19 +24,16 @@ class Collidertau(TGBFPlugin):
 
         if len(context.args) == 0 or len(context.args) > 1:
             con = Connect()
+
             ent = con.get_contract_variable(contract=contract, variable="entry_amount")
             ent = ent["value"] if "value" in ent else 0
-            ent = float(str(ent)) if ent else float("0")
-            ent = f"{int(ent):,}"
 
             pot = con.get_contract_variable(contract=contract, variable="pot_amount")
             pot = pot["value"] if "value" in pot else 0
-            pot = float(str(pot)) if pot else float("0")
-            pot = f"{int(pot):,}"
 
             replace = {
-                "entry_amount": ent,
-                "pot_amount": pot
+                "{{entry_amount}}": str(ent),
+                "{{pot_amount}}": str(pot)
             }
 
             update.message.reply_text(
@@ -62,7 +59,6 @@ class Collidertau(TGBFPlugin):
                 msg = f"Approved amount of MOB for {contract}: {approved}"
                 logging.info(msg)
 
-                # TODO: Does that work?
                 if float(approved) == 0:
                     app = lamden.approve_contract(contract, token=self.TOKEN_CONTRACT)
                     msg = f"Approved {contract}: {app}"

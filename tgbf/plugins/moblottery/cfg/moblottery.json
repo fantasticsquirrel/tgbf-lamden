@@ -1,0 +1,6 @@
+{
+    "handle": "mob_lottery",
+    "category": "Mint or Burn (MOB) Token",
+    "description": "Send MOB and win the lottery!",
+    "contract": "con_mob_lottery"
+}

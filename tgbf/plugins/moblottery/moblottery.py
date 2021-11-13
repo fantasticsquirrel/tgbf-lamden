@@ -15,11 +15,11 @@ class Moblottery(TGBFPlugin):
     def load(self):
         self.add_handler(CommandHandler(
             self.handle,
-            self.collidertau_callback,
+            self.lottery_callback,
             run_async=True))
 
     @TGBFPlugin.send_typing
-    def collidertau_callback(self, update: Update, context: CallbackContext):
+    def lottery_callback(self, update: Update, context: CallbackContext):
         contract = self.config.get("contract")
 
         if len(context.args) == 0 or len(context.args) > 1:
@@ -71,7 +71,7 @@ class Moblottery(TGBFPlugin):
             try:
                 # Call contract
                 join = lamden.post_transaction(
-                    stamps=120,
+                    stamps=150,
                     contract=contract,
                     function="joinLottery",
                     kwargs={}

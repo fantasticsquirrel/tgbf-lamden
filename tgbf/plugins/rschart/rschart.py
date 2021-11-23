@@ -111,16 +111,8 @@ class Rschart(TGBFPlugin):
 
         end_secs = int(time.time() - (timeframe * 24 * 60 * 60))
 
-        # TODO: Workaround that is needed because rswp API for trades is treating NEB as NEB_1
-        if token == "NEB":
-            token = "NEB_1"
-
         sql = self.get_resource("select_trades.sql", plugin="trades")
         res = self.execute_sql(sql, token, end_secs, plugin="trades")
-
-        # TODO: Workaround that is needed because rswp API for trades is treating NEB as NEB_1
-        if token == "NEB_1":
-            token = "NEB"
 
         if not res["data"]:
             msg = f"{emo.ERROR} No trades found"

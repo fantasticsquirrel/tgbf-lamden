@@ -33,7 +33,7 @@ class Tip(TGBFPlugin):
 
         if not reply:
             msg = f"{emo.ERROR} Tip a user by replying to his message"
-            logging.error(f"{msg} - {update}")
+            logging.info(f"{msg} - {update}")
             update.message.reply_text(msg)
             return
 

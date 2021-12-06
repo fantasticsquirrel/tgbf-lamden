@@ -108,6 +108,7 @@ class Send(TGBFPlugin):
                 disable_web_page_preview=True)
             return
 
+        """
         # Insert details into database
         self.execute_sql(
             self.get_resource("insert_send.sql"),
@@ -115,5 +116,4 @@ class Send(TGBFPlugin):
             to_address,
             amount,
             tx_hash)
-
-
+        """

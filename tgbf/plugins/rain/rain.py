@@ -231,13 +231,18 @@ class Rain(TGBFPlugin):
             f"{msg}\n\n{link}",
             parse_mode=ParseMode.HTML)
 
-        sql = self.get_resource("insert_rain.sql")
-
         for user in user_data:
             to_user_id = user[0]
 
+            """
             # Insert details into database
-            self.execute_sql(sql, from_user.id, to_user_id, amount_single, tx_hash)
+            self.execute_sql(
+                self.get_resource("insert_rain.sql"), 
+                from_user.id, 
+                to_user_id, 
+                amount_single, 
+                tx_hash)
+            """
 
             try:
                 # Notify user about tip

@@ -134,6 +134,7 @@ class Tip(TGBFPlugin):
                 disable_web_page_preview=True)
             return
 
+        """
         # Insert details into database
         self.execute_sql(
             self.get_resource("insert_tip.sql"),
@@ -141,6 +142,7 @@ class Tip(TGBFPlugin):
             to_user_id,
             amount,
             tx_hash)
+        """
 
         try:
             # Notify user about tip

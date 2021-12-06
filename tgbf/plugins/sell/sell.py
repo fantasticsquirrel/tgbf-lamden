@@ -41,6 +41,7 @@ class Sell(TGBFPlugin):
             token = "DOUG" if token == "🧐" else token
             token = "RSWP" if token == "🚀" else token
             token = "GOLD" if token == "🥇" else token
+            token = "BEER" if token == "🍺" else token
 
             sql = self.get_resource("select_token.sql")
             token_data = self.execute_sql(sql, token, plugin="tokens")["data"]

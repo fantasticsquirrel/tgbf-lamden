@@ -164,6 +164,7 @@ class Dice(TGBFPlugin):
             f"{bet_msg}\n{con_msg}\n\n{esc_mk(res_msg, version=2)}",
             parse_mode=ParseMode.MARKDOWN_V2)
 
+        """
         # Insert details into database
         self.execute_sql(
             self.get_resource("insert_bet.sql"),
@@ -174,3 +175,4 @@ class Dice(TGBFPlugin):
             result["result"],
             amount_back,
             "-")
+        """

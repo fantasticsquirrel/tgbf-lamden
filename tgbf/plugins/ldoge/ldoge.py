@@ -37,7 +37,11 @@ class Ldoge(TGBFPlugin):
                 parse_mode=ParseMode.MARKDOWN)
             return
 
-        user_id = update.effective_user.id
+        usr = update.effective_user
+
+        user_id = usr.id
+        user_full_name = usr.full_name
+        user_username = usr.username
         user_story = update.message.text.replace(f"/{self.handle} ", "")
 
         smin = self.config.get("min_chars")
@@ -47,14 +51,17 @@ class Ldoge(TGBFPlugin):
             update.message.reply_text(
                 f"{emo.ERROR} Your story needs to have more than {smin} "
                 f"characters and less than {smax} characters to be accepted")
-
             return
 
-        # TODO: One user can only submit one story?
+        if self.execute_sql(self.get_resource("check_user.sql"), user_id)["data"]:
+            update.message.reply_text(f"{emo.ERROR} You can submit only one story!")
+            return
 
         self.execute_sql(
             self.get_resource("insert_story.sql"),
             user_id,
+            user_full_name,
+            user_username,
             user_story)
 
         row_id = self.execute_sql(self.get_resource("select_rowid.sql"))
@@ -105,8 +112,6 @@ class Ldoge(TGBFPlugin):
                 data_list[3],
                 update.effective_user.id,
                 -1)
-
-        # TODO: Is is important to see a counter on the button with how much votes were already counted?
 
         msg = f"{emo.STARS} Vote counted!"
         context.bot.answer_callback_query(update.callback_query.id, msg)

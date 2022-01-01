@@ -1,5 +1,7 @@
 CREATE TABLE stories (
 	user_id TEXT NOT NULL,
+	user_name TEXT NOT NULL,
+	username TEXT NOT NULL,
 	story TEXT NOT NULL,
 	date_time DATETIME DEFAULT CURRENT_TIMESTAMP
 )

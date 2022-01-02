@@ -177,7 +177,7 @@ class API:
         """ Approve smart contract to spend a specific amount of TAU """
         kwargs = {"amount": decimal.Decimal(str(amount)), "to": contract}
 
-        return self.post_transaction(45, token, "approve", kwargs)
+        return self.post_transaction(55, token, "approve", kwargs)
 
     def get_approved_amount(self, contract: str, token: str = "currency", var: str = "balances"):
         """ Get amount of TAU that is approved to be spent by smart contract """

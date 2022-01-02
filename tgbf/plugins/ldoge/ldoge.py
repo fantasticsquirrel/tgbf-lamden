@@ -47,16 +47,27 @@ class Ldoge(TGBFPlugin):
         smin = self.config.get("min_chars")
         smax = self.config.get("max_chars")
 
-        if smin > len(user_story) > smax:
+        # Check if story has more than min length and less than max length
+        if smin > len(user_story) or len(user_story) > smax:
             update.message.reply_text(
                 f"{emo.ERROR} Your story needs to have more than {smin} "
                 f"characters and less than {smax} characters to be accepted")
             return
 
+        # Check if user already submitted a story
         if self.execute_sql(self.get_resource("check_user.sql"), user_id)["data"]:
             update.message.reply_text(f"{emo.ERROR} You can submit only one story!")
             return
 
+        # Retrieve row ID of current story if it exists
+        data = self.execute_sql(self.get_resource("select_rowid.sql"), user_story)["data"]
+
+        # Check if story is already in DB
+        if data and data[0]:
+            update.message.reply_text(f"{emo.ERROR} This story was already submitted!")
+            return
+
+        # Insert user story
         self.execute_sql(
             self.get_resource("insert_story.sql"),
             user_id,
@@ -64,7 +75,8 @@ class Ldoge(TGBFPlugin):
             user_username,
             user_story)
 
-        row_id = self.execute_sql(self.get_resource("select_rowid.sql"))
+        # Retrieve row ID again since it can only be empty right now
+        data = self.execute_sql(self.get_resource("select_rowid.sql"), user_story)["data"]
 
         try:
             # Send story to 'LDOGE Stories' channel
@@ -72,10 +84,13 @@ class Ldoge(TGBFPlugin):
                 self.config.get("channel"),
                 user_story,
                 parse_mode=ParseMode.HTML,
-                reply_markup=self.get_buttons(update.effective_user.id, row_id))
+                reply_markup=self.get_buttons(update.effective_user.id, data[0][0]))
 
             link = f'<a href="{channel_link}">LDOGE Stories</a>'
-            update.message.reply_text(f'{emo.DONE} Story successfully submitted to {link}')
+
+            update.message.reply_text(
+                f"{emo.DONE} Story successfully submitted to {link}",
+                parse_mode=ParseMode.HTML)
         except Exception as e:
             logging.info(f"User {user_id} could not be notified about LDOGE reply: {e} - {update}")
             update.message.reply_text(f'{emo.ERROR} Error while saving story: {e}')
@@ -98,19 +113,23 @@ class Ldoge(TGBFPlugin):
             return
 
         action = data_list[2]
+        story_id = data_list[3]
+        user_id = update.effective_user.id
+
+        self.execute_sql(self.get_resource("delete_vote.sql"), story_id, user_id)
 
         if action == "UP":
             self.execute_sql(
                 self.get_resource("insert_vote.sql"),
-                data_list[3],
-                update.effective_user.id,
+                story_id,
+                user_id,
                 1)
 
         elif action == "DOWN":
             self.execute_sql(
                 self.get_resource("insert_vote.sql"),
-                data_list[3],
-                update.effective_user.id,
+                story_id,
+                user_id,
                 -1)
 
         msg = f"{emo.STARS} Vote counted!"
@@ -121,5 +140,5 @@ class Ldoge(TGBFPlugin):
         menu = utl.build_menu([
             InlineKeyboardButton(f"{emo.UP} Vote Up", callback_data=f"{self.name}|{user_id}|UP|{row_id}"),
             InlineKeyboardButton(f"{emo.DOWN} Vote Down", callback_data=f"{self.name}|{user_id}|DOWN|{row_id}")
-        ])
+        ], n_cols=2)
         return InlineKeyboardMarkup(menu, resize_keyboard=True)

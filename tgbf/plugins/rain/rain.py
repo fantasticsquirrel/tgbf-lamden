@@ -167,7 +167,11 @@ class Rain(TGBFPlugin):
         function = self.config.get("function")
 
         try:
-            approved = lamden.get_approved_amount(contract, token_contract)
+            if token_contract in self.config.get("allowances_needed"):
+                approved = lamden.get_approved_amount(contract, token_contract, var="allowances")
+            else:
+                approved = lamden.get_approved_amount(contract, token_contract)
+
             approved = approved["value"] if "value" in approved else 0
             approved = approved if approved is not None else 0
 

@@ -179,10 +179,10 @@ class API:
 
         return self.post_transaction(45, token, "approve", kwargs)
 
-    def get_approved_amount(self, contract: str, token: str = "currency"):
+    def get_approved_amount(self, contract: str, token: str = "currency", var: str = "balances"):
         """ Get amount of TAU that is approved to be spent by smart contract """
         key = f"{self.wallet.verifying_key}:{contract}"
-        with requests.get(f"{self.node_url}/contracts/{token}/balances?key={key}") as res:
+        with requests.get(f"{self.node_url}/contracts/{token}/{var}?key={key}") as res:
             return decode(res.text)
 
     # ---- Block Explorer API ----

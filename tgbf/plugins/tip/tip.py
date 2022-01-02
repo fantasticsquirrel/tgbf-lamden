@@ -8,6 +8,7 @@ from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
 
+# TODO: Does this miss 'approval' to send tokens? Why isn't that an issue?
 class Tip(TGBFPlugin):
 
     def load(self):

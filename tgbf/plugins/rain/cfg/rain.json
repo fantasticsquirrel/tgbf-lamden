@@ -3,5 +3,8 @@
     "description": "Rain tokens on last active users",
     "contract": "con_multisend2",
     "function": "send",
-    "user_limit": 160
+    "user_limit": 160,
+    "allowances_needed": [
+        "con_pusd_v1_2"
+    ]
 }

@@ -13,7 +13,8 @@ from tgbf.plugin import TGBFPlugin
 class Rain(TGBFPlugin):
 
     STAMPS = [28, 22, 19, 18, 17, 16]
-    STAMPS_NEB = [56, 50, 47, 46, 45]
+    STAMPS_HIGH = [56, 50, 47, 46, 45]
+    STAMPS_VERY_HIGH = [76, 70, 67, 66, 65]
 
     def load(self):
         if not self.table_exists("rain"):
@@ -167,7 +168,7 @@ class Rain(TGBFPlugin):
         function = self.config.get("function")
 
         try:
-            if token_contract in self.config.get("allowances_needed"):
+            if token_contract in self.config.get("use_allowances"):
                 approved = lamden.get_approved_amount(contract, token_contract, var="allowances")
             else:
                 approved = lamden.get_approved_amount(contract, token_contract)
@@ -184,13 +185,17 @@ class Rain(TGBFPlugin):
             stamps_to_use = 0
             for a in range(len(addresses)):
                 try:
-                    if token_name == "NEB":
-                        stamps_to_use += self.STAMPS_NEB[a]
+                    if token_name in self.config.get("high_fees"):
+                        stamps_to_use += self.STAMPS_HIGH[a]
+                    elif token_name in self.config.get("very_high_fees"):
+                        stamps_to_use += self.STAMPS_VERY_HIGH[a]
                     else:
                         stamps_to_use += self.STAMPS[a]
                 except IndexError:
-                    if token_name == "NEB":
-                        stamps_to_use += self.STAMPS[-1]
+                    if token_name in self.config.get("high_fees"):
+                        stamps_to_use += self.STAMPS_HIGH[-1]
+                    elif token_name in self.config.get("very_high_fees"):
+                        stamps_to_use += self.STAMPS_VERY_HIGH[-1]
                     else:
                         stamps_to_use += self.STAMPS[-1]
 

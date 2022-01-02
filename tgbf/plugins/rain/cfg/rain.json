@@ -4,7 +4,13 @@
     "contract": "con_multisend2",
     "function": "send",
     "user_limit": 160,
-    "allowances_needed": [
+    "use_allowances": [
         "con_pusd_v1_2"
+    ],
+    "high_fees": [
+        "NEB"
+    ],
+    "very_high_fees": [
+        "PUSD", "PUSD_3"
     ]
 }

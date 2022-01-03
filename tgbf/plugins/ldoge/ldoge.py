@@ -1,9 +1,11 @@
+import html
 import logging
 import tgbf.emoji as emo
 import tgbf.utils as utl
 
 from telegram import ParseMode, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
+from telegram.utils.helpers import escape_markdown
 from tgbf.plugin import TGBFPlugin
 
 
@@ -33,7 +35,7 @@ class Ldoge(TGBFPlugin):
 
         if len(context.args) == 0:
             update.message.reply_text(
-                self.get_usage({'{{tg_channel}}': channel_link}),
+                self.get_usage({'{{tgchannel}}': escape_markdown(channel_link)}),
                 parse_mode=ParseMode.MARKDOWN)
             return
 
@@ -43,6 +45,8 @@ class Ldoge(TGBFPlugin):
         user_full_name = usr.full_name
         user_username = usr.username
         user_story = update.message.text.replace(f"/{self.handle} ", "")
+
+        user_story = html.escape(user_story)
 
         smin = self.config.get("min_chars")
         smax = self.config.get("max_chars")
@@ -82,7 +86,7 @@ class Ldoge(TGBFPlugin):
             # Send story to 'LDOGE Stories' channel
             context.bot.send_message(
                 self.config.get("channel"),
-                user_story,
+                escape_markdown(user_story),
                 parse_mode=ParseMode.HTML,
                 reply_markup=self.get_buttons(update.effective_user.id, data[0][0]))
 

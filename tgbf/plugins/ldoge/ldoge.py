@@ -110,14 +110,11 @@ class Ldoge(TGBFPlugin):
         if not data_list:
             return
 
-        if len(data_list) != 4:
+        if len(data_list) != 3:
             return
 
-        if int(data_list[1]) != update.effective_user.id:
-            return
-
-        action = data_list[2]
-        story_id = data_list[3]
+        action = data_list[1]
+        story_id = data_list[2]
         user_id = update.effective_user.id
 
         self.execute_sql(self.get_resource("delete_vote.sql"), story_id, user_id)
@@ -142,7 +139,7 @@ class Ldoge(TGBFPlugin):
 
     def get_buttons(self, user_id, row_id):
         menu = utl.build_menu([
-            InlineKeyboardButton(f"{emo.UP} Vote Up", callback_data=f"{self.name}|{user_id}|UP|{row_id}"),
-            InlineKeyboardButton(f"{emo.DOWN} Vote Down", callback_data=f"{self.name}|{user_id}|DOWN|{row_id}")
+            InlineKeyboardButton(f"{emo.UP} Vote Up", callback_data=f"{self.name}|UP|{row_id}"),
+            InlineKeyboardButton(f"{emo.DOWN} Vote Down", callback_data=f"{self.name}|DOWN|{row_id}")
         ], n_cols=2)
         return InlineKeyboardMarkup(menu, resize_keyboard=True)

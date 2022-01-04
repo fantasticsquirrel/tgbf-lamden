@@ -1,3 +1,4 @@
+import decimal
 import logging
 import tgbf.emoji as emo
 
@@ -11,7 +12,7 @@ class Taupusd(TGBFPlugin):
 
     def load(self):
         self.add_handler(CommandHandler(
-            self.name,
+            self.handle,
             self.pusd_callback,
             run_async=True))
 
@@ -66,7 +67,7 @@ class Taupusd(TGBFPlugin):
                 stamps=100,
                 contract=contract,
                 function=function,
-                kwargs={"amount": amount}
+                kwargs={"tau_amount": decimal.Decimal(str(amount))}
             )
         except Exception as e:
             logging.error(f"Error calling tau_to_pusd: {e}")
@@ -91,12 +92,12 @@ class Taupusd(TGBFPlugin):
             message.edit_text(f"{emo.ERROR} {result}")
             return
 
-        bought_amount = result["result"][result["result"].find("'") + 1:result["result"].rfind("'")]
+        #bought_amount = result["result"][result["result"].find("'") + 1:result["result"].rfind("'")]
 
         link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
 
         message.edit_text(
-            f"{emo.DONE} Received <code>{float(bought_amount):,.2f}</code> TAU\n{link}",
+            f"{emo.DONE} Received PUSD\n{link}",
             parse_mode=ParseMode.HTML,
             disable_web_page_preview=True
         )

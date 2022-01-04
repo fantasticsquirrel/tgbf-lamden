@@ -1,9 +1,11 @@
+import html
 import logging
 import tgbf.emoji as emo
 import tgbf.utils as utl
 
 from telegram import ParseMode, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
+from telegram.utils.helpers import escape_markdown
 from tgbf.plugin import TGBFPlugin
 from tgbf.web import EndpointAction
 
@@ -36,7 +38,7 @@ class Ldoge(TGBFPlugin):
 
         if len(context.args) == 0:
             update.message.reply_text(
-                self.get_usage({'{{tg_channel}}': channel_link}),
+                self.get_usage({'{{tgchannel}}': escape_markdown(channel_link)}),
                 parse_mode=ParseMode.MARKDOWN)
             return
 
@@ -46,6 +48,8 @@ class Ldoge(TGBFPlugin):
         user_full_name = usr.full_name
         user_username = usr.username if usr.username else None
         user_story = update.message.text.replace(f"/{self.handle} ", "")
+
+        user_story = html.escape(user_story)
 
         smin = self.config.get("min_chars")
         smax = self.config.get("max_chars")
@@ -85,7 +89,7 @@ class Ldoge(TGBFPlugin):
             # Send story to 'LDOGE Stories' channel
             context.bot.send_message(
                 self.config.get("channel"),
-                user_story,
+                escape_markdown(user_story),
                 parse_mode=ParseMode.HTML,
                 reply_markup=self.get_buttons(update.effective_user.id, data[0][0]))
 
@@ -109,14 +113,11 @@ class Ldoge(TGBFPlugin):
         if not data_list:
             return
 
-        if len(data_list) != 4:
+        if len(data_list) != 3:
             return
 
-        if int(data_list[1]) != update.effective_user.id:
-            return
-
-        action = data_list[2]
-        story_id = data_list[3]
+        action = data_list[1]
+        story_id = data_list[2]
         user_id = update.effective_user.id
 
         self.execute_sql(self.get_resource("delete_vote.sql"), story_id, user_id)
@@ -141,8 +142,8 @@ class Ldoge(TGBFPlugin):
 
     def get_buttons(self, user_id, row_id):
         menu = utl.build_menu([
-            InlineKeyboardButton(f"{emo.UP} Vote Up", callback_data=f"{self.name}|{user_id}|UP|{row_id}"),
-            InlineKeyboardButton(f"{emo.DOWN} Vote Down", callback_data=f"{self.name}|{user_id}|DOWN|{row_id}")
+            InlineKeyboardButton(f"{emo.UP} Vote Up", callback_data=f"{self.name}|UP|{row_id}"),
+            InlineKeyboardButton(f"{emo.DOWN} Vote Down", callback_data=f"{self.name}|DOWN|{row_id}")
         ], n_cols=2)
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 

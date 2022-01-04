@@ -158,17 +158,17 @@ class Ldoge(TGBFPlugin):
 
         data = list()
 
-        for story in stories["data"][0]:
-            votes = self.execute_sql(sql_votes, story[0][0])
+        for story in stories["data"]:
+            votes = self.execute_sql(sql_votes, story[0])
 
             data.append({
-                "id": story[0][0],
-                "story": story[0][1],
-                "user_id": story[0][2],
-                "user_name": story[0][3],
-                "user_handle": story[0][4],
-                "creation_date": story[0][5],
-                "votes": votes["data"][0] if votes["data"] else None
+                "id": story[0],
+                "story": story[1],
+                "user_id": story[2],
+                "user_name": story[3],
+                "user_handle": story[4],
+                "creation_date": story[5],
+                "votes": votes["data"][0][0] if votes["data"] else None
             })
 
         return data

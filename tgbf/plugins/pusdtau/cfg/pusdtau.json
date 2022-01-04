@@ -1,0 +1,6 @@
+{
+    "category": "PUSD Stablecoin Token",
+    "description": "Convert PUSD to TAU without slippage",
+    "contract": "con_pusd_v1_2",
+    "function": "pusd_to_tau"
+}

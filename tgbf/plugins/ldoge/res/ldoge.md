@@ -1,4 +1,6 @@
-Take the Lamb Doge storyline the way you want! Send your story idea with max 255 characters and see it being published and voted on in the Telegram channel {{tg_channel}}!
+Write the LambDoge storyline the way you want!  
+
+Send your story idea with max 500 characters and see it being published and voted on in the Telegram channel {{tg_channel}} !
 
 Syntax:  
 `/{{handle}} <your story text here>`  

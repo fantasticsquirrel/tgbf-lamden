@@ -5,6 +5,7 @@ import tgbf.utils as utl
 from telegram import ParseMode, Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from tgbf.plugin import TGBFPlugin
+from tgbf.web import EndpointAction
 
 
 class Ldoge(TGBFPlugin):
@@ -26,6 +27,8 @@ class Ldoge(TGBFPlugin):
             self.button_callback,
             run_async=True))
 
+        self.add_endpoint(self.name, EndpointAction(self.stories_api))
+
     @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def ldoge_callback(self, update: Update, context: CallbackContext):
@@ -41,7 +44,7 @@ class Ldoge(TGBFPlugin):
 
         user_id = usr.id
         user_full_name = usr.full_name
-        user_username = usr.username
+        user_username = usr.username if usr.username else None
         user_story = update.message.text.replace(f"/{self.handle} ", "")
 
         smin = self.config.get("min_chars")
@@ -142,3 +145,29 @@ class Ldoge(TGBFPlugin):
             InlineKeyboardButton(f"{emo.DOWN} Vote Down", callback_data=f"{self.name}|{user_id}|DOWN|{row_id}")
         ], n_cols=2)
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
+
+    def stories_api(self):
+        sql_stories = self.get_resource("select_stories.sql")
+        sql_votes = self.get_resource("select_votes.sql")
+
+        stories = self.execute_sql(sql_stories)
+
+        if not stories["data"]:
+            return {"error": "No stories found"}
+
+        data = list()
+
+        for story in stories["data"][0]:
+            votes = self.execute_sql(sql_votes, story[0][0])
+
+            data.append({
+                "id": story[0][0],
+                "story": story[0][1],
+                "user_id": story[0][2],
+                "user_name": story[0][3],
+                "user_handle": story[0][4],
+                "creation_date": story[0][5],
+                "votes": votes["data"][0] if votes["data"] else None
+            })
+
+        return data

@@ -141,7 +141,6 @@ cython_debug/
 
 # Custom TGBF
 .idea
-kill.sh
 /cfg/token.json
 qr_codes/
 log/

@@ -27,7 +27,6 @@ class TelegramBot:
 
         logging.info(f"Starting {con.DESCRIPTION}")
 
-        # TODO: Test
         self.bot_wallet = Wallet(bot_pk)
 
         read_timeout = self.config.get("telegram", "read_timeout")

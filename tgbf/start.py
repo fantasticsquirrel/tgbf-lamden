@@ -106,6 +106,7 @@ class TGBF:
             if not os.path.exists(log_path):
                 os.makedirs(log_path)
 
+            # Log to file
             file_log = TimedRotatingFileHandler(
                 log_file,
                 when="H",

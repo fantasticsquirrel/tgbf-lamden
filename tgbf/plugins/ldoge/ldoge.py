@@ -91,7 +91,7 @@ class Ldoge(TGBFPlugin):
                 self.config.get("channel"),
                 escape_markdown(user_story),
                 parse_mode=ParseMode.HTML,
-                reply_markup=self.get_buttons(update.effective_user.id, data[0][0]))
+                reply_markup=self.get_button(update.effective_user.id, data[0][0]))
 
             link = f'<a href="{channel_link}">LDOGE Stories</a>'
 
@@ -113,38 +113,21 @@ class Ldoge(TGBFPlugin):
         if not data_list:
             return
 
-        if len(data_list) != 3:
+        if len(data_list) != 2:
             return
 
-        action = data_list[1]
-        story_id = data_list[2]
+        story_id = data_list[1]
         user_id = update.effective_user.id
 
         self.execute_sql(self.get_resource("delete_vote.sql"), story_id, user_id)
-
-        if action == "UP":
-            self.execute_sql(
-                self.get_resource("insert_vote.sql"),
-                story_id,
-                user_id,
-                1)
-
-        elif action == "DOWN":
-            self.execute_sql(
-                self.get_resource("insert_vote.sql"),
-                story_id,
-                user_id,
-                -1)
+        self.execute_sql(self.get_resource("insert_vote.sql"), story_id, user_id, 1)
 
         msg = f"{emo.STARS} Vote counted!"
         context.bot.answer_callback_query(update.callback_query.id, msg)
         return
 
-    def get_buttons(self, user_id, row_id):
-        menu = utl.build_menu([
-            InlineKeyboardButton(f"{emo.UP} Vote Up", callback_data=f"{self.name}|UP|{row_id}"),
-            InlineKeyboardButton(f"{emo.DOWN} Vote Down", callback_data=f"{self.name}|DOWN|{row_id}")
-        ], n_cols=2)
+    def get_button(self, user_id, row_id):
+        menu = utl.build_menu([InlineKeyboardButton(f"{emo.UP} Vote Up", callback_data=f"{self.name}|{row_id}")])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 
     def stories_api(self):

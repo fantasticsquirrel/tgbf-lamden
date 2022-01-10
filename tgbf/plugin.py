@@ -28,6 +28,9 @@ class Notify(Enum):
     ERROR = 3
 
 
+# TODO: For each plugin, try not to use "run_async=True" for the handler and see if that helps with multiple instances
+#  If yes,then move from that to using "threaded()" in plugin class
+# TODO: How can i cast a class to it's real type (that i could choose myself) and then execute methods?
 class TGBFPlugin:
 
     def __init__(self, tg_bot: TelegramBot):
@@ -181,7 +184,6 @@ class TGBFPlugin:
         value = EndpointAction for this plugin """
         return self._endpoints
 
-    # TODO: Test
     @property
     def bot_wallet(self) -> Wallet:
         """ Return an instance of the Lamden wallet derived

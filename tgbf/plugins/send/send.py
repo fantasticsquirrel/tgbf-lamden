@@ -61,23 +61,29 @@ class Send(TGBFPlugin):
 
         if not lamden.is_address_valid(to_address):
             # Check if address is an alias
-            sql = self.get_resource("select_alias.sql")
-            alias = self.config.get("alias_plugin")
+            alias_plg = self.config.get("alias_plugin")
 
-            if not alias:
+            if not alias_plg:
                 msg = f"{emo.ERROR} Address not valid"
                 update.message.reply_text(msg)
                 return
 
-            address = self.execute_sql(sql, to_address, plugin=alias)
+            alias = to_address
 
-            if not address:
+            sql_adr = self.execute_sql(
+                self.get_resource("select_alias.sql", plugin=alias_plg),
+                update.effective_user.id,
+                alias,
+                plugin=alias_plg)
+
+            if not sql_adr["data"]:
                 msg = f"{emo.ERROR} Address not valid"
                 update.message.reply_text(msg)
                 return
 
-            to_address = address[0]
-            logging.info(f"Used {address} for alias '{to_address}'")
+            to_address = sql_adr["data"]
+
+            logging.info(f"Used alias '{alias}' for address {to_address}")
 
         message = update.message.reply_text(f"{emo.HOURGLASS} Sending {token_name}...")
 

@@ -124,7 +124,6 @@ class Ldoge(TGBFPlugin):
 
         msg = f"{emo.STARS} Vote counted!"
         context.bot.answer_callback_query(update.callback_query.id, msg)
-        return
 
     def get_button(self, user_id, row_id):
         menu = utl.build_menu([InlineKeyboardButton(f"{emo.UP} Vote Up", callback_data=f"{self.name}|{row_id}")])

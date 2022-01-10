@@ -1,5 +1,3 @@
-import logging
-
 import tgbf.emoji as emo
 import tgbf.utils as utl
 
@@ -95,7 +93,7 @@ class Alias(TGBFPlugin):
 
     def get_remove_button(self, user_id, alias):
         menu = utl.build_menu([
-            InlineKeyboardButton(f"{emo.STOP} Remove alert", callback_data=f"{self.name}|{user_id}|{alias}")
+            InlineKeyboardButton(f"{emo.STOP} Remove alias", callback_data=f"{self.name}|{user_id}|{alias}")
         ])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 

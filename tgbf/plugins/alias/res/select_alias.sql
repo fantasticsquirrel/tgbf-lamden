@@ -1,3 +1,3 @@
 SELECT address
-FROM addressbook
+FROM aliases
 WHERE user_id = ? AND alias = ?

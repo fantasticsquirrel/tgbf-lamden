@@ -1,4 +1,4 @@
-CREATE TABLE addressbook (
+CREATE TABLE aliases (
     user_id TEXT NOT NULL,
     alias TEXT NOT NULL,
     address TEXT NOT NULL,

@@ -67,8 +67,7 @@ class Alert(TGBFPlugin):
                     lhc_price = Connect().get_contract_variable(
                         self.config.get("rocketswap_contract"),
                         "prices",
-                        self.config.get("lhc_contract")
-                    )
+                        self.config.get("lhc_contract"))
 
                     lhc_price = lhc_price["value"] if "value" in lhc_price else 0
                     lhc_price = float(str(lhc_price)) if lhc_price else float("0")
@@ -93,8 +92,7 @@ class Alert(TGBFPlugin):
                     update.message.reply_text(
                         f"<code>{alert[1]}</code> price at <code>{alert[2]}</code>",
                         reply_markup=self.get_remove_button(update.effective_user.id, alert[0]),
-                        parse_mode=ParseMode.HTML
-                    )
+                        parse_mode=ParseMode.HTML)
             else:
                 update.message.reply_text(f"{emo.ERROR} No alert found")
             return
@@ -140,8 +138,7 @@ class Alert(TGBFPlugin):
 
             context.bot.delete_message(
                 update.effective_user.id,
-                update.callback_query.message.message_id
-            )
+                update.callback_query.message.message_id)
 
             context.bot.answer_callback_query(update.callback_query.id, "Alert removed")
 

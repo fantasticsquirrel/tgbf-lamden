@@ -64,9 +64,13 @@ class Send(TGBFPlugin):
             sql = self.get_resource("select_alias.sql")
             addressbook = self.config.get("address_book_plugin")
 
+            if not addressbook:
+                msg = f"{emo.ERROR} Address not valid"
+                update.message.reply_text(msg)
+                return
+
             address = self.execute_sql(sql, to_address, plugin=addressbook)
 
-            # TODO: Test
             if not address:
                 msg = f"{emo.ERROR} Address not valid"
                 update.message.reply_text(msg)

@@ -1,5 +1,5 @@
 {
     "category": "Lamden",
     "description": "Send TAU to another address",
-    "address_book_plugin": "addressbook"
+    "alias_plugin": "alias"
 }

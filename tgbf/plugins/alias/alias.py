@@ -113,16 +113,22 @@ class Alias(TGBFPlugin):
 
         user_id = update.effective_user.id
 
-        if data_list[1] != user_id:
+        if int(data_list[1]) != update.effective_user.id:
             return
 
         alias = data_list[2]
 
-        self.execute_sql(self.get_resource("delete_alias.sql"), alias)
-
-        context.bot.delete_message(
+        del_result = self.execute_sql(
+            self.get_resource("delete_alias.sql"),
             update.effective_user.id,
-            update.callback_query.message.message_id)
+            alias)
 
-        msg = f"{emo.DONE} Alias '{alias}' removed!"
+        if del_result["success"]:
+            context.bot.delete_message(
+                update.effective_user.id,
+                update.callback_query.message.message_id)
+            msg = f"{emo.DONE} Alias '{alias}' removed!"
+        else:
+            msg = f"{emo.ERROR} Alias '{alias}' could not be removed!"
+
         context.bot.answer_callback_query(update.callback_query.id, msg)

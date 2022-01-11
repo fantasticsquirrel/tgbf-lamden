@@ -188,13 +188,13 @@ class Nebape(TGBFPlugin):
                 message.edit_caption(f"{emo.ERROR} {result}")
                 return
 
-            neb_returned = result["result"][result["result"].find("'")+1:result["result"].rfind("'")]
+            neb_returned = result["result"].split(" ")
 
             ex_link = f'<a href="{lamden.explorer_url}/transactions/{tx_hash}">View Transaction on Explorer</a>'
 
             message.edit_caption(
                 f"You successfully unsubscribed from Nebula Ape Listings. "
-                f"{int(float(neb_returned)):,} NEB was returned.\n{ex_link}",
+                f"{int(float(neb_returned[2])):,} NEB was returned.\n{ex_link}",
                 parse_mode=ParseMode.HTML)
 
             msg = f"{emo.DONE} Unsubscribed"

@@ -166,6 +166,18 @@ class Rschart(TGBFPlugin):
         if not image:
             image = Image.open(join(self.get_res_path(), self.LOGO_DIR, self.DEF_LOGO))
 
+        margin_l = 130
+        tickformat = "0.8f"
+
+        max_value = df_price["Price"].max()
+        if max_value > 0.9:
+            if max_value > 999:
+                margin_l = 90
+                tickformat = "0,.0f"
+            else:
+                margin_l = 95
+                tickformat = "0.2f"
+
         layout = go.Layout(
             images=[dict(
                 source=image,
@@ -181,6 +193,16 @@ class Rschart(TGBFPlugin):
                 font=dict(
                     size=24
                 )
+            ),
+            autosize=False,
+            width=800,
+            height=600,
+            margin=go.layout.Margin(
+                l=margin_l,
+                r=50,
+                b=85,
+                t=100,
+                pad=4
             ),
             paper_bgcolor='rgb(233,233,233)',
             plot_bgcolor='rgb(233,233,233)',
@@ -210,12 +232,15 @@ class Rschart(TGBFPlugin):
         )
 
         try:
-            result["data"] = go.Figure(data=[price], layout=layout)
+            fig = go.Figure(data=[price], layout=layout)
+            fig["layout"]["yaxis"].update(tickformat=tickformat)
+
+            result["data"] = fig
             return result
         except Exception as e:
             logging.error(e)
             self.notify(e)
 
             result["success"] = False
-            result["data"] = str(e)
+            result["data"] = str(repr(e))
             return result

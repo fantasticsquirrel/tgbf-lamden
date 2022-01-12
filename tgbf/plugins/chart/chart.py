@@ -1,5 +1,7 @@
 import io
 import json
+import os.path
+
 import plotly
 import logging
 import pandas as pd
@@ -8,6 +10,7 @@ import plotly.graph_objs as go
 import tgbf.utils as utl
 import tgbf.emoji as emo
 
+from PIL import Image
 from io import BytesIO
 from pandas import DataFrame
 from telegram import ParseMode, Update
@@ -128,7 +131,7 @@ class Chart(TGBFPlugin):
 
         layout = go.Layout(
             images=[dict(
-                source=info["image"]["large"],
+                source=Image.open(os.path.join(self.get_res_path(), "lamden.png")),
                 opacity=0.8,
                 xref="paper", yref="paper",
                 x=1.05, y=1,
@@ -163,7 +166,7 @@ class Chart(TGBFPlugin):
                 ticksuffix=""
             ),
             title=dict(
-                text=f"{info['symbol'].upper()}/{base.upper()}",
+                text=f"{info['symbol'].upper()}-{base.upper()}",
                 x=0.5,
                 font=dict(
                     size=24

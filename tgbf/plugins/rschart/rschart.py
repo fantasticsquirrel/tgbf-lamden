@@ -10,14 +10,18 @@ import plotly.graph_objs as go
 import tgbf.emoji as emo
 import tgbf.utils as utl
 
+from PIL import Image
 from io import BytesIO
 from pandas import DataFrame
+from os.path import join, isfile
 from telegram import ParseMode, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from tgbf.plugin import TGBFPlugin
 
 
 class Rschart(TGBFPlugin):
+
+    LOGO_DIR = "logos"
 
     def load(self):
         plotly.io.orca.ensure_server()
@@ -52,7 +56,7 @@ class Rschart(TGBFPlugin):
         else:
             timeframe = 3  # days
 
-        result = self.get_image(token, timeframe)
+        result = self.get_chart(token, timeframe)
 
         if not result["success"]:
             update.message.reply_text(result["data"])
@@ -79,7 +83,7 @@ class Rschart(TGBFPlugin):
         token = data_list[1]
         timeframe = data_list[2]
 
-        result = self.get_image(token, float(timeframe))
+        result = self.get_chart(token, float(timeframe))
 
         if not result["success"]:
             update.callback_query.message.reply_text(result["data"])
@@ -106,7 +110,7 @@ class Rschart(TGBFPlugin):
         ])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 
-    def get_image(self, token, timeframe):
+    def get_chart(self, token, timeframe):
         result = {"success": True, "data": None}
 
         end_secs = int(time.time() - (timeframe * 24 * 60 * 60))
@@ -142,7 +146,22 @@ class Rschart(TGBFPlugin):
         df_price["DateTime"] = pd.to_datetime(df_price["DateTime"], unit="s")
         price = go.Scatter(x=df_price.get("DateTime"), y=df_price.get("Price"))
 
+        logo_path = join(self.get_res_path(), self.LOGO_DIR, f"{token}.png")
+
+        if isfile(logo_path):
+            image = Image.open(logo_path)
+        else:
+            image = None
+
         layout = go.Layout(
+            images=[dict(
+                source=image,
+                opacity=0.8,
+                xref="paper", yref="paper",
+                x=1.05, y=1,
+                sizex=0.2, sizey=0.2,
+                xanchor="right", yanchor="bottom"
+            )],
             title=dict(
                 text=f"{token}-TAU",
                 x=0.5,
@@ -176,17 +195,6 @@ class Rschart(TGBFPlugin):
                 }
             }]
         )
-
-        """
-            images=[dict(
-                source="set image url",
-                opacity=0.8,
-                xref="paper", yref="paper",
-                x=1.05, y=1,
-                sizex=0.2, sizey=0.2,
-                xanchor="right", yanchor="bottom"
-            )]
-        """
 
         try:
             result["data"] = go.Figure(data=[price], layout=layout)

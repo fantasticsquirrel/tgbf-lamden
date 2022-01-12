@@ -10,10 +10,10 @@ import plotly.graph_objs as go
 import tgbf.emoji as emo
 import tgbf.utils as utl
 
-from PIL import Image
 from io import BytesIO
 from pandas import DataFrame
 from os.path import join, isfile
+from PIL import Image, ImageFile
 from telegram import ParseMode, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from tgbf.plugin import TGBFPlugin
@@ -22,6 +22,9 @@ from tgbf.plugin import TGBFPlugin
 class Rschart(TGBFPlugin):
 
     LOGO_DIR = "logos"
+    DEF_LOGO = "NO_LOGO.png"
+
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     def load(self):
         plotly.io.orca.ensure_server()
@@ -124,34 +127,44 @@ class Rschart(TGBFPlugin):
             result["data"] = msg
             return result
 
-        """
-        try:
-            res = requests.get(f"{self.config.get('token_url')}/{token_contract}")
-        except Exception as e:
-            logging.error(f"Can't retrieve trade history: {e}")
-            update.message.reply_text(f"{emo.ERROR} {e}")
-            return
-
-        if res.json()["token"]["token_base64_png"]:
-            img_data = res.json()["token"]["token_base64_png"]
-        elif res.json()["token"]["token_base64_svg"]:
-            img_data = res.json()["token"]["token_base64_svg"]
-        else:
-            img_data = None
-
-        image = base64.decodebytes(str.encode(img_data))
-        """
-
         df_price = DataFrame(res["data"], columns=["DateTime", "Price"])
         df_price["DateTime"] = pd.to_datetime(df_price["DateTime"], unit="s")
         price = go.Scatter(x=df_price.get("DateTime"), y=df_price.get("Price"))
 
-        logo_path = join(self.get_res_path(), self.LOGO_DIR, f"{token}.png")
+        image = None
 
+        logo_path = join(self.get_res_path(), self.LOGO_DIR, f"{token}.jpg")
+
+        # Try loading logo
         if isfile(logo_path):
-            image = Image.open(logo_path)
+            try:
+                image = Image.open(logo_path)
+            except Exception as e:
+                logging.error(f"{emo.ERROR} Can not load logo for '{token}'")
+                logging.error(e)
         else:
-            image = None
+            # Retrieve logo in base64
+            token_logo = self.execute_sql(
+                self.get_resource("select_logo.sql", plugin="tokens"),
+                token,
+                plugin="tokens")
+
+            # Create and save logo
+            if token_logo["data"] and token_logo["data"][0][0]:
+                with open(logo_path, "wb") as logo_file:
+                    img_data = str.encode(token_logo["data"][0][0])
+                    logo_file.write(base64.decodebytes(img_data))
+
+                try:
+                    # Load logo
+                    image = Image.open(logo_path)
+                except Exception as e:
+                    logging.error(f"{emo.ERROR} Can not load logo for '{token}'")
+                    logging.error(e)
+
+        # Load default logo
+        if not image:
+            image = Image.open(join(self.get_res_path(), self.LOGO_DIR, self.DEF_LOGO))
 
         layout = go.Layout(
             images=[dict(

@@ -1,6 +1,8 @@
 import logging
 
-from telegram import Update, ParseMode
+import tgbf.emoji as emo
+
+from telegram import Update
 from telegram.ext import CallbackContext, CommandHandler
 from tgbf.lamden.rocketswap import Rocketswap
 from tgbf.plugin import TGBFPlugin
@@ -15,7 +17,7 @@ class Tokens(TGBFPlugin):
 
         self.add_handler(CommandHandler(
             self.name,
-            self.dice_callback,
+            self.token_callback,
             run_async=True))
 
         update_interval = self.config.get("update_interval")
@@ -24,7 +26,7 @@ class Tokens(TGBFPlugin):
     @TGBFPlugin.owner
     @TGBFPlugin.private
     @TGBFPlugin.send_typing
-    def dice_callback(self, update: Update, context: CallbackContext):
+    def token_callback(self, update: Update, context: CallbackContext):
         if len(context.args) == 1 and context.args[0].lower() == "refresh":
             for token in Rocketswap().token_list():
                 self.execute_sql(
@@ -36,6 +38,8 @@ class Tokens(TGBFPlugin):
                     token["contract_name"])
 
                 logging.info(f"TOKEN REFRESHED: {token}")
+
+            update.message.reply_text(f"{emo.DONE} Tokens refreshed")
 
     def update_tokens(self, context: CallbackContext):
         res = self.execute_sql(self.get_resource("select_contracts.sql"))

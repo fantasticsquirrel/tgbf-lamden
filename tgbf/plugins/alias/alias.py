@@ -35,7 +35,9 @@ class Alias(TGBFPlugin):
         arg = context.args[0]
 
         if arg.lower() == "list":
-            aliases = self.execute_sql(self.get_resource("select_aliases.sql"))
+            aliases = self.execute_sql(
+                self.get_resource("select_aliases.sql"),
+                update.effective_user.id)
 
             if aliases["data"]:
                 for alias in aliases["data"]:
@@ -86,7 +88,7 @@ class Alias(TGBFPlugin):
         self.execute_sql(
             self.get_resource("insert_alias.sql"),
             update.effective_user.id,
-            alias,
+            alias.lower(),
             address)
 
         update.message.reply_text(f"{emo.DONE} Alias saved")

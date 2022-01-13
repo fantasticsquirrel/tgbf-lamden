@@ -74,7 +74,7 @@ class Send(TGBFPlugin):
             sql_adr = self.execute_sql(
                 self.get_resource("select_alias.sql", plugin=alias_plg),
                 update.effective_user.id,
-                alias,
+                alias.lower(),
                 plugin=alias_plg)
 
             if not sql_adr["data"]:
@@ -82,7 +82,12 @@ class Send(TGBFPlugin):
                 update.message.reply_text(msg)
                 return
 
-            to_address = sql_adr["data"]
+            to_address = sql_adr["data"][0][0]
+
+            if not lamden.is_address_valid(to_address):
+                msg = f"{emo.ERROR} Address not valid"
+                update.message.reply_text(msg)
+                return
 
             logging.info(f"Used alias '{alias}' for address {to_address}")
 

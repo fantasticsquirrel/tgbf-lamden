@@ -12,12 +12,19 @@ import tgbf.utils as utl
 
 from io import BytesIO
 from pandas import DataFrame
+from os.path import join, isfile
+from PIL import Image, ImageFile
 from telegram import ParseMode, Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from tgbf.plugin import TGBFPlugin
 
 
 class Rschart(TGBFPlugin):
+
+    LOGO_DIR = "logos"
+    DEF_LOGO = "NO_LOGO.png"
+
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     def load(self):
         plotly.io.orca.ensure_server()
@@ -52,7 +59,7 @@ class Rschart(TGBFPlugin):
         else:
             timeframe = 3  # days
 
-        result = self.get_image(token, timeframe)
+        result = self.get_chart(token, timeframe)
 
         if not result["success"]:
             update.message.reply_text(result["data"])
@@ -79,7 +86,7 @@ class Rschart(TGBFPlugin):
         token = data_list[1]
         timeframe = data_list[2]
 
-        result = self.get_image(token, float(timeframe))
+        result = self.get_chart(token, float(timeframe))
 
         if not result["success"]:
             update.callback_query.message.reply_text(result["data"])
@@ -106,7 +113,7 @@ class Rschart(TGBFPlugin):
         ])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 
-    def get_image(self, token, timeframe):
+    def get_chart(self, token, timeframe):
         result = {"success": True, "data": None}
 
         end_secs = int(time.time() - (timeframe * 24 * 60 * 60))
@@ -120,35 +127,82 @@ class Rschart(TGBFPlugin):
             result["data"] = msg
             return result
 
-        """
-        try:
-            res = requests.get(f"{self.config.get('token_url')}/{token_contract}")
-        except Exception as e:
-            logging.error(f"Can't retrieve trade history: {e}")
-            update.message.reply_text(f"{emo.ERROR} {e}")
-            return
-
-        if res.json()["token"]["token_base64_png"]:
-            img_data = res.json()["token"]["token_base64_png"]
-        elif res.json()["token"]["token_base64_svg"]:
-            img_data = res.json()["token"]["token_base64_svg"]
-        else:
-            img_data = None
-
-        image = base64.decodebytes(str.encode(img_data))
-        """
-
         df_price = DataFrame(res["data"], columns=["DateTime", "Price"])
         df_price["DateTime"] = pd.to_datetime(df_price["DateTime"], unit="s")
         price = go.Scatter(x=df_price.get("DateTime"), y=df_price.get("Price"))
 
+        image = None
+
+        logo_path = join(self.get_res_path(), self.LOGO_DIR, f"{token}.jpg")
+
+        # Try loading logo
+        if isfile(logo_path):
+            try:
+                image = Image.open(logo_path)
+            except Exception as e:
+                logging.error(f"{emo.ERROR} Can not load logo for '{token}'")
+                logging.error(e)
+        else:
+            # Retrieve logo in base64
+            token_logo = self.execute_sql(
+                self.get_resource("select_logo.sql", plugin="tokens"),
+                token,
+                plugin="tokens")
+
+            # Create and save logo
+            if token_logo["data"] and token_logo["data"][0][0]:
+                with open(logo_path, "wb") as logo_file:
+                    img_data = str.encode(token_logo["data"][0][0])
+                    logo_file.write(base64.decodebytes(img_data))
+
+                try:
+                    # Load logo
+                    image = Image.open(logo_path)
+                except Exception as e:
+                    logging.error(f"{emo.ERROR} Can not load logo for '{token}'")
+                    logging.error(e)
+
+        # Load default logo
+        if not image:
+            image = Image.open(join(self.get_res_path(), self.LOGO_DIR, self.DEF_LOGO))
+
+        margin_l = 130
+        tickformat = "0.8f"
+
+        max_value = df_price["Price"].max()
+        if max_value > 0.9:
+            if max_value > 999:
+                margin_l = 90
+                tickformat = "0,.0f"
+            else:
+                margin_l = 95
+                tickformat = "0.2f"
+
         layout = go.Layout(
+            images=[dict(
+                source=image,
+                opacity=0.8,
+                xref="paper", yref="paper",
+                x=1.05, y=1,
+                sizex=0.2, sizey=0.2,
+                xanchor="right", yanchor="bottom"
+            )],
             title=dict(
                 text=f"{token}-TAU",
                 x=0.5,
                 font=dict(
                     size=24
                 )
+            ),
+            autosize=False,
+            width=800,
+            height=600,
+            margin=go.layout.Margin(
+                l=margin_l,
+                r=50,
+                b=85,
+                t=100,
+                pad=4
             ),
             paper_bgcolor='rgb(233,233,233)',
             plot_bgcolor='rgb(233,233,233)',
@@ -177,24 +231,16 @@ class Rschart(TGBFPlugin):
             }]
         )
 
-        """
-            images=[dict(
-                source="set image url",
-                opacity=0.8,
-                xref="paper", yref="paper",
-                x=1.05, y=1,
-                sizex=0.2, sizey=0.2,
-                xanchor="right", yanchor="bottom"
-            )]
-        """
-
         try:
-            result["data"] = go.Figure(data=[price], layout=layout)
+            fig = go.Figure(data=[price], layout=layout)
+            fig["layout"]["yaxis"].update(tickformat=tickformat)
+
+            result["data"] = fig
             return result
         except Exception as e:
             logging.error(e)
             self.notify(e)
 
             result["success"] = False
-            result["data"] = str(e)
+            result["data"] = str(repr(e))
             return result

@@ -43,7 +43,13 @@ class Balance(TGBFPlugin):
         if tau_balance:
             balances_list.insert(0, tau_balance[0])
 
-        min_limit = 0.0001
+        decimals = self.config.get("decimals")
+
+        min_limit = "0."
+        for i in range(decimals - 1):
+            min_limit += "0"
+
+        min_limit = float(min_limit + "1")
 
         if not balances_list:
             msg = f"{emo.INFO} Your wallet is empty"
@@ -60,7 +66,14 @@ class Balance(TGBFPlugin):
             if b < min_limit:
                 continue
 
-            b = f"{int(b):,}" if b.is_integer() else f"{b:,.4f}"
+            b = f"{int(b):,}" if b.is_integer() else f"{b:,.{decimals}f}"
+
+            # Remove any useless zeros at the end
+            if "." in b:
+                while b.endswith("0"):
+                    b = b[:-1]
+                if b.endswith("."):
+                    b = b[:-1]
 
             symbol = f"{entry[0]}:"
             msg += f"{symbol:<{max_length + 1}} {b}\n"

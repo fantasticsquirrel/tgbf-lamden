@@ -44,7 +44,7 @@ class TelegramBot:
 
         try:
             logging.info("Connecting bot...")
-            self.updater = Updater(tg_token, request_kwargs=self.tgb_kwargs, use_context=True)
+            self.updater = Updater(tg_token, request_kwargs=self.tgb_kwargs)
         except InvalidToken as e:
             logging.error(f"ERROR: Bot token not valid: {e}")
             exit()

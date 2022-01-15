@@ -7,6 +7,7 @@ from telegram.ext import CommandHandler, CallbackContext
 from telegram import Update, ParseMode
 
 
+# TODO: Sending whole balance should be possible with amount = "all"
 class Send(TGBFPlugin):
 
     def load(self):

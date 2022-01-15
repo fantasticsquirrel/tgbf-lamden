@@ -45,15 +45,10 @@ class TelegramBot:
         try:
             logging.info("Connecting bot...")
             self.updater = Updater(tg_token, request_kwargs=self.tgb_kwargs)
-        except InvalidToken as e:
-            logging.error(f"ERROR: Bot token not valid: {e}")
-            exit()
-
-        try:
             # Check if Telegram token is really valid
             logging.info("Checking bot token...")
             self.updater.bot.get_me()
-        except Unauthorized as e:
+        except (InvalidToken, Unauthorized) as e:
             logging.error(f"ERROR: Bot token not valid: {e}")
             exit()
 

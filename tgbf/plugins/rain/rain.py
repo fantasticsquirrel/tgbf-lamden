@@ -238,7 +238,8 @@ class Rain(TGBFPlugin):
 
         message.edit_text(
             f"{msg}\n\n{link}",
-            parse_mode=ParseMode.HTML)
+            parse_mode=ParseMode.HTML,
+            disable_web_page_preview=True)
 
         for user in user_data:
             to_user_id = user[0]

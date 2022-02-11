@@ -13,4 +13,4 @@ class Connect(TGBFPlugin):
 
     @TGBFPlugin.send_typing
     def connect_callback(self, update: Update, context: CallbackContext):
-        update.message.reply_text("https://link.medium.com/QqdOVOhmHgb")
+        update.message.reply_text(self.config.get("link"))

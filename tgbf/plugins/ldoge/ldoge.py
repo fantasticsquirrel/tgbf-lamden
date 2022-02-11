@@ -34,11 +34,16 @@ class Ldoge(TGBFPlugin):
     @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def ldoge_callback(self, update: Update, context: CallbackContext):
-        channel_link = self.config.get("channel_link")
+        smin = self.config.get("min_chars")
+        smax = self.config.get("max_chars")
+        link = self.config.get("channel_link")
 
         if len(context.args) == 0:
             update.message.reply_text(
-                self.get_usage({'{{tgchannel}}': escape_markdown(channel_link)}),
+                self.get_usage({
+                    '{{min}}': smin,
+                    '{{max}}': smax,
+                    '{{tgchannel}}': escape_markdown(link)}),
                 parse_mode=ParseMode.MARKDOWN)
             return
 
@@ -50,9 +55,6 @@ class Ldoge(TGBFPlugin):
         user_story = update.message.text.replace(f"/{self.handle} ", "")
 
         user_story = html.escape(user_story)
-
-        smin = self.config.get("min_chars")
-        smax = self.config.get("max_chars")
 
         # Check if story has more than min length and less than max length
         if smin > len(user_story) or len(user_story) > smax:
@@ -93,10 +95,10 @@ class Ldoge(TGBFPlugin):
                 parse_mode=ParseMode.HTML,
                 reply_markup=self.get_button(update.effective_user.id, data[0][0]))
 
-            link = f'<a href="{channel_link}">LDOGE Stories</a>'
+            channel = f'<a href="{link}">LDOGE Stories</a>'
 
             update.message.reply_text(
-                f"{emo.DONE} Story successfully submitted to {link}",
+                f"{emo.DONE} Story successfully submitted to {channel}",
                 parse_mode=ParseMode.HTML)
         except Exception as e:
             logging.info(f"User {user_id} could not be notified about LDOGE reply: {e} - {update}")

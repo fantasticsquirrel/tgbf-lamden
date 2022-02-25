@@ -53,8 +53,13 @@ class Ldoge(TGBFPlugin):
         user_full_name = usr.full_name
         user_username = usr.username if usr.username else None
         user_story = update.message.text.replace(f"/{self.handle} ", "")
-
         user_story = html.escape(user_story)
+
+        if not user_username:
+            msg = f"{emo.ERROR} You need to have a username to be able to submit a story! Please " \
+                  f"check your Telegram settings and set as username for your account."
+            update.message.reply_text(msg)
+            return
 
         # Check if story has more than min length and less than max length
         if smin > len(user_story) or len(user_story) > smax:

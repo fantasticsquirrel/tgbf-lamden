@@ -162,7 +162,8 @@ class Dice(TGBFPlugin):
 
         message.edit_text(
             f"{bet_msg}\n{con_msg}\n\n{esc_mk(res_msg, version=2)}",
-            parse_mode=ParseMode.MARKDOWN_V2)
+            parse_mode=ParseMode.MARKDOWN_V2,
+            disable_web_page_preview=True)
 
         """
         # Insert details into database

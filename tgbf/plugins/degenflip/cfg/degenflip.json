@@ -1,0 +1,8 @@
+{
+    "category": "DEGEN Token",
+    "description": "Double your DEGEN or lose it",
+    "contract": "con_degen_flip_004",
+    "function": "flip",
+    "blacklist": [],
+    "blacklist_msg": "Execute in [Trading Group](https://t.me/Tradetau) or [Rocketswap Group](https://t.me/rocketswap) or [Nebula Group](https://t.me/LamdenNebula)"
+}

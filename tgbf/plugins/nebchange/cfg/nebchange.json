@@ -1,0 +1,8 @@
+{
+    "category": "Nebula (NEB) Token",
+    "description": "Notify about large price changes",
+    "update_interval": 90,
+    "listing_chat_id": -1001497528232,
+    "days_to_avg": 3,
+    "chg_perc": 20
+}

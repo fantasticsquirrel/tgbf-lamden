@@ -126,7 +126,7 @@ class Buy(TGBFPlugin):
         try:
             # Call contract to buy the token
             buy = lamden.post_transaction(
-                stamps=150,
+                stamps=300,
                 contract=self.RS_CONTRACT,
                 function="buy",
                 kwargs=kwargs

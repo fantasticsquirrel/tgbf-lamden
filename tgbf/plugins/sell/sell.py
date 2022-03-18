@@ -121,7 +121,7 @@ class Sell(TGBFPlugin):
         try:
             # Call contract to sell the token
             sell = lamden.post_transaction(
-                stamps=150,
+                stamps=300,
                 contract=self.RS_CONTRACT,
                 function="sell",
                 kwargs=kwargs

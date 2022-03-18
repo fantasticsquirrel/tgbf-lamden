@@ -1,4 +1,3 @@
-import os
 import logging
 import tgbf.emoji as emo
 

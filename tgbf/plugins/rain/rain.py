@@ -189,6 +189,8 @@ class Rain(TGBFPlugin):
                         stamps_to_use += self.STAMPS_HIGH[a]
                     elif token_name in self.config.get("very_high_fees"):
                         stamps_to_use += self.STAMPS_VERY_HIGH[a]
+                    elif token_name == "RTAU":
+                        stamps_to_use += 350
                     else:
                         stamps_to_use += self.STAMPS[a]
                 except IndexError:
@@ -196,6 +198,8 @@ class Rain(TGBFPlugin):
                         stamps_to_use += self.STAMPS_HIGH[-1]
                     elif token_name in self.config.get("very_high_fees"):
                         stamps_to_use += self.STAMPS_VERY_HIGH[-1]
+                    elif token_name == "RTAU":
+                        stamps_to_use += 350
                     else:
                         stamps_to_use += self.STAMPS[-1]
 

@@ -2,5 +2,5 @@
     "handle": "rtau_rewards",
     "category": "RTAU Token",
     "description": "ReflectTAU.io",
-    "contract": "con_reflecttau_v2"
+    "contract": "con_reflecttau_v2_reflection"
 }

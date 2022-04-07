@@ -20,14 +20,17 @@ class Rtaurewards(TGBFPlugin):
 
         tau_pool = lamden.get_contract_variable(
                 self.config.get("contract"),
+                "metadata",
                 "tau_pool")
 
         tau_pool = tau_pool["value"] if "value" in tau_pool else 0
         tau_pool = float(str(tau_pool)) if tau_pool else float("0")
 
-        if not tau_pool:
+        if tau_pool:
+            tau_pool = int(tau_pool)
+        else:
             tau_pool = "N/A"
 
         update.message.reply_text(
-            f'<code>{tau_pool}</code> TAU in Reward-Pool',
+            f'<code>{tau_pool:,}</code> TAU in Reward-Pool',
             parse_mode=ParseMode.HTML)

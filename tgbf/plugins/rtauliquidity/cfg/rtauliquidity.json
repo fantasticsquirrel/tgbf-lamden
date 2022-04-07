@@ -1,0 +1,6 @@
+{
+    "handle": "rtau_liquidity",
+    "category": "RTAU Token",
+    "description": "Total Auto-LP Pool",
+    "contract": "con_reflecttau_v2_liquidity"
+}

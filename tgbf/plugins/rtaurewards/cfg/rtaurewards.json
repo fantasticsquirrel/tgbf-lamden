@@ -1,6 +1,6 @@
 {
     "handle": "rtau_rewards",
     "category": "RTAU Token",
-    "description": "ReflectTAU.io",
+    "description": "Total TAU Reward Pool",
     "contract": "con_reflecttau_v2_reflection"
 }

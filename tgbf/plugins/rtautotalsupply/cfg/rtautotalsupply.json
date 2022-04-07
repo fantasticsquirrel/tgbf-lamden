@@ -1,0 +1,6 @@
+{
+    "handle": "rtau_total_supply",
+    "category": "RTAU Token",
+    "description": "Total Supply",
+    "contract": "con_reflecttau_v2"
+}

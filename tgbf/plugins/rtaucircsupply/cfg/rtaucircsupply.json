@@ -1,0 +1,6 @@
+{
+    "handle": "rtau_circ_supply",
+    "category": "RTAU Token",
+    "description": "Circulating Supply",
+    "contract": "con_reflecttau_v2"
+}

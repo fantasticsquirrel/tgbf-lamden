@@ -28,7 +28,7 @@ class Rtautotalsupply(TGBFPlugin):
         if total_supply:
             total_supply = int(total_supply)
         else:
-            total_supply = "N/A"
+            total_supply = 0
 
         update.message.reply_text(
             f'<code>{total_supply:,}</code> Total Supply',

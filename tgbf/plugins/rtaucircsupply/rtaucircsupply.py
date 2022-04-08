@@ -46,7 +46,7 @@ class Rtaucircsupply(TGBFPlugin):
         if circ_suppy:
             circ_suppy = int(circ_suppy)
         else:
-            circ_suppy = "N/A"
+            circ_suppy = 0
 
         update.message.reply_text(
             f'<code>{circ_suppy:,}</code> Circulating Supply',

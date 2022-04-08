@@ -29,7 +29,7 @@ class Rtauliquidity(TGBFPlugin):
         if tau_pool:
             tau_pool = int(tau_pool)
         else:
-            tau_pool = "N/A"
+            tau_pool = 0
 
         update.message.reply_text(
             f'<code>{tau_pool:,}</code> TAU in Liquidity-Pool',

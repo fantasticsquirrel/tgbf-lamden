@@ -392,27 +392,20 @@ class TGBFPlugin:
             logging.error(e)
             self.notify(e)
 
-        con = None
-        cur = None
+        with sqlite3.connect(db_path, timeout=db_timeout) as con:
+            try:
+                cur = con.cursor()
+                cur.execute(sql, args)
+                con.commit()
 
-        try:
-            con = sqlite3.connect(db_path, timeout=db_timeout)
-            cur = con.cursor()
-            cur.execute(sql, args)
-            con.commit()
+                res["data"] = cur.fetchall()
+                res["success"] = True
 
-            res["data"] = cur.fetchall()
-            res["success"] = True
-        except Exception as e:
-            res["data"] = str(e)
-            res["success"] = False
-            logging.error(e)
-            self.notify(e)
-        finally:
-            if cur:
-                cur.close()
-            if con:
-                con.close()
+            except Exception as e:
+                res["data"] = str(e)
+                res["success"] = False
+                logging.error(e)
+                self.notify(e)
 
             return res
 

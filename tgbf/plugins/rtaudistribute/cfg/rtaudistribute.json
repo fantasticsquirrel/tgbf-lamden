@@ -1,0 +1,6 @@
+{
+    "handle": "rtau_distribute",
+    "category": "RTAU Token",
+    "description": "Distribute TAU to RTAU holders",
+    "contract": "con_reflecttau_v2_reflection"
+}

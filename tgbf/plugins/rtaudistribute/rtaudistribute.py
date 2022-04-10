@@ -7,7 +7,7 @@ from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
 
-class Rtaudistribution(TGBFPlugin):
+class Rtaudistribute(TGBFPlugin):
 
     def load(self):
         self.add_handler(CommandHandler(

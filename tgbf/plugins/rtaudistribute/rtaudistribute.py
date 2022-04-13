@@ -17,6 +17,10 @@ class Rtaudistribute(TGBFPlugin):
 
     @TGBFPlugin.send_typing
     def distribute_callback(self, update: Update, context: CallbackContext):
+        username = update.effective_user.username
+        if username != "cross_chain1" or username != "endogen":
+            update.message.reply_text(f"{emo.ERROR} You are not allowed to do that")
+
         wallet = self.get_wallet(1)
         lamden = Connect(wallet)
 

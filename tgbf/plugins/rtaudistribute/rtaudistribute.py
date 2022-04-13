@@ -20,6 +20,7 @@ class Rtaudistribute(TGBFPlugin):
         username = update.effective_user.username
         if username != "cross_chain1" or username != "endogen":
             update.message.reply_text(f"{emo.ERROR} You are not allowed to do that")
+            return
 
         wallet = self.get_wallet(1)
         lamden = Connect(wallet)

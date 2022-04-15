@@ -56,7 +56,7 @@ class Rtaudistribute(TGBFPlugin):
         tx_hash = distribute["hash"]
 
         # Wait for transaction to be completed
-        success, result = lamden.tx_succeeded(tx_hash)
+        success, result = lamden.tx_succeeded(tx_hash, check_period=10, timeout=120)
 
         if not success:
             logging.error(f"Transaction not successful: {result}")
@@ -64,4 +64,4 @@ class Rtaudistribute(TGBFPlugin):
             message.edit_text(msg)
             return
 
-        message.edit_text(f"{emo.DONE} DONE!")
+        message.edit_text(f"{emo.DONE} TAU distributed to holders")

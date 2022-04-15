@@ -3,7 +3,7 @@ import json
 import logging
 
 from threading import Thread
-from watchgod import watch, Change
+from watchfiles import watch, Change
 from collections.abc import Callable
 
 
@@ -20,7 +20,7 @@ class ConfigManager(Thread):
     # Ignore reloading config?
     _ignore = False
 
-    def __init__(self, config_file, callback: Callable = None, callback_pass_args=True):
+    def __init__(self, config_file, auto_update=False, callback: Callable = None, callback_pass_args=True):
         """ This class takes a JSON config file and makes it available
          so that if you provide a key, you will get the value back.
          Values can also bet set or removed from the config. Setting
@@ -42,17 +42,18 @@ class ConfigManager(Thread):
          called without passing arguments.
          """
 
-        Thread.__init__(self)
-
         if config_file:
             self._cfg_file = config_file
         else:
             logging.error("ERROR: No config file provided")
 
-        self._callback = callback
-        self._callback_pass_args = callback_pass_args
+        if auto_update:
+            Thread.__init__(self)
 
-        self.start()
+            self._callback = callback
+            self._callback_pass_args = callback_pass_args
+
+            self.start()
 
     def run(self) -> None:
         """ Watch for config file changes """
@@ -69,9 +70,13 @@ class ConfigManager(Thread):
         if self._ignore:
             self._ignore = False
         else:
+            logging.debug(f"Modified - reading content: {self._cfg_file}")
+
             self._read_cfg()
 
             if callable(self._callback):
+                logging.debug(f"Modified - executing callback: {self._cfg_file}")
+
                 if self._callback_pass_args:
                     Thread(target=self._callback(self._cfg, None, None)).start()
                 else:

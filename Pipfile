@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 python-telegram-bot = "*"
-watchgod = "*"
 psutil = "*"
 flask = "*"
 requests = "*"
@@ -19,6 +18,7 @@ segno = "*"
 qrcode-artistic = "*"
 pytrends = "*"
 image = "*"
+watchfiles = "*"
 
 [dev-packages]
 

@@ -368,6 +368,7 @@ class TGBFPlugin:
 
         return self._get_database_content(db_path, sql, *args)
 
+    # TODO: Weird name since it's not always only getting but also setting values
     def _get_database_content(self, db_path, sql, *args):
         """ Open database connection and execute SQL statement """
 

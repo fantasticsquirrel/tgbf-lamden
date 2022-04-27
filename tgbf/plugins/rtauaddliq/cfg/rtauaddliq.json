@@ -1,0 +1,6 @@
+{
+    "handle": "rtau_add_liquidity",
+    "category": "RTAU Token",
+    "description": "Add liquidity to pool",
+    "contract": "con_reflecttau_v2"
+}

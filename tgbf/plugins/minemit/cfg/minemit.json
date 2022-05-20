@@ -1,0 +1,7 @@
+{
+    "handle": "mine_mit",
+    "category": "Lamden Tokens",
+    "description": "Mine MIT token",
+    "contract": "con_mine_xtimes",
+    "function": "multi_mine"
+}

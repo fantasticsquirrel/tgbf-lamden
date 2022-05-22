@@ -257,7 +257,7 @@ class Otc(TGBFPlugin):
         try:
             # Call OTC contract
             ret = lamden.post_transaction(
-                stamps=200,
+                stamps=500,
                 contract=contract,
                 function="make_offer",
                 kwargs=kwargs)
@@ -476,7 +476,7 @@ class Otc(TGBFPlugin):
                 try:
                     # Call OTC contract
                     ret = lamden.post_transaction(
-                        stamps=80,
+                        stamps=200,
                         contract=contract,
                         function="cancel_offer",
                         kwargs={"offer_id": otc_id})
@@ -564,7 +564,7 @@ class Otc(TGBFPlugin):
                 try:
                     # Call OTC contract
                     ret = lamden.post_transaction(
-                        stamps=120,
+                        stamps=550,
                         contract=contract,
                         function="take_offer",
                         kwargs={"offer_id": otc_id})

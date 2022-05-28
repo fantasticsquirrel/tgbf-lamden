@@ -9,12 +9,12 @@ from tgbf.lamden.connect import Connect
 from tgbf.plugin import TGBFPlugin
 
 
-class Dope(TGBFPlugin):
+class King(TGBFPlugin):
 
     def load(self):
         self.add_handler(CommandHandler(
             self.name,
-            self.dope_callback,
+            self.king_callback,
             run_async=True))
 
         self.add_handler(CallbackQueryHandler(
@@ -22,7 +22,7 @@ class Dope(TGBFPlugin):
             run_async=True))
 
     @TGBFPlugin.send_typing
-    def dope_callback(self, update: Update, context: CallbackContext):
+    def king_callback(self, update: Update, context: CallbackContext):
         usr_id = update.effective_user.id
         wallet = self.get_wallet(usr_id)
         lamden = Connect(wallet)
@@ -48,13 +48,13 @@ class Dope(TGBFPlugin):
                 logging.info(msg)
 
         except Exception as e:
-            logging.error(f"Error approving DOPE contract: {e}")
+            logging.error(f"Error approving KING contract: {e}")
             return
 
     def mint_callback(self, update: Update, context: CallbackContext):
         data = update.callback_query.data
 
-        if not data == self.name:
+        if data != self.name:
             return
 
         message = update.callback_query.message
@@ -65,25 +65,25 @@ class Dope(TGBFPlugin):
 
         try:
             mint = lamden.post_transaction(
-                stamps=70,  # TODO
+                stamps=self.config.get('stamps_to_use'),
                 contract=self.config.get("contract"),
                 function="mint",
                 kwargs=dict()
             )
         except Exception as e:
-            logging.error(f"Error calling DOPE - mint(): {e}")
+            logging.error(f"Error calling KING - mint(): {e}")
             message.edit_caption(f"{emo.ERROR} {e}")
             return
 
-        logging.info(f"Executed DOPE - mint(): {mint}")
+        logging.info(f"Executed KING - mint(): {mint}")
 
         if "error" in mint:
-            logging.error(f"DOPE - mint() returned error: {mint['error']}")
+            logging.error(f"KING - mint() returned error: {mint['error']}")
             message.edit_caption(f"{emo.ERROR} {mint['error']}")
             return
 
         context.bot.answer_callback_query(update.callback_query.id, f'{emo.DONE} Contract executed')
 
     def get_mint_button(self):
-        menu = utl.build_menu([InlineKeyboardButton("Mint DOPE", callback_data=f"{self.name}")])
+        menu = utl.build_menu([InlineKeyboardButton("Mint KING", callback_data=f"{self.name}")])
         return InlineKeyboardMarkup(menu, resize_keyboard=True)

@@ -2,6 +2,5 @@
     "category": "Lamden Name Service",
     "description": "Mint and list namespaces",
     "contract": "con_nameservice_v3",
-    "blockservice": "https://blockservice.nebulamden.finance/current/all/con_nameservice_v3/collection_balances/{address}",
-    "resolver": "https://lns.reflecttau.io/resolve/{namespace}.tau"
+    "blockservice": "https://blockservice.nebulamden.finance/current/all/con_nameservice_v3/collection_balances/{address}"
 }

@@ -82,7 +82,6 @@ class Lns(TGBFPlugin):
 
             tx_hash = mint["hash"]
 
-            # Wait for transaction to be completed
             success, result = lamden.tx_succeeded(tx_hash)
 
             if not success:
@@ -106,7 +105,7 @@ class Lns(TGBFPlugin):
             message = update.message.reply_text(msg)
 
             try:
-                blockservice = self.config.get("blockservice").replace("{address}", wallet)
+                blockservice = self.config.get("blockservice").replace("{address}", wallet.verifying_key)
                 namespaces = requests.get(blockservice).json()
 
                 if not namespaces:
@@ -114,13 +113,14 @@ class Lns(TGBFPlugin):
                     return
 
                 owned_str = str()
-                for name, owned in namespaces[contract]['collection_balances'][wallet].items():
-                    if owned != 1:
+                for name, qty in namespaces[contract]['collection_balances'][wallet.verifying_key].items():
+                    if qty != 1:
                         continue
 
-                    owned_str += name + "\n"
-                    message.edit_text(owned_str)
-                    return
+                    owned_str += f"<code>{name}</code>\n"
+
+                message.edit_text(owned_str, parse_mode=ParseMode.HTML)
+                return
 
             except Exception as e:
                 logging.error(f"Not possible to retrieve LNS namespaces for {wallet}: {e}")
@@ -138,6 +138,16 @@ class Lns(TGBFPlugin):
 
             namespace = context.args[1]
             to = context.args[2]
+
+            if not lamden.is_address_valid(to):
+                lns_res = lamden.lns_resolve(to)
+
+                if "error" in lns_res:
+                    msg = f"{emo.ERROR} Not a valid address or LNS namespace"
+                    update.message.reply_text(msg)
+                    return
+
+                to = lns_res["response"]
 
             msg = f"{emo.HOURGLASS} Transfering namespace..."
             message = update.message.reply_text(msg)
@@ -180,6 +190,7 @@ class Lns(TGBFPlugin):
                 disable_web_page_preview=True)
             return
 
+        # RESOLVE NAMESPACE
         elif command == "resolve":
             if len(context.args) != 2:
                 update.message.reply_text(
@@ -193,8 +204,7 @@ class Lns(TGBFPlugin):
             message = update.message.reply_text(msg)
 
             try:
-                resolver = self.config.get("resolver").replace("{namespace}", namespace)
-                response = requests.get(resolver).json()
+                response = lamden.lns_resolve(namespace)
 
                 if "status" not in response:
                     message.edit_text(f"{emo.ERROR} Can not resolve namespace")
@@ -204,6 +214,7 @@ class Lns(TGBFPlugin):
                     return
 
                 message.edit_text(f"<code>{response['response']}</code>", parse_mode=ParseMode.HTML)
+                return
 
             except Exception as e:
                 logging.error(f"Resolver returned error: {e}")

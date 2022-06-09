@@ -62,35 +62,20 @@ class Send(TGBFPlugin):
         to_address = context.args[2]
 
         if not lamden.is_address_valid(to_address):
-            # Check if address is an alias
-            alias_plg = self.config.get("alias_plugin")
+            # Check if address is a LNS namespace
+            lns_res = lamden.lns_resolve(to_address)
 
-            if not alias_plg:
-                msg = f"{emo.ERROR} Address not valid"
+            if "error" in lns_res:
+                msg = f"{emo.ERROR} Not a valid address or LNS namespace"
                 update.message.reply_text(msg)
                 return
 
-            alias = to_address
-
-            sql_adr = self.execute_sql(
-                self.get_resource("select_alias.sql", plugin=alias_plg),
-                update.effective_user.id,
-                alias.lower(),
-                plugin=alias_plg)
-
-            if not sql_adr["data"]:
-                msg = f"{emo.ERROR} Address not valid"
-                update.message.reply_text(msg)
-                return
-
-            to_address = sql_adr["data"][0][0]
+            to_address = lns_res["response"]
 
             if not lamden.is_address_valid(to_address):
-                msg = f"{emo.ERROR} Address not valid"
+                msg = f"{emo.ERROR} LNS namespace is not a valid address!"
                 update.message.reply_text(msg)
                 return
-
-            logging.info(f"Used alias '{alias}' for address {to_address}")
 
         message = update.message.reply_text(f"{emo.HOURGLASS} Sending {token_name}...")
 
@@ -135,13 +120,3 @@ class Send(TGBFPlugin):
                 parse_mode=ParseMode.HTML,
                 disable_web_page_preview=True)
             return
-
-        """
-        # Insert details into database
-        self.execute_sql(
-            self.get_resource("insert_send.sql"),
-            from_wallet.verifying_key,
-            to_address,
-            amount,
-            tx_hash)
-        """

@@ -24,6 +24,6 @@
     },
     "web": {
         "use_web": true,
-        "port": 4987
+        "port": 4986
     }
 }

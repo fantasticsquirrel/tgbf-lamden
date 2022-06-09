@@ -11,5 +11,6 @@
             {"https://testnet-master-1.lamden.io": null}
         ],
         "explorer": {"https://explorer.lamden.io": null}
-    }
+    },
+    "lns_resolver": "https://lns.reflecttau.io/resolve/{namespace}.tau"
 }

@@ -16,13 +16,15 @@ class Connect(API):
 
         node_host, node_port, explorer_host, explorer_port = self.connect(ping)
         wallet = wallet if wallet else Wallet()
+        lns = self.cfg.get("lns_resolver")
 
         super().__init__(
             node_host=node_host,
             node_port=node_port,
             wallet=wallet,
             explorer_host=explorer_host,
-            explorer_port=explorer_port)
+            explorer_port=explorer_port,
+            lns=lns)
 
     def connect(self, ping: bool):
         explorer_dict = self.cfg.get(self.chain)["explorer"]

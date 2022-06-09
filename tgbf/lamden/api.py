@@ -17,15 +17,18 @@ class API:
             node_port: int = None,
             wallet: Wallet = None,
             explorer_host: str = None,
-            explorer_port: int = None):
+            explorer_port: int = None,
+            lns: str = None):
 
         self.node_host = node_host
         self.node_port = node_port
         self.wallet = wallet
         self.explorer_host = explorer_host
         self.explorer_port = explorer_port
+        self.lns = lns
         self._node_url = None
         self._explorer_url = None
+        self._lns = None
 
     @property
     def node_url(self):
@@ -46,6 +49,15 @@ class API:
             self._explorer_url = self.explorer_host
 
         return self._explorer_url
+
+    @property
+    def lns_url(self):
+        if self.lns:
+            self._lns = f"{self.lns}"
+        else:
+            self._lns = self.lns
+
+        return self._lns
 
     def is_address_valid(self, address: str):
         """ Check if the given address is valid """
@@ -184,6 +196,12 @@ class API:
         key = f"{self.wallet.verifying_key}:{contract}"
         with requests.get(f"{self.node_url}/contracts/{token}/{var}?key={key}") as res:
             return decode(res.text)
+
+    def lns_resolve(self, namespace):
+        """ Resolve given namespace to an address with Lamden Name Service (LNS) """
+        lns_url = self.lns.replace("{namespace}", namespace)
+        with requests.get(lns_url) as res:
+            return res.json()
 
     # ---- Block Explorer API ----
 

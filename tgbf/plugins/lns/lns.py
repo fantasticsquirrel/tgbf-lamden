@@ -221,3 +221,9 @@ class Lns(TGBFPlugin):
                 msg = f"{emo.ERROR} {e}"
                 message.edit_text(msg)
                 return
+
+        else:
+            update.message.reply_text(
+                self.get_usage(),
+                parse_mode=ParseMode.MARKDOWN)
+            return

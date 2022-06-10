@@ -222,6 +222,29 @@ class Lns(TGBFPlugin):
                 message.edit_text(msg)
                 return
 
+        # COUNT NAMESPACES
+        elif command == "count":
+            msg = f"{emo.HOURGLASS} Counting namespaces..."
+            message = update.message.reply_text(msg)
+
+            try:
+                blockservice = self.config.get("blockservice").replace("{address}", "")
+                namespaces = requests.get(blockservice).json()
+
+                counter = 0
+                for address, namespace_dict in namespaces[contract]['collection_balances'].items():
+                    # TODO: Check how much keys exist with value 1
+                    pass
+
+                message.edit_text(f'<code>{counter}</code> LNS namespaces generated', parse_mode=ParseMode.HTML)
+                return
+
+            except Exception as e:
+                logging.error(f"Not possible to retrieve LNS namespaces for {wallet}: {e}")
+                msg = f"{emo.ERROR} {e}"
+                message.edit_text(msg)
+                return
+
         else:
             update.message.reply_text(
                 self.get_usage(),

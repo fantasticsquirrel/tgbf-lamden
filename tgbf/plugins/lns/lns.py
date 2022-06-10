@@ -142,12 +142,17 @@ class Lns(TGBFPlugin):
             if not lamden.is_address_valid(to):
                 lns_res = lamden.lns_resolve(to)
 
-                if "error" in lns_res:
+                if lns_res['status'] == "error":
                     msg = f"{emo.ERROR} Not a valid address or LNS namespace"
                     update.message.reply_text(msg)
                     return
 
                 to = lns_res["response"]
+
+                if not lamden.is_address_valid(to):
+                    msg = f"{emo.ERROR} LNS namespace is not a valid address!"
+                    update.message.reply_text(msg)
+                    return
 
             msg = f"{emo.HOURGLASS} Transfering namespace..."
             message = update.message.reply_text(msg)

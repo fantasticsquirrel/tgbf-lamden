@@ -20,7 +20,6 @@ class Send(TGBFPlugin):
             self.send_callback,
             run_async=True))
 
-    @TGBFPlugin.private
     @TGBFPlugin.send_typing
     def send_callback(self, update: Update, context: CallbackContext):
         if len(context.args) != 3:
@@ -65,7 +64,7 @@ class Send(TGBFPlugin):
             # Check if address is a LNS namespace
             lns_res = lamden.lns_resolve(to_address)
 
-            if "error" in lns_res:
+            if lns_res['status'] == "error":
                 msg = f"{emo.ERROR} Not a valid address or LNS namespace"
                 update.message.reply_text(msg)
                 return

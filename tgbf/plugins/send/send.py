@@ -65,7 +65,7 @@ class Send(TGBFPlugin):
             # Check if address is a LNS namespace
             lns_res = lamden.lns_resolve(to_address)
 
-            if "error" in lns_res:
+            if lns_res['status'] == "error":
                 msg = f"{emo.ERROR} Not a valid address or LNS namespace"
                 update.message.reply_text(msg)
                 return

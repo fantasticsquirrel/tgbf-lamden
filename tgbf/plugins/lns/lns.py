@@ -238,8 +238,7 @@ class Lns(TGBFPlugin):
 
                 counter = 0
                 for address, namespace_dict in namespaces[contract]['collection_balances'].items():
-                    # TODO: Check how much keys exist with value 1
-                    pass
+                    counter += sum(x == 1 for x in namespace_dict.values())
 
                 message.edit_text(f'<code>{counter}</code> LNS namespaces generated', parse_mode=ParseMode.HTML)
                 return

@@ -26,6 +26,9 @@ Example for resolving namespace `endogen` to address:
 List namespaces connected to your bot wallet:  
 `/{{handle}} list`  
 
+List namespaces connected address:  
+`/{{handle}} list <address>`  
+
 Show number of minted namespaces:  
 `/{{handle}} count`  
 

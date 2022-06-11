@@ -108,11 +108,24 @@ class Lns(TGBFPlugin):
 
         # LIST NAMESPACES
         elif command == "list":
+            address = str()
+
+            if len(context.args) == 2:
+                address = context.args[1]
+
+            if not lamden.is_address_valid(address):
+                msg = f"{emo.ERROR} Provided address not valid..."
+                update.message.reply_text(msg)
+                return
+
+            if not address:
+                address = wallet.verifying_key
+
             msg = f"{emo.HOURGLASS} Retrieving namespaces..."
             message = update.message.reply_text(msg)
 
             try:
-                blockservice = self.config.get("blockservice").replace("{address}", wallet.verifying_key)
+                blockservice = self.config.get("blockservice").replace("{address}", address)
                 namespaces = requests.get(blockservice).json()
 
                 if not namespaces:
@@ -120,7 +133,7 @@ class Lns(TGBFPlugin):
                     return
 
                 owned_str = str()
-                for name, qty in namespaces[contract]['collection_balances'][wallet.verifying_key].items():
+                for name, qty in namespaces[contract]['collection_balances'][address].items():
                     if qty != 1:
                         continue
 

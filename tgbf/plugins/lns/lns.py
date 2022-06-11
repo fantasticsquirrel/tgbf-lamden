@@ -117,7 +117,10 @@ class Lns(TGBFPlugin):
                     if qty != 1:
                         continue
 
-                    owned_str += f"<code>{name}</code>\n"
+                    owned_str += f"<code>{name}</code>, "
+
+                if owned_str:
+                    owned_str = owned_str[:-2]
 
                 message.edit_text(owned_str, parse_mode=ParseMode.HTML)
                 return

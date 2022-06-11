@@ -28,3 +28,6 @@ List namespaces connected to your bot wallet:
 
 Show number of minted namespaces:  
 `/{{handle}} count`  
+
+Show avatar for namespace:  
+`/{{handle}} avatar <namespace>`  

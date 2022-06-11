@@ -1,7 +1,12 @@
 import logging
+import os.path
+
 import requests
+from PIL import Image
+
 import tgbf.emoji as emo
 
+from os.path import join, isfile
 from telegram import Update, ParseMode
 from telegram.ext import CommandHandler, CallbackContext
 from tgbf.lamden.connect import Connect
@@ -9,6 +14,8 @@ from tgbf.plugin import TGBFPlugin
 
 
 class Lns(TGBFPlugin):
+
+    AVATAR_DIR = "avatars"
 
     def load(self):
         self.add_handler(CommandHandler(
@@ -139,7 +146,7 @@ class Lns(TGBFPlugin):
                     parse_mode=ParseMode.MARKDOWN)
                 return
 
-            namespace = context.args[1]
+            namespace = context.args[1].lower()
             to = context.args[2]
 
             if not lamden.is_address_valid(to):
@@ -206,7 +213,7 @@ class Lns(TGBFPlugin):
                     parse_mode=ParseMode.MARKDOWN)
                 return
 
-            namespace = context.args[1]
+            namespace = context.args[1].lower()
 
             msg = f"{emo.HOURGLASS} Resolving namespace..."
             message = update.message.reply_text(msg)
@@ -251,6 +258,21 @@ class Lns(TGBFPlugin):
                 msg = f"{emo.ERROR} {e}"
                 message.edit_text(msg)
                 return
+
+        elif command == "avatar":
+            if len(context.args) != 2:
+                update.message.reply_text(
+                    self.get_usage(),
+                    parse_mode=ParseMode.MARKDOWN)
+                return
+
+            namespace = context.args[1].lower()
+
+            update.message.reply_photo(
+                photo=f"https://robohash.org/{namespace}?set=set4",
+                caption=f"Avatar for namespace <code>{namespace}</code>",
+                parse_mode=ParseMode.HTML)
+            return
 
         else:
             update.message.reply_text(

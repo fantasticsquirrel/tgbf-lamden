@@ -1,12 +1,7 @@
 import logging
-import os.path
-
 import requests
-from PIL import Image
-
 import tgbf.emoji as emo
 
-from os.path import join, isfile
 from telegram import Update, ParseMode
 from telegram.ext import CommandHandler, CallbackContext
 from tgbf.lamden.connect import Connect
@@ -113,13 +108,13 @@ class Lns(TGBFPlugin):
             if len(context.args) == 2:
                 address = context.args[1]
 
+            if not address:
+                address = wallet.verifying_key
+
             if not lamden.is_address_valid(address):
                 msg = f"{emo.ERROR} Provided address not valid..."
                 update.message.reply_text(msg)
                 return
-
-            if not address:
-                address = wallet.verifying_key
 
             msg = f"{emo.HOURGLASS} Retrieving namespaces..."
             message = update.message.reply_text(msg)
@@ -257,14 +252,16 @@ class Lns(TGBFPlugin):
 
             try:
                 blockservice = self.config.get("blockservice").replace("{address}", "")
-                namespaces = requests.get(blockservice).json()
 
-                counter = 0
-                for address, namespace_dict in namespaces[contract]['collection_balances'].items():
-                    counter += sum(x == 1 for x in namespace_dict.values())
+                with requests.get(blockservice) as namespaces:
+                    namespaces = namespaces.json()
 
-                message.edit_text(f'<code>{counter}</code> LNS namespaces generated', parse_mode=ParseMode.HTML)
-                return
+                    counter = 0
+                    for address, namespace_dict in namespaces[contract]['collection_balances'].items():
+                        counter += sum(x == 1 for x in namespace_dict.values())
+
+                    message.edit_text(f'<code>{counter}</code> LNS namespaces generated', parse_mode=ParseMode.HTML)
+                    return
 
             except Exception as e:
                 logging.error(f"Not possible to retrieve LNS namespaces for {wallet}: {e}")
@@ -279,13 +276,36 @@ class Lns(TGBFPlugin):
                     parse_mode=ParseMode.MARKDOWN)
                 return
 
+            msg = f"{emo.HOURGLASS} Retrieving avatar..."
+            message = update.message.reply_text(msg)
+
             namespace = context.args[1].lower()
 
-            update.message.reply_photo(
-                photo=f"https://robohash.org/{namespace}?set=set4",
-                caption=f"Avatar for namespace <code>{namespace}</code>",
-                parse_mode=ParseMode.HTML)
-            return
+            try:
+                blockservice = self.config.get("blockservice") \
+                    .replace("collection_balances", "collection_nfts")\
+                    .replace("{address}", "")
+
+                with requests.get(blockservice) as bs:
+                    bs = bs.json()
+
+                    if namespace not in bs[contract]['collection_nfts']:
+                        msg = f'{emo.ERROR} LNS namespace does not exist'
+                        message.edit_text(msg)
+                        return
+
+                    message.delete()
+                    update.message.reply_photo(
+                        photo=f"https://robohash.org/{namespace}?set=set4",
+                        caption=f"Avatar for namespace <code>{namespace}</code>",
+                        parse_mode=ParseMode.HTML)
+                    return
+
+            except Exception as e:
+                logging.error(f"Not possible to retrieve LNS namespaces for {wallet}: {e}")
+                msg = f"{emo.ERROR} {e}"
+                message.edit_text(msg)
+                return
 
         else:
             update.message.reply_text(

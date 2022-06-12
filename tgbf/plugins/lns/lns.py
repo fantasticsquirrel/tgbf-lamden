@@ -58,18 +58,13 @@ class Lns(TGBFPlugin):
                     app = lamden.approve_contract(contract)
                     msg = f"Approved {contract}: {app}"
                     logging.info(msg)
-            except Exception as e:
-                logging.error(f"Error approving namespace minting: {e}")
-                msg = f"{emo.ERROR} {e}"
-                message.edit_text(msg)
-                return
 
-            try:
                 mint = lamden.post_transaction(
                     stamps=80,
                     contract=contract,
                     function="mint_nft",
                     kwargs={"name": namespace})
+
             except Exception as e:
                 logging.error(f"Error calling LNS mint contract: {e}")
                 msg = f"{emo.ERROR} {e}"
@@ -121,24 +116,26 @@ class Lns(TGBFPlugin):
 
             try:
                 blockservice = self.config.get("blockservice").replace("{address}", address)
-                namespaces = requests.get(blockservice).json()
 
-                if not namespaces:
-                    message.edit_text("No namespaces minted yet")
+                with requests.get(blockservice) as namespaces:
+                    namespaces = namespaces.json()
+
+                    if not namespaces:
+                        message.edit_text("No namespaces minted yet")
+                        return
+
+                    owned_str = str()
+                    for name, qty in namespaces[contract]['collection_balances'][address].items():
+                        if qty != 1:
+                            continue
+
+                        owned_str += f"<code>{name}</code>, "
+
+                    if owned_str:
+                        owned_str = owned_str[:-2]
+
+                    message.edit_text(owned_str, parse_mode=ParseMode.HTML)
                     return
-
-                owned_str = str()
-                for name, qty in namespaces[contract]['collection_balances'][address].items():
-                    if qty != 1:
-                        continue
-
-                    owned_str += f"<code>{name}</code>, "
-
-                if owned_str:
-                    owned_str = owned_str[:-2]
-
-                message.edit_text(owned_str, parse_mode=ParseMode.HTML)
-                return
 
             except Exception as e:
                 logging.error(f"Not possible to retrieve LNS namespaces for {wallet}: {e}")
@@ -176,24 +173,25 @@ class Lns(TGBFPlugin):
             message = update.message.reply_text(msg)
 
             try:
-                mint = lamden.post_transaction(
+                transfer = lamden.post_transaction(
                     stamps=80,
                     contract=contract,
                     function="transfer",
                     kwargs={"name": namespace, "amount": 1, "to": to})
+
             except Exception as e:
                 logging.error(f"Error calling LNS transfer contract: {e}")
                 msg = f"{emo.ERROR} {e}"
                 message.edit_text(msg)
                 return
 
-            if "error" in mint:
-                logging.error(f"LNS transfer contract returned error: {mint['error']}")
-                msg = f"{emo.ERROR} {mint['error']}"
+            if "error" in transfer:
+                logging.error(f"LNS transfer contract returned error: {transfer['error']}")
+                msg = f"{emo.ERROR} {transfer['error']}"
                 message.edit_text(msg)
                 return
 
-            tx_hash = mint["hash"]
+            tx_hash = transfer["hash"]
 
             # Wait for transaction to be completed
             success, result = lamden.tx_succeeded(tx_hash)

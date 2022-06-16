@@ -2,5 +2,8 @@
     "category": "Lamden Name Service",
     "description": "Mint and list namespaces",
     "contract": "con_nameservice_v3",
-    "blockservice": "https://blockservice.nebulamden.finance/current/all/con_nameservice_v3/collection_balances/{address}"
+    "nft_market_contract": "con_nft_marketplace_v1",
+    "rtau_contract": "con_reflecttau_v2",
+    "rtau_treasury_contract": "con_reflecttau_v2_treasury",
+    "blockservice": "https://blockservice.nebulamden.finance/"
 }

@@ -602,7 +602,12 @@ class Lns(TGBFPlugin):
                     continue
                 for name, details_dict in nft_contract_detail_dict.items():
                     if name == namespace and details_dict["amount"] == 1:
-                        return seller, details_dict["price"]["__fixed__"]
+                        price = details_dict["price"]
+
+                        if isinstance(price, dict) and "__fixed__" in price:
+                            price = details_dict["price"]["__fixed__"]
+
+                        return seller, str(price)
 
         return None, None
 

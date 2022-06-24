@@ -199,7 +199,7 @@ class API:
 
     def lns_resolve(self, namespace):
         """ Resolve given namespace to an address with Lamden Name Service (LNS) """
-        lns_url = self.lns.replace("{namespace}", namespace)
+        lns_url = self.lns.replace("{namespace}", namespace.lower())
         with requests.get(lns_url) as res:
             return res.json()
 

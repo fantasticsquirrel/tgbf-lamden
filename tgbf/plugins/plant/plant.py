@@ -1,6 +1,9 @@
-import json
+import ast
 import logging
+import os.path
+
 import requests
+import urllib.request
 import tgbf.emoji as emo
 
 from telegram import Update, ParseMode
@@ -35,6 +38,36 @@ class Plant(TGBFPlugin):
         # ------ 1 ARGUMENT ------
         if len(context.args) == 1:
 
+            # ------ SEASON ------
+            if first_argument == "season":
+                blockservice = self.config.get("blockservice") + f"current/all/{contract}/plants/"
+                bs_season_end = blockservice + "growing_season_end_time"
+                bs_active_gen = blockservice + "active_generation"
+
+                with requests.get(bs_season_end) as season_end:
+                    season_end_json = season_end.json()
+                    ed = season_end_json[contract]['plants']['growing_season_end_time']['__time__']
+
+                with requests.get(bs_active_gen) as active_gen:
+                    active_gen_json = active_gen.json()
+                    generation = active_gen_json[contract]['plants']['active_generation']
+
+                update.message.reply_text(
+                    f"<code>Season End: {ed[0]}-{ed[1]}-{ed[2]} at {ed[3]}:{ed[4]}:{ed[5]}</code>\n"
+                    f"<code>Active Generation: {generation}</code>",
+                    parse_mode=ParseMode.HTML)
+
+            # ------ EVERYTHING ELSE ------
+            else:
+                update.message.reply_text(
+                    self.get_usage(),
+                    parse_mode=ParseMode.MARKDOWN)
+                return
+
+        # ------ 2 ARGUMENTS ------
+        if len(context.args) == 2:
+            second_argument = context.args[1].lower()
+
             # ------ BUY ------
             if first_argument == "buy":
                 try:
@@ -54,7 +87,7 @@ class Plant(TGBFPlugin):
                         stamps=150,
                         contract=contract,
                         function="buy_plant",
-                        kwargs={})
+                        kwargs={"nick": second_argument})
 
                 except Exception as e:
                     logging.error(f"Error calling buy_plant() from {contract} contract: {e}")
@@ -76,58 +109,73 @@ class Plant(TGBFPlugin):
                     update.message.reply_text(msg)
                     return
 
-                result_data = result['result']
-                result_dict = json.loads(result_data[0])
-                result_ipfs = result_data[1]
+                result_list = ast.literal_eval(result['result'])
+                result_ipfs = result_list[-1]
+
+                #filename = result_ipfs.split("=")[-1]
+                #img_path = os.path.join(self.get_res_path(), filename)
 
                 ex_url = f"{lamden.explorer_url}/transactions/{tx_hash}"
 
-                # TODO: Format dict in reply message
-                update.message.reply_photo(
-                    photo=result_ipfs,
-                    caption=f'<code>{result_dict}</code> <a href="{ex_url}">View Tx</a>',
-                    parse_mode=ParseMode.HTML)
-
-            # ------ SEASON ------
-            elif first_argument == "season":
-                blockservice = self.config.get("blockservice") + f"current/all/{contract}/plants/"
-                bs_season_end = blockservice + "growing_season_end_time"
-                bs_active_gen = blockservice + "active_generation"
-
-                with requests.get(bs_season_end) as season_end:
-                    season_end_json = season_end.json()
-
-                with requests.get(bs_active_gen) as active_gen:
-                    active_gen_json = active_gen.json()
-
-                # TODO: Format correctly and send as message
+                #urllib.request.urlretrieve(result_ipfs, img_path)
 
                 update.message.reply_text(
-                    f"Season End: {season_end_json}\n\n"
-                    f"Active Generation: {active_gen_json}",
+                    text=f'<code>Water: {result_list[0]}</code>\n'
+                         f'<code>Photosynthesis: {result_list[1]}</code>\n'
+                         f'<code>Bugs: {result_list[2]}</code>\n'
+                         f'<code>Nutrients: {result_list[3]}</code>\n'
+                         f'<code>Weed: {result_list[4]}</code>\n'
+                         f'<code>Toxicity: {result_list[5]}</code>\n'
+                         f'<code>Burn amount: {result_list[6]}</code>\n'
+                         f'<code>Weather: {result_list[7]}</code>\n\n'
+                         f'<code>{result_list[8]}</code>',
                     parse_mode=ParseMode.HTML)
-
-            # ------ EVERYTHING ELSE ------
-            else:
-                update.message.reply_text(
-                    self.get_usage(),
-                    parse_mode=ParseMode.MARKDOWN)
-                return
-
-        # ------ 2 ARGUMENTS ------
-        if len(context.args) == 2:
-            second_argument = context.args[1].lower()
 
             # ------ STATS ------
-            if second_argument == "stats":
-                blockservice = self.config.get("blockservice") + f"current/all/{contract}/plants/"
+            elif first_argument == "stats":
+                blockservice = self.config.get("blockservice") + f"current/all/{contract}/"
 
-                with requests.get(blockservice) as bs:
-                    bs_json = bs.json()
+                with requests.get(blockservice + f"collection_nfts/{second_argument}") as bs:
+                    res = bs.json()[contract]['collection_nfts'][second_argument]
 
-                # TODO: Set real stats
+                    plant_generation = res[0]
+                    plant_number = res[1]
+                    plant_name = f'Gen_{plant_generation}_{plant_number}'
+
+                with requests.get(blockservice + f"collection_nfts/{plant_name}:nft_metadata") as bs:
+                    res = bs.json()[contract]['collection_nfts'][plant_name]['nft_metadata']
+
+                    alve = res['alive']
+                    burn = res['burn_amount']
+                    bugs = res['current_bugs']
+                    nutr = res['current_nutrients']
+                    phto = res['current_photosynthesis']
+                    toxi = res['current_toxicity']
+                    watr = res['current_water']
+                    weth = res['current_weather']
+                    weed = res['current_weeds']
+
+                    last_calc = res['last_calc']['__time__']
+                    ld = res['last_daily']['__time__']
+                    lgl = res['last_grow_light']['__time__']
+                    li = res['last_interaction']['__time__']
+                    lsw = res['last_squash_weed']['__time__']
+
                 update.message.reply_text(
-                    f'{emo.DONE} Executed!',
+                    text=f"<code>Alive: {alve}</code>\n"
+                         f"<code>Burn amount: {burn}</code>\n"
+                         f"<code>Bugs: {bugs}</code>\n"
+                         f"<code>Nutrients: {nutr}</code>\n"
+                         f"<code>Photosynthesis: {phto}</code>\n"
+                         f"<code>Toxicity: {toxi}</code>\n"
+                         f"<code>Water: {watr}</code>\n"
+                         f"<code>Weather: {weth}</code>\n"
+                         f"<code>Weeds: {weed}</code>\n\n"
+                         f"<code>Last calculation: {ld[0]}-{ld[1]}-{ld[2]} at {ld[3]}:{ld[4]}:{ld[5]}</code>\n"
+                         f"<code>Last daily      : {ld[0]}-{ld[1]}-{ld[2]} at {ld[3]}:{ld[4]}:{ld[5]}</code>\n"
+                         f"<code>Last grow light : {lgl[0]}-{lgl[1]}-{lgl[2]} at {lgl[3]}:{lgl[4]}:{lgl[5]}</code>\n"
+                         f"<code>Last interaction: {li[0]}-{li[1]}-{li[2]} at {li[3]}:{li[4]}:{li[5]}</code>\n"
+                         f"<code>Last squash weed: {lsw[0]}-{lsw[1]}-{lsw[2]} at {lsw[3]}:{lsw[4]}:{lsw[5]}</code>\n",
                     parse_mode=ParseMode.HTML)
 
             # ------ INTERACT WITH PLANT BY NAME ------
@@ -168,9 +216,3 @@ class Plant(TGBFPlugin):
                     f'{emo.DONE} Executed! <a href="{ex_url}">View Tx</a>',
                     parse_mode=ParseMode.HTML,
                     disable_web_page_preview=True)
-
-        # ------ EVERYTHING ELSE ------
-        else:
-            update.message.reply_text(
-                self.get_usage(),
-                parse_mode=ParseMode.MARKDOWN)

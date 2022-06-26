@@ -16,6 +16,11 @@ class Logfile(TGBFPlugin):
             self.logfile_callback,
             run_async=True))
 
+        self.add_handler(CommandHandler(
+            "log",
+            self.logfile_callback,
+            run_async=True))
+
     @TGBFPlugin.owner
     @TGBFPlugin.private
     @TGBFPlugin.send_typing

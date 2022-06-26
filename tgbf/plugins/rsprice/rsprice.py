@@ -24,6 +24,11 @@ class Rsprice(TGBFPlugin):
             self.rsprice,
             run_async=True))
 
+        self.add_handler(CommandHandler(
+            "rp",
+            self.rsprice,
+            run_async=True))
+
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def rsprice(self, update: Update, context: CallbackContext):

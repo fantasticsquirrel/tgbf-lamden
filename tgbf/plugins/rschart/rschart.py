@@ -34,6 +34,11 @@ class Rschart(TGBFPlugin):
             self.rschart_callback,
             run_async=True))
 
+        self.add_handler(CommandHandler(
+            "rc",
+            self.rschart_callback,
+            run_async=True))
+
         self.add_handler(CallbackQueryHandler(
             self.button_callback,
             run_async=True))

@@ -32,6 +32,11 @@ class Chart(TGBFPlugin):
             self.chart_callback,
             run_async=True))
 
+        self.add_handler(CommandHandler(
+            "c",
+            self.chart_callback,
+            run_async=True))
+
     @TGBFPlugin.blacklist
     @TGBFPlugin.send_typing
     def chart_callback(self, update: Update, context: CallbackContext):

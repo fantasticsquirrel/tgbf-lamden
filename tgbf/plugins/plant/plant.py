@@ -23,8 +23,9 @@ class Plant(TGBFPlugin):
     @TGBFPlugin.send_typing
     def plant_callback(self, update: Update, context: CallbackContext):
         if len(context.args) < 1:
-            update.message.reply_text(
-                self.get_usage(),
+            update.message.reply_photo(
+                photo=open(os.path.join(self.get_res_path(), "plant.png"), "rb"),
+                caption=self.get_resource("plant.md"),
                 parse_mode=ParseMode.MARKDOWN)
             return
 
@@ -59,8 +60,9 @@ class Plant(TGBFPlugin):
 
             # ------ EVERYTHING ELSE ------
             else:
-                update.message.reply_text(
-                    self.get_usage(),
+                update.message.reply_photo(
+                    photo=open(os.path.join(self.get_res_path(), "plant.png"), "rb"),
+                    caption=self.get_resource("plant.md"),
                     parse_mode=ParseMode.MARKDOWN)
                 return
 
@@ -145,6 +147,15 @@ class Plant(TGBFPlugin):
                 with requests.get(blockservice + f"collection_nfts/{plant_name}:nft_metadata") as bs:
                     res = bs.json()[contract]['collection_nfts'][plant_name]['nft_metadata']
 
+                    if res['current_weather'] == 1:
+                        weather = "sunny"
+                    elif res['current_weather'] == 2:
+                        weather = "cloudy"
+                    elif res['current_weather'] == 3:
+                        weather = "rainy"
+                    else:
+                        weather = res['current_weather']
+
                     alve = res['alive']
                     burn = res['burn_amount']
                     bugs = res['current_bugs']
@@ -152,7 +163,6 @@ class Plant(TGBFPlugin):
                     phto = res['current_photosynthesis']
                     toxi = res['current_toxicity']
                     watr = res['current_water']
-                    weth = res['current_weather']
                     weed = res['current_weeds']
 
                     last_calc = res['last_calc']['__time__']
@@ -169,7 +179,7 @@ class Plant(TGBFPlugin):
                          f"<code>Photosynthesis: {phto}</code>\n"
                          f"<code>Toxicity: {toxi}</code>\n"
                          f"<code>Water: {watr}</code>\n"
-                         f"<code>Weather: {weth}</code>\n"
+                         f"<code>Weather: {weather}</code>\n"
                          f"<code>Weeds: {weed}</code>\n\n"
                          f"<code>Last calculation: {ld[0]}-{ld[1]}-{ld[2]} at {ld[3]}:{ld[4]}:{ld[5]}</code>\n"
                          f"<code>Last daily      : {ld[0]}-{ld[1]}-{ld[2]} at {ld[3]}:{ld[4]}:{ld[5]}</code>\n"
@@ -180,6 +190,27 @@ class Plant(TGBFPlugin):
 
             # ------ INTERACT WITH PLANT BY NAME ------
             else:
+
+                action_types = [
+                    "water",
+                    "squash",
+                    "spraybugs",
+                    "growlights",
+                    "shade",
+                    "fertilize",
+                    "pullweeds",
+                    "sprayweeds",
+                    "finalize",
+                    "sellberries"
+                ]
+
+                if second_argument not in action_types:
+                    update.message.reply_text(
+                        f'{emo.ERROR} you can only use following actions: {", ".join(action_types)}',
+                        parse_mode=ParseMode.HTML,
+                        disable_web_page_preview=True)
+                    return
+
                 try:
                     interact = lamden.post_transaction(
                         stamps=150,

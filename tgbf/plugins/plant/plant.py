@@ -42,20 +42,20 @@ class Plant(TGBFPlugin):
             # ------ SEASON ------
             if first_argument == "season":
                 blockservice = self.config.get("blockservice") + f"current/all/{contract}/plants/"
-                bs_season_end = blockservice + "growing_season_end_time"
-                bs_active_gen = blockservice + "active_generation"
 
-                with requests.get(bs_season_end) as season_end:
-                    season_end_json = season_end.json()
-                    ed = season_end_json[contract]['plants']['growing_season_end_time']['__time__']
+                with requests.get(blockservice) as res:
+                    response = res.json()
 
-                with requests.get(bs_active_gen) as active_gen:
-                    active_gen_json = active_gen.json()
-                    generation = active_gen_json[contract]['plants']['active_generation']
+                    ed = response[contract]['plants']['growing_season_end_time']['__time__']
+                    generation = response[contract]['plants']['active_generation']
+                    reward_pool = response[contract]['plants'][str(generation)]['total_tau']
+                    if isinstance(reward_pool, dict):
+                        reward_pool = reward_pool['__fixed__']
 
                 update.message.reply_text(
                     f"<code>Season End: {ed[0]}-{ed[1]}-{ed[2]} at {ed[3]}:{ed[4]}:{ed[5]}</code>\n"
-                    f"<code>Active Generation: {generation}</code>",
+                    f"<code>Active Generation: {generation}</code>\n"
+                    f"<code>Total Reward Pool: {reward_pool}</code>",
                     parse_mode=ParseMode.HTML)
 
             # ------ EVERYTHING ELSE ------

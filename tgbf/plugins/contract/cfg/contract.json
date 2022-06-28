@@ -2,7 +2,7 @@
     "category": "TAU on BSC",
     "description": "Show TAU contract address on BSC",
     "contract": "0x70d7109D3AfE13EE8f9015566272838519578c6b",
-    "dextools": "https://www.dextools.io/app/bsc/pair-explorer/0xd52e65ebcaf8e2db9712d899f3a8e205a53d2472",
+    "defined": "https://www.defined.fi/bsc/0xd52e65ebcaf8e2db9712d899f3a8e205a53d2472",
     "pancake": "https://pancakeswap.finance/swap?outputCurrency=0x70d7109D3AfE13EE8f9015566272838519578c6b",
     "how_to": "https://youtu.be/096JFdmHiN0",
     "msg_start": "TAU (BEP20) contract on BSC",

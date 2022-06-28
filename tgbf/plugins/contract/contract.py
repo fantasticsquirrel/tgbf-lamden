@@ -14,7 +14,7 @@ class Contract(TGBFPlugin):
     @TGBFPlugin.send_typing
     def contract_callback(self, update: Update, context: CallbackContext):
         contract = self.config.get("contract")
-        dextools = self.config.get("dextools")
+        dextools = self.config.get("defined")
         pancake = self.config.get("pancake")
         how_to = self.config.get("how_to")
         msg_start = self.config.get("msg_start")
@@ -23,7 +23,7 @@ class Contract(TGBFPlugin):
         update.message.reply_text(
             f'{msg_start}\n\n'
             f'<code>{contract}</code>\n\n'
-            f'<a href="{dextools}">DEXTools</a> | '
+            f'<a href="{dextools}">Defined</a> | '
             f'<a href="{pancake}">PancakeSwap</a> | '
             f'<a href="{how_to}">How-To</a>\n\n'
             f'{msg_end}',

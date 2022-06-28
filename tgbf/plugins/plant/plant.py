@@ -247,34 +247,32 @@ class Plant(TGBFPlugin):
                     message.edit_text(msg)
                     return
 
-                # plant_data["current_weather"]]
-                result_list = ast.literal_eval(result['result'])
+                # Result is a list with properties
+                if str(result["result"]).startswith("["):
+                    result_list = ast.literal_eval(result['result'])
 
-                if result_list[7] == 1:
-                    weather = "sunny"
-                elif result_list[7] == 2:
-                    weather = "cloudy"
-                elif result_list[7] == 3:
-                    weather = "rainy"
+                    if result_list[7] == 1:
+                        weather = "sunny"
+                    elif result_list[7] == 2:
+                        weather = "cloudy"
+                    elif result_list[7] == 3:
+                        weather = "rainy"
+                    else:
+                        weather = result_list[7]
+
+                    message.edit_text(
+                        text=f'<code>Water: {result_list[0]}</code>\n'
+                             f'<code>Photosynthesis: {result_list[1]}</code>\n'
+                             f'<code>Bugs: {result_list[2]}</code>\n'
+                             f'<code>Nutrients: {result_list[3]}</code>\n'
+                             f'<code>Weed: {result_list[4]}</code>\n'
+                             f'<code>Toxicity: {result_list[5]}</code>\n'
+                             f'<code>Burn amount: {result_list[6]}</code>\n'
+                             f'<code>Weather: {weather}</code>',
+                        parse_mode=ParseMode.HTML)
+
+                # Result is a string (means plant is dead)
                 else:
-                    weather = result_list[7]
-
-                message.edit_text(
-                    text=f'<code>Water: {result_list[0]}</code>\n'
-                         f'<code>Photosynthesis: {result_list[1]}</code>\n'
-                         f'<code>Bugs: {result_list[2]}</code>\n'
-                         f'<code>Nutrients: {result_list[3]}</code>\n'
-                         f'<code>Weed: {result_list[4]}</code>\n'
-                         f'<code>Toxicity: {result_list[5]}</code>\n'
-                         f'<code>Burn amount: {result_list[6]}</code>\n'
-                         f'<code>Weather: {weather}</code>',
-                    parse_mode=ParseMode.HTML)
-
-                """
-                ex_url = f"{lamden.explorer_url}/transactions/{tx_hash}"
-
-                update.message.reply_text(
-                    f'{emo.DONE} Executed! <a href="{ex_url}">View Tx</a>',
-                    parse_mode=ParseMode.HTML,
-                    disable_web_page_preview=True)
-                """
+                    message.edit_text(
+                        text=f'{emo.SAD} {result["result"]}',
+                        parse_mode=ParseMode.HTML)

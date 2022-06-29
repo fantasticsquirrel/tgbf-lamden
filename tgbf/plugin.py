@@ -54,6 +54,9 @@ class TGBFPlugin:
         # Access to Lamden bot wallet
         self._bot_wallet = self._bot.bot_wallet
 
+        # Access to Twitter bot
+        self.twitter = self._bot.twbot
+
         # Create global db table for wallets
         if not self.global_table_exists("wallets"):
             sql = self.get_global_resource("create_wallets.sql")

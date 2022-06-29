@@ -22,14 +22,11 @@ class TGBF:
         # Run only one instance
         SingleInstance()
 
-        # Read secret tokens
-        tg_token, bot_pk = self._get_tokens()
-
         # Read global config file
         self.cfg = Cfg(os.path.join(con.DIR_CFG, con.FILE_CFG))
 
         # Create Telegram bot
-        self.tgb = TelegramBot(self.cfg, tg_token, bot_pk)
+        self.tgb = TelegramBot(self.cfg, self._get_tokens())
 
     def _parse_args(self):
         """ Parse command line arguments """
@@ -135,11 +132,21 @@ class TGBF:
 
         token_path = os.path.join(con.DIR_CFG, con.FILE_TKN)
 
+        tokens = dict()
+
         try:
             if os.path.isfile(token_path):
                 with open(token_path, "r", encoding="utf8") as file:
                     json_content = json.load(file)
-                    return json_content["telegram"], json_content["bot-pk"]
+
+                    tokens["telegram"] = json_content["telegram"]
+                    tokens["bot-pk"] = json_content["bot-pk"]
+                    tokens["tw-consumer-key"] = json_content["tw-consumer-key"]
+                    tokens["tw-consumer-sec"] = json_content["tw-consumer-sec"]
+                    tokens["tw-access-token-key"] = json_content["tw-access-token-key"]
+                    tokens["tw-access-token-sec"] = json_content["tw-access-token-sec"]
+
+                    return tokens
             else:
                 exit(f"ERROR: No token file '{con.FILE_TKN}' found at '{token_path}'")
         except KeyError as e:

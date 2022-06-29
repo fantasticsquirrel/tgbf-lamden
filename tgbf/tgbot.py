@@ -17,17 +17,18 @@ from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
 from telegram.error import InvalidToken, Unauthorized
 from tgbf.config import ConfigManager
 from tgbf.web import FlaskAppWrapper, EndpointAction
+from tgbf.twitter import TwitterBot
 from lamden.crypto.wallet import Wallet
 
 
 class TelegramBot:
 
-    def __init__(self, config: ConfigManager, tg_token, bot_pk):
+    def __init__(self, config: ConfigManager, tokens: dict):
         self.config = config
 
         logging.info(f"Starting {con.DESCRIPTION}")
 
-        self.bot_wallet = Wallet(bot_pk)
+        self.bot_wallet = Wallet(tokens["bot-pk"])
 
         read_timeout = self.config.get("telegram", "read_timeout")
         connect_timeout = self.config.get("telegram", "connect_timeout")
@@ -44,7 +45,7 @@ class TelegramBot:
 
         try:
             logging.info("Connecting bot...")
-            self.updater = Updater(tg_token, request_kwargs=self.tgb_kwargs)
+            self.updater = Updater(tokens["telegram"], request_kwargs=self.tgb_kwargs)
             # Check if Telegram token is really valid
             logging.info("Checking bot token...")
             self.updater.bot.get_me()
@@ -67,6 +68,14 @@ class TelegramBot:
         # Add default web endpoint
         action = EndpointAction(None, None)
         self.web.app.add_url_rule("/", "/", action)
+
+        # Init Twitter bot
+        logging.info("Setting up Twitter bot...")
+        self.twbot = TwitterBot(
+            tokens["tw-consumer-key"],
+            tokens["tw-consumer-sec"],
+            tokens["tw-access-token-key"],
+            tokens["tw-access-token-sec"])
 
         # Load classes from folder 'plugins'
         logging.info("Loading plugins...")

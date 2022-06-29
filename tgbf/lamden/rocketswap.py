@@ -3,7 +3,7 @@ import requests
 
 class Rocketswap:
 
-    base_url = "https://stats.rocketswap.exchange:2053/api/"
+    base_url = "https://rocketswap.exchange:2053/api/"
 
     def __init__(self, base_url=None):
         self.base_url = base_url if base_url else self.base_url

@@ -126,7 +126,7 @@ class Plant(TGBFPlugin):
                          f'<code>Photosynthesis: {result_list[1]}</code>\n'
                          f'<code>Bugs: {result_list[2]}</code>\n'
                          f'<code>Nutrients: {result_list[3]}</code>\n'
-                         f'<code>Weed: {result_list[4]}</code>\n'
+                         f'<code>Weeds: {result_list[4]}</code>\n'
                          f'<code>Toxicity: {result_list[5]}</code>\n'
                          f'<code>Burn amount: {result_list[6]}</code>\n'
                          f'<code>Weather: {result_list[7]}</code>\n\n'
@@ -265,7 +265,7 @@ class Plant(TGBFPlugin):
                              f'<code>Photosynthesis: {result_list[1]}</code>\n'
                              f'<code>Bugs: {result_list[2]}</code>\n'
                              f'<code>Nutrients: {result_list[3]}</code>\n'
-                             f'<code>Weed: {result_list[4]}</code>\n'
+                             f'<code>Weeds: {result_list[4]}</code>\n'
                              f'<code>Toxicity: {result_list[5]}</code>\n'
                              f'<code>Burn amount: {result_list[6]}</code>\n'
                              f'<code>Weather: {weather}</code>',

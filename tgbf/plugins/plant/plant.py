@@ -3,7 +3,6 @@ import logging
 import os.path
 
 import requests
-import urllib.request
 import tgbf.emoji as emo
 
 from telegram import Update, ParseMode
@@ -57,6 +56,10 @@ class Plant(TGBFPlugin):
                     f"<code>Active Generation: {generation}</code>\n"
                     f"<code>Total Reward Pool: {reward_pool}</code>",
                     parse_mode=ParseMode.HTML)
+
+            # ------ SCORING ------
+            elif first_argument == "scoring":
+                update.message.reply_photo(open(os.path.join(self.get_res_path(), "scoring.png"), "rb"))
 
             # ------ EVERYTHING ELSE ------
             else:

@@ -55,7 +55,7 @@ class ReplyStream(tweepy.Stream):
         if text_list[1] == "tip":
             amount = text_list[2]
             to = text_list[3]
-            self.client.create_tweet(text=f"Hey @{user} i just tipped {to} with {amount} TAU")
+            self.client.create_tweet(text=f"Hey @{user} i just tipped {to} with {amount} $TAU")
 
     def on_exception(self, exception):
         logging.error(f'Error in Twitter Bot: {exception}')
@@ -69,10 +69,12 @@ def get_wallet(username):
     db_file = os.path.join(path, c.DIR_DAT, "twitter.db")
 
     if not db_table_exists(db_file, "tw_wallets"):
-        sql = os.path.join(path, c.DIR_RES, "table_exists.sql")
-        res = db(db_file, sql, username)
+        sql_file = os.path.join(path, c.DIR_RES, "create_tw_wallets.sql")
+        sql = get_res(sql_file)
+        db(db_file, sql)
 
-    sql = os.path.join(path, c.DIR_RES, "select_tw_wallet.sql")
+    sql_file = os.path.join(path, c.DIR_RES, "select_tw_wallet.sql")
+    sql = get_res(sql_file)
 
     res = db(db_file, sql, username)
 
@@ -83,7 +85,8 @@ def get_wallet(username):
     # Create new wallet
     wallet = Wallet()
 
-    sql = os.path.join(path, c.DIR_RES, "insert_tw_wallet.sql")
+    sql_file = os.path.join(path, c.DIR_RES, "insert_tw_wallet.sql")
+    sql = get_res(sql_file)
 
     # Save wallet to database
     db(
@@ -139,7 +142,8 @@ def db_table_exists(db_path, table_name):
     exists = False
 
     path, _ = os.path.split(os.getcwd())
-    sql = os.path.join(path, c.DIR_RES, "table_exists.sql")
+    sql_file = os.path.join(path, c.DIR_RES, "table_exists.sql")
+    sql = get_res(sql_file)
 
     try:
         if cur.execute(sql, [table_name]).fetchone():
@@ -149,6 +153,12 @@ def db_table_exists(db_path, table_name):
 
     con.close()
     return exists
+
+
+def get_res(path: str):
+    with open(path, "r", encoding="utf8") as f:
+        return f.read()
+
 
 if __name__ == "__main__":
     twitter = TwitterBot(

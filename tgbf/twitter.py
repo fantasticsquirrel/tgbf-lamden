@@ -9,6 +9,11 @@ import json
 
 import tgbf.constants as c
 from lamden.crypto.wallet import Wallet
+from tgbf.lamden.connect import Connect
+
+
+path, _ = os.path.split(os.getcwd())
+db_file = os.path.join(path, c.DIR_DAT, "twitter.db")
 
 
 class TwitterBot:
@@ -40,33 +45,46 @@ class ReplyStream(tweepy.Stream):
         self.client = client
 
     def on_data(self, raw_data):
-        data = json.loads(raw_data)
-        logging.debug(f'ReplyStream - on_data()', data)
+        tweet = json.loads(raw_data)
+        logging.debug(f'ReplyStream - on_data()', tweet)
 
-        user = data["user"]["screen_name"]
+        from_user = tweet["user"]["screen_name"]
 
-        wallet = get_wallet(user)
-        print("wallet - address", wallet.verifying_key)
-        print("wallet - privkey", wallet.signing_key)
+        wallet = get_wallet(from_user)
+        lamden = Connect(wallet)
 
-        text = data["text"].lower()
+        text = tweet["text"].lower()
         text_list = text.split()
 
         if text_list[1] == "tip":
             amount = text_list[2]
             to = text_list[3]
-            self.client.create_tweet(text=f"Hey @{user} i just tipped {to} with {amount} $TAU")
+
+            if to.startswith("@"):
+                to_address = get_wallet(to[-1]).verifying_key
+            else:
+                self.client.create_tweet(
+                    in_reply_to_tweet_id=tweet.id,
+                    text=get_tip_help())
+                return
+
+            lamden.send(amount, to_address)
+
+            self.client.create_tweet(
+                in_reply_to_tweet_id=tweet.id,
+                text=f"Tipped {amount} $TAU to {to}")
 
     def on_exception(self, exception):
         logging.error(f'Error in Twitter Bot: {exception}')
 
 
+def get_tip_help():
+    return f"Tip a user with: 'tip <amount> @<username>'"
+
+
 def get_wallet(username):
     """ Return address and privkey for given Twitter username.
     If no wallet exists then it will be created. """
-
-    path, _ = os.path.split(os.getcwd())
-    db_file = os.path.join(path, c.DIR_DAT, "twitter.db")
 
     if not db_table_exists(db_file, "tw_wallets"):
         sql_file = os.path.join(path, c.DIR_RES, "create_tw_wallets.sql")
@@ -94,7 +112,8 @@ def get_wallet(username):
         sql,
         username,
         wallet.verifying_key,
-        wallet.signing_key)
+        wallet.signing_key
+    )
 
     logging.info(f"Twitter Wallet created for {username}: {wallet.verifying_key} / {wallet.signing_key}")
     return wallet
@@ -141,7 +160,6 @@ def db_table_exists(db_path, table_name):
     cur = con.cursor()
     exists = False
 
-    path, _ = os.path.split(os.getcwd())
     sql_file = os.path.join(path, c.DIR_RES, "table_exists.sql")
     sql = get_res(sql_file)
 
@@ -155,8 +173,8 @@ def db_table_exists(db_path, table_name):
     return exists
 
 
-def get_res(path: str):
-    with open(path, "r", encoding="utf8") as f:
+def get_res(res_path: str):
+    with open(res_path, "r", encoding="utf8") as f:
         return f.read()
 
 

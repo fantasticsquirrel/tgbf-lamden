@@ -9,7 +9,7 @@ import json
 
 import tgbf.constants as c
 from lamden.crypto.wallet import Wallet
-from tgbf.lamden.connect import Connect
+#from tgbf.lamden.connect import Connect
 
 
 path, _ = os.path.split(os.getcwd())
@@ -51,28 +51,36 @@ class ReplyStream(tweepy.Stream):
         from_user = tweet["user"]["screen_name"]
 
         wallet = get_wallet(from_user)
-        lamden = Connect(wallet)
+        #lamden = Connect(wallet)
 
         text = tweet["text"].lower()
         text_list = text.split()
 
-        if text_list[1] == "tip":
+        command = text_list[1]
+
+        # TIP
+        if command == "tip":
             amount = text_list[2]
             to = text_list[3]
 
             if to.startswith("@"):
-                to_address = get_wallet(to[-1]).verifying_key
+                to_address = get_wallet(to[1:]).verifying_key
             else:
                 self.client.create_tweet(
-                    in_reply_to_tweet_id=tweet.id,
+                    in_reply_to_tweet_id=tweet["id"],
                     text=get_tip_help())
                 return
 
-            lamden.send(amount, to_address)
+            #lamden.send(amount, to_address)
 
             self.client.create_tweet(
-                in_reply_to_tweet_id=tweet.id,
+                in_reply_to_tweet_id=tweet["id"],
                 text=f"Tipped {amount} $TAU to {to}")
+
+        elif command == "address":
+            self.client.create_tweet(
+                in_reply_to_tweet_id=tweet["id"],
+                text=f"Your Lamden Twitter address: {get_wallet(from_user).verifying_key}")
 
     def on_exception(self, exception):
         logging.error(f'Error in Twitter Bot: {exception}')

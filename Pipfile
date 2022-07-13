@@ -19,6 +19,7 @@ qrcode-artistic = "*"
 pytrends = "*"
 image = "*"
 watchfiles = "*"
+tweepy = "*"
 
 [dev-packages]
 

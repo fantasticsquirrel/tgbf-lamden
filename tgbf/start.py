@@ -141,10 +141,6 @@ class TGBF:
 
                     tokens["telegram"] = json_content["telegram"]
                     tokens["bot-pk"] = json_content["bot-pk"]
-                    tokens["tw-consumer-key"] = json_content["tw-consumer-key"]
-                    tokens["tw-consumer-sec"] = json_content["tw-consumer-sec"]
-                    tokens["tw-access-token-key"] = json_content["tw-access-token-key"]
-                    tokens["tw-access-token-sec"] = json_content["tw-access-token-sec"]
 
                     return tokens
             else:

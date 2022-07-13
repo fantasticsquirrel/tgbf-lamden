@@ -28,6 +28,11 @@ class Notify(Enum):
     ERROR = 3
 
 
+class WalletType(Enum):
+    TWITTER = 1
+    BOT = 2
+
+
 # TODO: For each plugin, try not to use "run_async=True" for the handler and see if that helps with multiple instances
 #  If yes,then move from that to using "threaded()" in plugin class
 # TODO: How can i cast a class to it's real type (that i could choose myself) and then execute methods?
@@ -53,9 +58,6 @@ class TGBFPlugin:
 
         # Access to Lamden bot wallet
         self._bot_wallet = self._bot.bot_wallet
-
-        # Access to Twitter bot
-        self.twitter = self._bot.twbot
 
         # Create global db table for wallets
         if not self.global_table_exists("wallets"):
@@ -313,12 +315,13 @@ class TGBFPlugin:
             context=context,
             name=name if name else self.name)
 
-    def execute_global_sql(self, sql, *args):
+    def execute_global_sql(self, sql, *args, db_name=""):
         """ Execute raw SQL statement on the global
         database and return the result
 
         param: sql = the SQL query
         param: *args = arguments for the SQL query
+        param: db_name = name of the database file
 
         Following data will be returned
         If error happens:
@@ -330,7 +333,13 @@ class TGBFPlugin:
         If database disabled:
         {"success": False, "data": "Database disabled"} """
 
-        db_path = os.path.join(os.getcwd(), c.DIR_DAT, c.FILE_DAT)
+        if db_name:
+            if not db_name.lower().endswith(".db"):
+                db_name += ".db"
+        else:
+            db_name = c.FILE_DAT
+
+        db_path = os.path.join(os.getcwd(), c.DIR_DAT, db_name)
         return self._get_database_content(db_path, sql, *args)
 
     def execute_sql(self, sql, *args, plugin="", db_name=""):
@@ -413,10 +422,16 @@ class TGBFPlugin:
 
             return res
 
-    def global_table_exists(self, table_name):
+    def global_table_exists(self, table_name, db_name=""):
         """ Return TRUE if given table exists in global database, otherwise FALSE """
 
-        db_path = os.path.join(os.getcwd(), c.DIR_DAT, c.FILE_DAT)
+        if db_name:
+            if not db_name.lower().endswith(".db"):
+                db_name += ".db"
+        else:
+            db_name = c.FILE_DAT
+
+        db_path = os.path.join(os.getcwd(), c.DIR_DAT, db_name)
         return self._database_table_exists(db_path, table_name)
 
     def table_exists(self, table_name, plugin=None, db_name=None):
@@ -701,13 +716,17 @@ class TGBFPlugin:
             return threading.Thread(target=fn, args=args, kwargs=kwargs).start()
         return _threaded
 
-    def get_wallet(self, user_id):
+    def get_wallet(self, user, wallet_type: WalletType = WalletType.BOT):
         """ Return address and privkey for given user_id.
         If no wallet exists then it will be created. """
 
         # Check if user already has a wallet
-        sql = self.get_global_resource("select_wallet.sql")
-        res = self.execute_global_sql(sql, user_id)
+        if wallet_type == WalletType.BOT:
+            sql = self.get_global_resource("select_wallet.sql")
+            res = self.execute_global_sql(sql, user)
+        elif wallet_type == WalletType.TWITTER:
+            sql = self.get_global_resource("select_tw_wallet.sql")
+            res = self.execute_global_sql(sql, user, db_name="twitter")
 
         # User already has a wallet
         if res["data"]:
@@ -717,11 +736,19 @@ class TGBFPlugin:
         wallet = Wallet()
 
         # Save wallet to database
-        self.execute_global_sql(
-            self.get_global_resource("insert_wallet.sql"),
-            user_id,
-            wallet.verifying_key,
-            wallet.signing_key)
+        if wallet_type == WalletType.BOT:
+            self.execute_global_sql(
+                self.get_global_resource("insert_wallet.sql"),
+                user,
+                wallet.verifying_key,
+                wallet.signing_key)
+        elif wallet_type == WalletType.TWITTER:
+            self.execute_global_sql(
+                self.get_global_resource("insert_tw_wallet.sql"),
+                user,
+                wallet.verifying_key,
+                wallet.signing_key,
+                db_name="twitter")
 
-        logging.info(f"Wallet created for {user_id}: {wallet.verifying_key} / {wallet.signing_key}")
+        logging.info(f"Wallet created for {user}: {wallet.verifying_key} / {wallet.signing_key}")
         return wallet

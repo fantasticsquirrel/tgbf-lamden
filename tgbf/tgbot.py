@@ -17,7 +17,6 @@ from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
 from telegram.error import InvalidToken, Unauthorized
 from tgbf.config import ConfigManager
 from tgbf.web import FlaskAppWrapper, EndpointAction
-from tgbf.twitter import TwitterBot
 from lamden.crypto.wallet import Wallet
 
 
@@ -68,14 +67,6 @@ class TelegramBot:
         # Add default web endpoint
         action = EndpointAction(None, None)
         self.web.app.add_url_rule("/", "/", action)
-
-        # Init Twitter bot
-        logging.info("Setting up Twitter bot...")
-        self.twbot = TwitterBot(
-            tokens["tw-consumer-key"],
-            tokens["tw-consumer-sec"],
-            tokens["tw-access-token-key"],
-            tokens["tw-access-token-sec"])
 
         # Load classes from folder 'plugins'
         logging.info("Loading plugins...")

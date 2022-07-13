@@ -1,6 +1,6 @@
 {
-    "consumer_key": "TJ7Y0y927hwefSDTNEhyyMhbE",
-    "consumer_sec": "c2sxEg9AY3xAWV4hpA5s13vtxEfZYWPboetsgB4Y9Y9sSzegzO",
-    "access_token_key": "1031526641028288513-3LzOWL7fvxN97Iyn57Q4CrGVCkf9VH",
-    "access_token_sec": "36MPjgSeIDfMKw8061BS8zQMnO7JETkdF6oDGL1H9E3L3"
+    "consumer_key": "<some_token>",
+    "consumer_sec": "<some_token>",
+    "access_token_key": "<some_token>",
+    "access_token_sec": "<some_token>"
 }

@@ -9,7 +9,6 @@ from tgbf.lamden.connect import Connect
 class Twitter(TGBFPlugin):
     client = None
 
-    @TGBFPlugin.threaded
     def load(self):
         if not self.global_table_exists("tw_wallets", db_name="twitter"):
             sql = self.get_global_resource("create_tw_wallets.sql")

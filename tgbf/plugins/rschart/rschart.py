@@ -119,6 +119,11 @@ class Rschart(TGBFPlugin):
         return InlineKeyboardMarkup(menu, resize_keyboard=True)
 
     def get_chart(self, token, timeframe):
+        original = token
+
+        if token == "TAU":
+            token = "LUSD"
+
         result = {"success": True, "data": None}
 
         end_secs = int(time.time() - (timeframe * 24 * 60 * 60))
@@ -132,13 +137,20 @@ class Rschart(TGBFPlugin):
             result["data"] = msg
             return result
 
+        if original == "TAU":
+            for i in range(len(res["data"])):
+                res["data"][i] = (res["data"][i][0], 1 / res["data"][i][1])
+
         df_price = DataFrame(res["data"], columns=["DateTime", "Price"])
         df_price["DateTime"] = pd.to_datetime(df_price["DateTime"], unit="s")
         price = go.Scatter(x=df_price.get("DateTime"), y=df_price.get("Price"))
 
         image = None
 
-        logo_path = join(self.get_res_path(), self.LOGO_DIR, f"{token}.jpg")
+        if original == "TAU":
+            logo_path = join(self.get_res_path(), self.LOGO_DIR, f"{original}.jpg")
+        else:
+            logo_path = join(self.get_res_path(), self.LOGO_DIR, f"{token}.jpg")
 
         # Try loading logo
         if isfile(logo_path):
@@ -183,6 +195,11 @@ class Rschart(TGBFPlugin):
                 margin_l = 95
                 tickformat = "0.2f"
 
+        if original == "TAU":
+            label = "TAU-LUSD"
+        else:
+            label = f"{token}-TAU"
+
         layout = go.Layout(
             images=[dict(
                 source=image,
@@ -193,7 +210,7 @@ class Rschart(TGBFPlugin):
                 xanchor="right", yanchor="bottom"
             )],
             title=dict(
-                text=f"{token}-TAU",
+                text=label,
                 x=0.5,
                 font=dict(
                     size=24

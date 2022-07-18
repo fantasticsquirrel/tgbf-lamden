@@ -115,14 +115,6 @@ class Plant(TGBFPlugin):
                     return
 
                 result_list = ast.literal_eval(result['result'])
-                result_ipfs = result_list[-1]
-
-                #filename = result_ipfs.split("=")[-1]
-                #img_path = os.path.join(self.get_res_path(), filename)
-
-                ex_url = f"{lamden.explorer_url}/transactions/{tx_hash}"
-
-                #urllib.request.urlretrieve(result_ipfs, img_path)
 
                 update.message.reply_text(
                     text=f'<code>Water: {result_list[0]}</code>\n'
@@ -277,5 +269,5 @@ class Plant(TGBFPlugin):
                 # Result is a string (means plant is dead)
                 else:
                     message.edit_text(
-                        text=f'{emo.SAD} {result["result"]}',
+                        text=f'{result["result"]}',
                         parse_mode=ParseMode.HTML)

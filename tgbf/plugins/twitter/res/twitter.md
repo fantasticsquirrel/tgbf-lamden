@@ -1,5 +1,8 @@
-Tip a user   
-`/{{handle}} tip <amount> @<username>`  
+Tip a user with TAU:  
+tip <amount> @<username>  
 
-Show address  
-`/{{handle}} address`
+Show own address:  
+address  
+
+Send TAU to address:  
+send <amount> <address>  

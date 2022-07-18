@@ -28,11 +28,6 @@ class Notify(Enum):
     ERROR = 3
 
 
-class WalletType(Enum):
-    TWITTER = 1
-    BOT = 2
-
-
 # TODO: For each plugin, try not to use "run_async=True" for the handler and see if that helps with multiple instances
 #  If yes,then move from that to using "threaded()" in plugin class
 # TODO: How can i cast a class to it's real type (that i could choose myself) and then execute methods?
@@ -716,17 +711,13 @@ class TGBFPlugin:
             return threading.Thread(target=fn, args=args, kwargs=kwargs).start()
         return _threaded
 
-    def get_wallet(self, user, wallet_type: WalletType = WalletType.BOT):
+    def get_wallet(self, user_id, db_name="global.db"):
         """ Return address and privkey for given user_id.
         If no wallet exists then it will be created. """
 
         # Check if user already has a wallet
-        if wallet_type == WalletType.BOT:
-            sql = self.get_global_resource("select_wallet.sql")
-            res = self.execute_global_sql(sql, user)
-        elif wallet_type == WalletType.TWITTER:
-            sql = self.get_global_resource("select_tw_wallet.sql")
-            res = self.execute_global_sql(sql, user, db_name="twitter")
+        sql = self.get_global_resource("select_wallet.sql")
+        res = self.execute_global_sql(sql, user_id, db_name=db_name)
 
         # User already has a wallet
         if res["data"]:
@@ -736,19 +727,12 @@ class TGBFPlugin:
         wallet = Wallet()
 
         # Save wallet to database
-        if wallet_type == WalletType.BOT:
-            self.execute_global_sql(
-                self.get_global_resource("insert_wallet.sql"),
-                user,
-                wallet.verifying_key,
-                wallet.signing_key)
-        elif wallet_type == WalletType.TWITTER:
-            self.execute_global_sql(
-                self.get_global_resource("insert_tw_wallet.sql"),
-                user,
-                wallet.verifying_key,
-                wallet.signing_key,
-                db_name="twitter")
+        self.execute_global_sql(
+            self.get_global_resource("insert_wallet.sql"),
+            user_id,
+            wallet.verifying_key,
+            wallet.signing_key,
+            db_name=db_name)
 
-        logging.info(f"Wallet created for {user}: {wallet.verifying_key} / {wallet.signing_key}")
+        logging.info(f"Wallet created for {user_id}: {wallet.verifying_key} / {wallet.signing_key}")
         return wallet

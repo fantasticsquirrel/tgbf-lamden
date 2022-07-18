@@ -2,5 +2,6 @@
     "consumer_key": "<some_token>",
     "consumer_sec": "<some_token>",
     "access_token_key": "<some_token>",
-    "access_token_sec": "<some_token>"
+    "access_token_sec": "<some_token>",
+    "bearer_token": "<some_token>"
 }

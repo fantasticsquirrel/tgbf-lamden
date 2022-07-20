@@ -1,8 +1,9 @@
-Tip a user with TAU:  
-tip <amount> @<username>  
+Tip a user by replying:  
+{{bot_handle}} tip <amount>  
 
 Show own address:  
-address  
+{{bot_handle}} address  
 
 Send TAU to address:  
-send <amount> <address>  
+{{bot_handle}} send <amount> <address>  
+{{bot_handle}} send <amount> @<username>

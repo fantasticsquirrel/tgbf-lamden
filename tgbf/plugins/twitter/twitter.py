@@ -6,6 +6,8 @@ from tgbf.plugin import TGBFPlugin
 from tgbf.lamden.connect import Connect
 
 
+# TODO: Add sending DM to bot to link TG wallet: bot generates ID, user needs to post it to other bot
+# TODO: Add sending DM to receive private key
 class Twitter(TGBFPlugin):
     client = None
 
@@ -62,15 +64,10 @@ class MentionStream(tweepy.StreamingClient):
         text = tweet.text.lower()
         text_list = text.split()
 
-        if self.bot_username not in text_list:
+        if self.get_id(tweet, self.bot_username) == tweet.author_id:
             return
 
         success, result = self.get_command(text_list)
-
-        from_user = tweet.author_id
-
-        wallet = self.plugin.get_wallet(from_user, db_name="twitter")
-        lamden = Connect(wallet)
 
         if not success:
             self.client.create_tweet(
@@ -78,22 +75,31 @@ class MentionStream(tweepy.StreamingClient):
                 text=result)
             return
 
+        from_user = tweet.author_id
+
+        wallet = self.plugin.get_wallet(from_user, db_name="twitter")
+        lamden = Connect(wallet)
+
         command = result[0]
 
         # ---- TIP ----
         if command == "tip":
-            amount = result[1]
-            to = result[2]
-
-            if to.startswith("@"):
-                user_id = self.get_id(tweet, to)
-                to_wallet = self.plugin.get_wallet(user_id, db_name="twitter")
-                to_address = to_wallet.verifying_key
-            else:
+            if not tweet.in_reply_to_user_id:
                 self.client.create_tweet(
                     in_reply_to_tweet_id=tweet.id,
-                    text=f"{emo.ERROR} Username needs to start with @")
+                    text=f"{emo.ERROR} You need to reply to a Tweet to tip someone")
                 return
+
+            if len(result) < 2:
+                self.client.create_tweet(
+                    in_reply_to_tweet_id=tweet.id,
+                    text=self.plugin.get_usage({"{{bot_handle}}": self.bot_username}))
+                return
+
+            amount = result[1]
+
+            to_wallet = self.plugin.get_wallet(tweet.in_reply_to_user_id, db_name="twitter")
+            to_address = to_wallet.verifying_key
 
             res = lamden.send(amount, to_address)
 
@@ -105,7 +111,7 @@ class MentionStream(tweepy.StreamingClient):
                     text=msg)
                 return
 
-            msg = f'{emo.MONEY} Tipped {amount} $TAU to {to}\n ' + \
+            msg = f'{emo.MONEY} Tipped {amount} $TAU ' + \
                   f'{lamden.explorer_url}/transactions/{res["hash"]}'
 
             self.client.create_tweet(
@@ -123,16 +129,37 @@ class MentionStream(tweepy.StreamingClient):
 
         # ---- SEND ----
         elif command == "send":
-            amount = result[1]
-            to = result[2]
-
-            if not lamden.is_address_valid(to):
+            if len(result) < 2:
                 self.client.create_tweet(
                     in_reply_to_tweet_id=tweet.id,
-                    text=f"{emo.ERROR} Not a valid #Lamden address")
+                    text=self.plugin.get_usage({"{{bot_handle}}": self.bot_username}))
                 return
 
-            res = lamden.send(amount, to)
+            if len(result) < 3:
+                self.client.create_tweet(
+                    in_reply_to_tweet_id=tweet.id,
+                    text=f"{emo.ERROR} Specify username or address to send $TAU to")
+                return
+
+            to = result[2]
+
+            if to.startswith("@"):
+                user_id = self.get_id(tweet, to)
+                to_wallet = self.plugin.get_wallet(user_id, db_name="twitter")
+                to_address = to_wallet.verifying_key
+
+            else:
+                if not lamden.is_address_valid(to):
+                    self.client.create_tweet(
+                        in_reply_to_tweet_id=tweet.id,
+                        text=f"{emo.ERROR} Not a valid Lamden address")
+                    return
+
+                to_address = to
+
+            amount = result[1]
+
+            res = lamden.send(amount, to_address)
 
             if "error" in res:
                 msg = f"{emo.ERROR} Transaction error: {res['error']}"
@@ -142,7 +169,7 @@ class MentionStream(tweepy.StreamingClient):
                     text=msg)
                 return
 
-            msg = f'{emo.MONEY} Sent {amount} $TAU to {to}\n ' + \
+            msg = f'{emo.MONEY} Sent {amount} $TAU ' + \
                   f'{lamden.explorer_url}/transactions/{res["hash"]}'
 
             self.client.create_tweet(
@@ -153,7 +180,7 @@ class MentionStream(tweepy.StreamingClient):
         elif command == "help":
             self.client.create_tweet(
                 in_reply_to_tweet_id=tweet.id,
-                text=self.plugin.get_usage())
+                text=self.plugin.get_usage({"{{bot_handle}}": self.bot_username}))
 
     def get_command(self, text_list: list):
         try:

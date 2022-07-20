@@ -6,6 +6,7 @@ from tgbf.plugin import TGBFPlugin
 from tgbf.lamden.connect import Connect
 
 
+# TODO: Use blockservice stamp estimation endpoint to check the tx before sending
 # TODO: Add sending DM to bot to link TG wallet: bot generates ID, user needs to post it to other bot
 # TODO: Add sending DM to receive private key
 class Twitter(TGBFPlugin):
@@ -68,7 +69,6 @@ class MentionStream(tweepy.StreamingClient):
         text_list = text.split()
 
         if self.bot_id == tweet.author_id:
-            print("Tweet is from bot", tweet)
             return
 
         success, result = self.get_command(text_list)
@@ -108,11 +108,15 @@ class MentionStream(tweepy.StreamingClient):
             res = lamden.send(amount, to_address)
 
             if "error" in res:
-                msg = f"{emo.ERROR} Transaction error: {res['error']}"
-                logging.error(msg)
+                error = res['error']
+                logging.error(f"Transaction error: {error}")
+
+                if "sender has too few stamps for this transaction" in error:
+                    error = "This Account does not have enough TAU to pay for transactions"
+
                 self.client.create_tweet(
                     in_reply_to_tweet_id=tweet.id,
-                    text=msg)
+                    text=f"{emo.ERROR} {error}")
                 return
 
             msg = f'{emo.MONEY} Tipped {amount} $TAU ' + \
@@ -166,11 +170,15 @@ class MentionStream(tweepy.StreamingClient):
             res = lamden.send(amount, to_address)
 
             if "error" in res:
-                msg = f"{emo.ERROR} Transaction error: {res['error']}"
-                logging.error(msg)
+                error = res['error']
+                logging.error(f"Transaction error: {error}")
+
+                if "sender has too few stamps for this transaction" in error:
+                    error = "This Account does not have enough TAU to pay for transactions"
+
                 self.client.create_tweet(
                     in_reply_to_tweet_id=tweet.id,
-                    text=msg)
+                    text=f"{emo.ERROR} {error}")
                 return
 
             msg = f'{emo.MONEY} Sent {amount} $TAU ' + \

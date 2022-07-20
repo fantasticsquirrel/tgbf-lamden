@@ -58,13 +58,17 @@ class MentionStream(tweepy.StreamingClient):
         self.client = client
         self.plugin = plugin
 
-        self.bot_username = f"@{self.client.get_me().data['username'].lower()}"
+        me = self.client.get_me()
+
+        self.bot_username = f"@{me.data['username'].lower()}"
+        self.bot_id = me.data['id']
 
     def on_tweet(self, tweet):
         text = tweet.text.lower()
         text_list = text.split()
 
-        if self.get_id(tweet, self.bot_username) == tweet.author_id:
+        if self.bot_id == tweet.author_id:
+            print("Tweet is from bot", tweet)
             return
 
         success, result = self.get_command(text_list)

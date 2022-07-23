@@ -65,11 +65,17 @@ class MentionStream(tweepy.StreamingClient):
         self.bot_id = me.data['id']
 
     def on_tweet(self, tweet):
-        text = tweet.text.lower()
-        text_list = text.split()
-
+        # It's from the bot itself
         if self.bot_id == tweet.author_id:
             return
+
+        text = tweet.text.lower()
+
+        # It's a retweet
+        if text.startswith("RT "):
+            return
+
+        text_list = text.split()
 
         success, result = self.get_command(text_list)
 

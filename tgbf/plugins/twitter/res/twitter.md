@@ -6,4 +6,6 @@ Show own address:
 
 Send TAU to address:  
 {{bot_handle}} send <amount> <address>  
-{{bot_handle}} send <amount> @<username>
+{{bot_handle}} send <amount> @<username>  
+
+#LamdenTau Homepage: https://bit.ly/3J0iZ8O  

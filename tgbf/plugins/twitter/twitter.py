@@ -6,7 +6,7 @@ from tgbf.plugin import TGBFPlugin
 from tgbf.lamden.connect import Connect
 
 
-# TODO: Use blockservice stamp estimation endpoint to check the tx before sending
+# TODO: Use stamp estimation endpoint to check the tx before sending: https://github.com/Lamden/stamp_estimation_script
 # TODO: Add sending DM to bot to link TG wallet: bot generates ID, user needs to post it to other bot
 # TODO: Add sending DM to receive private key
 class Twitter(TGBFPlugin):
@@ -120,7 +120,8 @@ class MentionStream(tweepy.StreamingClient):
                 return
 
             msg = f'{emo.MONEY} Tipped {amount} $TAU ' + \
-                  f'{lamden.explorer_url}/transactions/{res["hash"]}'
+                  f'{lamden.explorer_url}/transactions/{res["hash"]}\n' \
+                  f'#LamdenTau Homepage: https://bit.ly/3J0iZ8O'
 
             self.client.create_tweet(
                 in_reply_to_tweet_id=tweet.id,
@@ -133,7 +134,7 @@ class MentionStream(tweepy.StreamingClient):
 
             self.client.create_tweet(
                 in_reply_to_tweet_id=tweet.id,
-                text=f"Your #Lamden address: {user_address}")
+                text=f"Your #LamdenTau address: {user_address}")
 
         # ---- SEND ----
         elif command == "send":
@@ -160,7 +161,7 @@ class MentionStream(tweepy.StreamingClient):
                 if not lamden.is_address_valid(to):
                     self.client.create_tweet(
                         in_reply_to_tweet_id=tweet.id,
-                        text=f"{emo.ERROR} Not a valid Lamden address")
+                        text=f"{emo.ERROR} Not a valid #LamdenTau address")
                     return
 
                 to_address = to
@@ -182,7 +183,8 @@ class MentionStream(tweepy.StreamingClient):
                 return
 
             msg = f'{emo.MONEY} Sent {amount} $TAU ' + \
-                  f'{lamden.explorer_url}/transactions/{res["hash"]}'
+                  f'{lamden.explorer_url}/transactions/{res["hash"]}\n' \
+                  f'#LamdenTau Homepage: https://bit.ly/3J0iZ8O'
 
             self.client.create_tweet(
                 in_reply_to_tweet_id=tweet.id,

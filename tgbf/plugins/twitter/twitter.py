@@ -38,6 +38,7 @@ class Twitter(TGBFPlugin):
             expansions=[
                 "author_id",
                 "in_reply_to_user_id",
+                "referenced_tweets.id",
                 "entities.mentions.username"
             ],
             tweet_fields=[
@@ -80,6 +81,9 @@ class MentionStream(tweepy.StreamingClient):
         success, result = self.get_command(text_list)
 
         if not success:
+            if "Unknown command" in result:
+                return
+
             self.client.create_tweet(
                 in_reply_to_tweet_id=tweet.id,
                 text=result)
@@ -108,6 +112,12 @@ class MentionStream(tweepy.StreamingClient):
 
             amount = result[1]
 
+            if not self.is_number(amount):
+                self.client.create_tweet(
+                    in_reply_to_tweet_id=tweet.id,
+                    text=f"{emo.ERROR} Provided amount is not valid")
+                return
+
             to_wallet = self.plugin.get_wallet(tweet.in_reply_to_user_id, db_name="twitter")
             to_address = to_wallet.verifying_key
 
@@ -125,9 +135,11 @@ class MentionStream(tweepy.StreamingClient):
                     text=f"{emo.ERROR} {error}")
                 return
 
-            msg = f'{emo.MONEY} Tipped {amount} $TAU ' + \
-                  f'{lamden.explorer_url}/transactions/{res["hash"]}\n' \
-                  f'#LamdenTau Homepage: https://bit.ly/3J0iZ8O'
+            # user_name = self.get_username(tweet, tweet.in_reply_to_user_id)
+
+            msg = f'{emo.MONEY} You have tipped {amount} $TAU\n' + \
+                  f'Transaction details: {lamden.explorer_url}/transactions/{res["hash"]}\n' \
+                  f'#LamdenTau Homepage https://bit.ly/3J0iZ8O'
 
             self.client.create_tweet(
                 in_reply_to_tweet_id=tweet.id,
@@ -188,9 +200,9 @@ class MentionStream(tweepy.StreamingClient):
                     text=f"{emo.ERROR} {error}")
                 return
 
-            msg = f'{emo.MONEY} Sent {amount} $TAU ' + \
-                  f'{lamden.explorer_url}/transactions/{res["hash"]}\n' \
-                  f'#LamdenTau Homepage: https://bit.ly/3J0iZ8O'
+            msg = f'{emo.MONEY} You sent {amount} $TAU\n' + \
+                  f'Transaction details: {lamden.explorer_url}/transactions/{res["hash"]}\n' \
+                  f'#LamdenTau Homepage https://bit.ly/3J0iZ8O'
 
             self.client.create_tweet(
                 in_reply_to_tweet_id=tweet.id,
@@ -202,6 +214,18 @@ class MentionStream(tweepy.StreamingClient):
                 in_reply_to_tweet_id=tweet.id,
                 text=self.plugin.get_usage({"{{bot_handle}}": self.bot_username}))
 
+    def on_exception(self, exception):
+        msg = f'Error in Twitter plugin: {exception}'
+        self.plugin.notify(msg)
+        logging.error(msg)
+
+    def is_number(self, s: str):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            return False
+
     def get_command(self, text_list: list):
         try:
             for i in range(len(text_list)):
@@ -212,13 +236,13 @@ class MentionStream(tweepy.StreamingClient):
         except:
             return False, f"{emo.ERROR} Wrong syntax"
 
-    def get_id(self, tweet, username):
+    def get_id(self, tweet: tweepy.Tweet, username: str):
         for user in tweet.data["entities"]["mentions"]:
             u = "@" + user["username"].lower()
             if u == username.lower():
                 return int(user["id"])
 
-    def on_exception(self, exception):
-        msg = f'Error in Twitter plugin: {exception}'
-        self.plugin.notify(msg)
-        logging.error(msg)
+    def get_username(self, tweet: tweepy.Tweet, user_id: str):
+        for user in tweet.data["entities"]["mentions"]:
+            if user["id"] == str(user_id):
+                return "@" + user["username"]

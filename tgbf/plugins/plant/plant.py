@@ -35,101 +35,103 @@ class Plant(TGBFPlugin):
         first_argument = context.args[0].lower()
         contract = self.config.get("contract")
 
-        # ------ 1 ARGUMENT ------
-        if len(context.args) == 1:
+        # ------ SEASON ------
+        if first_argument == "season":
+            blockservice = self.config.get("blockservice") + f"current/all/{contract}/plants/"
 
-            # ------ SEASON ------
-            if first_argument == "season":
-                blockservice = self.config.get("blockservice") + f"current/all/{contract}/plants/"
+            with requests.get(blockservice) as res:
+                response = res.json()
 
-                with requests.get(blockservice) as res:
-                    response = res.json()
+                ed = response[contract]['plants']['growing_season_end_time']['__time__']
+                generation = response[contract]['plants']['active_generation']
+                reward_pool = response[contract]['plants'][str(generation)]['total_tau']
+                if isinstance(reward_pool, dict):
+                    reward_pool = reward_pool['__fixed__']
 
-                    ed = response[contract]['plants']['growing_season_end_time']['__time__']
-                    generation = response[contract]['plants']['active_generation']
-                    reward_pool = response[contract]['plants'][str(generation)]['total_tau']
-                    if isinstance(reward_pool, dict):
-                        reward_pool = reward_pool['__fixed__']
+            update.message.reply_text(
+                f"<code>Season End: {ed[0]}-{ed[1]}-{ed[2]} at {ed[3]}:{ed[4]}:{ed[5]}</code>\n"
+                f"<code>Active Generation: {generation}</code>\n"
+                f"<code>Total Reward Pool: {reward_pool}</code>",
+                parse_mode=ParseMode.HTML)
 
-                update.message.reply_text(
-                    f"<code>Season End: {ed[0]}-{ed[1]}-{ed[2]} at {ed[3]}:{ed[4]}:{ed[5]}</code>\n"
-                    f"<code>Active Generation: {generation}</code>\n"
-                    f"<code>Total Reward Pool: {reward_pool}</code>",
-                    parse_mode=ParseMode.HTML)
+        # ------ SCORING ------
+        elif first_argument == "scoring":
+            update.message.reply_photo(open(os.path.join(self.get_res_path(), "scoring.png"), "rb"))
 
-            # ------ SCORING ------
-            elif first_argument == "scoring":
-                update.message.reply_photo(open(os.path.join(self.get_res_path(), "scoring.png"), "rb"))
-
-            # ------ EVERYTHING ELSE ------
-            else:
+        # ------ BUY ------
+        elif first_argument == "buy":
+            if len(context.args) < 2:
                 update.message.reply_photo(
                     photo=open(os.path.join(self.get_res_path(), "plant.png"), "rb"),
                     caption=self.get_resource("plant.md"),
                     parse_mode=ParseMode.MARKDOWN)
                 return
 
-        # ------ 2 ARGUMENTS ------
-        if len(context.args) == 2:
             second_argument = context.args[1].lower()
 
-            # ------ BUY ------
-            if first_argument == "buy":
-                try:
-                    approved = lamden.get_approved_amount(contract)
-                    approved = approved["value"] if "value" in approved else 0
-                    approved = approved if approved is not None else 0
+            if len(context.args) > 2:
+                third_argument = context.args[2]
+            else:
+                third_argument = False
 
-                    msg = f"Approved amount of TAU for {contract}: {approved}"
+            try:
+                approved = lamden.get_approved_amount(contract)
+                approved = approved["value"] if "value" in approved else 0
+                approved = approved if approved is not None else 0
+
+                msg = f"Approved amount of TAU for {contract}: {approved}"
+                logging.info(msg)
+
+                if float(approved) < 999999:
+                    app = lamden.approve_contract(contract)
+                    msg = f"Approved {contract}: {app}"
                     logging.info(msg)
 
-                    if float(approved) < 999999:
-                        app = lamden.approve_contract(contract)
-                        msg = f"Approved {contract}: {app}"
-                        logging.info(msg)
+                buy = lamden.post_transaction(
+                    stamps=150,
+                    contract=contract,
+                    function="buy_plant",
+                    kwargs={"nick": second_argument, "referrer": third_argument})
 
-                    buy = lamden.post_transaction(
-                        stamps=150,
-                        contract=contract,
-                        function="buy_plant",
-                        kwargs={"nick": second_argument})
+            except Exception as e:
+                logging.error(f"Error calling buy_plant() from {contract} contract: {e}")
+                update.message.reply_text(f"{emo.ERROR} {e}")
+                return
 
-                except Exception as e:
-                    logging.error(f"Error calling buy_plant() from {contract} contract: {e}")
-                    update.message.reply_text(f"{emo.ERROR} {e}")
-                    return
+            if "error" in buy:
+                logging.error(f"buy_plant() from {contract} contract returned error: {buy['error']}")
+                update.message.reply_text(f"{emo.ERROR} {buy['error']}")
+                return
 
-                if "error" in buy:
-                    logging.error(f"buy_plant() from {contract} contract returned error: {buy['error']}")
-                    update.message.reply_text(f"{emo.ERROR} {buy['error']}")
-                    return
+            tx_hash = buy["hash"]
 
-                tx_hash = buy["hash"]
+            success, result = lamden.tx_succeeded(tx_hash)
 
-                success, result = lamden.tx_succeeded(tx_hash)
+            if not success:
+                logging.error(f"Transaction not successful: {result}")
+                msg = f"{emo.ERROR} {result}"
+                update.message.reply_text(msg)
+                return
 
-                if not success:
-                    logging.error(f"Transaction not successful: {result}")
-                    msg = f"{emo.ERROR} {result}"
-                    update.message.reply_text(msg)
-                    return
+            result_list = ast.literal_eval(result['result'])
 
-                result_list = ast.literal_eval(result['result'])
+            update.message.reply_text(
+                text=f'<code>Water: {result_list[0]}</code>\n'
+                     f'<code>Photosynthesis: {result_list[1]}</code>\n'
+                     f'<code>Bugs: {result_list[2]}</code>\n'
+                     f'<code>Nutrients: {result_list[3]}</code>\n'
+                     f'<code>Weeds: {result_list[4]}</code>\n'
+                     f'<code>Toxicity: {result_list[5]}</code>\n'
+                     f'<code>Burn amount: {result_list[6]}</code>\n'
+                     f'<code>Weather: {result_list[7]}</code>\n\n'
+                     f'<code>{result_list[8]}</code>',
+                parse_mode=ParseMode.HTML)
 
-                update.message.reply_text(
-                    text=f'<code>Water: {result_list[0]}</code>\n'
-                         f'<code>Photosynthesis: {result_list[1]}</code>\n'
-                         f'<code>Bugs: {result_list[2]}</code>\n'
-                         f'<code>Nutrients: {result_list[3]}</code>\n'
-                         f'<code>Weeds: {result_list[4]}</code>\n'
-                         f'<code>Toxicity: {result_list[5]}</code>\n'
-                         f'<code>Burn amount: {result_list[6]}</code>\n'
-                         f'<code>Weather: {result_list[7]}</code>\n\n'
-                         f'<code>{result_list[8]}</code>',
-                    parse_mode=ParseMode.HTML)
+        if len(context.args) > 1:
+            second_argument = context.args[1].lower()
 
             # ------ STATS ------
-            elif second_argument == "stats":
+            if second_argument == "stats":
                 blockservice = self.config.get("blockservice") + f"current/all/{contract}/"
 
                 with requests.get(blockservice + f"collection_nfts/{first_argument}") as bs:
@@ -271,3 +273,11 @@ class Plant(TGBFPlugin):
                     message.edit_text(
                         text=f'{result["result"]}',
                         parse_mode=ParseMode.HTML)
+
+        # ------ EVERYTHING ELSE ------
+        else:
+            update.message.reply_photo(
+                photo=open(os.path.join(self.get_res_path(), "plant.png"), "rb"),
+                caption=self.get_resource("plant.md"),
+                parse_mode=ParseMode.MARKDOWN)
+            return

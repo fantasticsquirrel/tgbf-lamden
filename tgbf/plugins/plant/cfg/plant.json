@@ -1,6 +1,6 @@
 {
     "description": "Grow your own plant",
     "category": "Strawberry Farm",
-    "contract": "con_tvf2_4",
+    "contract": "con_harvest_002",
     "blockservice": "https://blockservice.nebulamden.finance/"
 }

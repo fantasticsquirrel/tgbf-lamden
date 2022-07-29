@@ -138,8 +138,8 @@ class Plant(TGBFPlugin):
                     with requests.get(blockservice + f"collection_nfts/{first_argument}") as bs:
                         res = bs.json()[contract]['collection_nfts'][first_argument]
 
-                        plant_generation = res[1]
-                        plant_number = res[1]
+                        plant_generation = res["__hash_self__"][0]
+                        plant_number = res["__hash_self__"][1]
                         plant_name = f'Gen_{plant_generation}_{plant_number}'
 
                     with requests.get(blockservice + f"collection_nfts/{plant_name}") as bs:

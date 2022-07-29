@@ -23,7 +23,7 @@ class Plant(TGBFPlugin):
     def plant_callback(self, update: Update, context: CallbackContext):
         if len(context.args) < 1:
             update.message.reply_photo(
-                photo=open(os.path.join(self.get_res_path(), "plant.png"), "rb"),
+                photo=open(os.path.join(self.get_res_path(), "plant.jpg"), "rb"),
                 caption=self.get_resource("plant.md"),
                 parse_mode=ParseMode.MARKDOWN)
             return
@@ -62,7 +62,7 @@ class Plant(TGBFPlugin):
         elif first_argument == "buy":
             if len(context.args) < 2:
                 update.message.reply_photo(
-                    photo=open(os.path.join(self.get_res_path(), "plant.png"), "rb"),
+                    photo=open(os.path.join(self.get_res_path(), "plant.jpg"), "rb"),
                     caption=self.get_resource("plant.md"),
                     parse_mode=ParseMode.MARKDOWN)
                 return
@@ -127,157 +127,158 @@ class Plant(TGBFPlugin):
                      f'<code>{result_list[8]}</code>',
                 parse_mode=ParseMode.HTML)
 
-        if len(context.args) > 1:
-            second_argument = context.args[1].lower()
-
-            # ------ STATS ------
-            if second_argument == "stats":
-                blockservice = self.config.get("blockservice") + f"current/all/{contract}/"
-
-                with requests.get(blockservice + f"collection_nfts/{first_argument}") as bs:
-                    res = bs.json()[contract]['collection_nfts'][first_argument]
-
-                    plant_generation = res[0]
-                    plant_number = res[1]
-                    plant_name = f'Gen_{plant_generation}_{plant_number}'
-
-                with requests.get(blockservice + f"collection_nfts/{plant_name}") as bs:
-                    plant_data = bs.json()[contract]['collection_nfts'][plant_name]
-                    ipfs_url = plant_data["__hash_self__"]["ipfs_image_url"]
-
-                    meta = bs.json()[contract]['collection_nfts'][plant_name]['nft_metadata']
-
-                    if meta['current_weather'] == 1:
-                        weather = "sunny"
-                    elif meta['current_weather'] == 2:
-                        weather = "cloudy"
-                    elif meta['current_weather'] == 3:
-                        weather = "rainy"
-                    else:
-                        weather = meta['current_weather']
-
-                    alve = meta['alive']
-                    burn = meta['burn_amount']
-                    bugs = meta['current_bugs']
-                    nutr = meta['current_nutrients']
-                    phto = meta['current_photosynthesis']
-                    toxi = meta['current_toxicity']
-                    watr = meta['current_water']
-                    weed = meta['current_weeds']
-
-                    lc = meta['last_calc']['__time__']
-                    ld = meta['last_daily']['__time__']
-                    lgl = meta['last_grow_light']['__time__']
-                    li = meta['last_interaction']['__time__']
-                    lsw = meta['last_squash_weed']['__time__']
-
-                update.message.reply_text(
-                    text=f"<code>Alive: {alve}</code>\n"
-                         f"<code>Burn amount: {burn}</code>\n"
-                         f"<code>Bugs: {bugs}</code>\n"
-                         f"<code>Nutrients: {nutr}</code>\n"
-                         f"<code>Photosynthesis: {phto}</code>\n"
-                         f"<code>Toxicity: {toxi}</code>\n"
-                         f"<code>Water: {watr}</code>\n"
-                         f"<code>Weather: {weather}</code>\n"
-                         f"<code>Weeds: {weed}</code>\n\n"
-                         f"<code>Last calculation: {lc[0]}-{lc[1]}-{lc[2]} at {lc[3]}:{lc[4]}:{lc[5]}</code>\n"
-                         f"<code>Last daily      : {ld[0]}-{ld[1]}-{ld[2]} at {ld[3]}:{ld[4]}:{ld[5]}</code>\n"
-                         f"<code>Last grow light : {lgl[0]}-{lgl[1]}-{lgl[2]} at {lgl[3]}:{lgl[4]}:{lgl[5]}</code>\n"
-                         f"<code>Last interaction: {li[0]}-{li[1]}-{li[2]} at {li[3]}:{li[4]}:{li[5]}</code>\n"
-                         f"<code>Last squash weed: {lsw[0]}-{lsw[1]}-{lsw[2]} at {lsw[3]}:{lsw[4]}:{lsw[5]}</code>\n\n"
-                         f"<code>{ipfs_url}</code>",
-                    parse_mode=ParseMode.HTML)
-
-            # ------ INTERACT WITH PLANT BY NAME ------
-            else:
-
-                action_types = [
-                    "water",
-                    "squash",
-                    "spraybugs",
-                    "growlights",
-                    "shade",
-                    "fertilize",
-                    "pullweeds",
-                    "sprayweeds",
-                    "finalize",
-                    "sellberries"
-                ]
-
-                if second_argument not in action_types:
-                    update.message.reply_text(
-                        f'{emo.ERROR} you can only use following actions: {", ".join(action_types)}',
-                        parse_mode=ParseMode.HTML,
-                        disable_web_page_preview=True)
-                    return
-
-                message = update.message.reply_text(f"{emo.HOURGLASS} Working in the garden...")
-
-                try:
-                    interact = lamden.post_transaction(
-                        stamps=150,
-                        contract=contract,
-                        function="nickname_interaction",
-                        kwargs={
-                            "nickname": first_argument,
-                            "function_name": second_argument
-                        })
-
-                except Exception as e:
-                    logging.error(f"Error calling nickname_interaction() from {contract} contract: {e}")
-                    message.edit_text(f"{emo.ERROR} {e}")
-                    return
-
-                if "error" in interact:
-                    logging.error(f"nickname_interaction() from {contract} contract returned error: {interact['error']}")
-                    message.edit_text(f"{emo.ERROR} {interact['error']}")
-                    return
-
-                tx_hash = interact["hash"]
-
-                success, result = lamden.tx_succeeded(tx_hash)
-
-                if not success:
-                    logging.error(f"Transaction not successful: {result}")
-                    msg = f"{emo.ERROR} {result}"
-                    message.edit_text(msg)
-                    return
-
-                # Result is a list with properties
-                if str(result["result"]).startswith("["):
-                    result_list = ast.literal_eval(result['result'])
-
-                    if result_list[7] == 1:
-                        weather = "sunny"
-                    elif result_list[7] == 2:
-                        weather = "cloudy"
-                    elif result_list[7] == 3:
-                        weather = "rainy"
-                    else:
-                        weather = result_list[7]
-
-                    message.edit_text(
-                        text=f'<code>Water: {result_list[0]}</code>\n'
-                             f'<code>Photosynthesis: {result_list[1]}</code>\n'
-                             f'<code>Bugs: {result_list[2]}</code>\n'
-                             f'<code>Nutrients: {result_list[3]}</code>\n'
-                             f'<code>Weeds: {result_list[4]}</code>\n'
-                             f'<code>Toxicity: {result_list[5]}</code>\n'
-                             f'<code>Burn amount: {result_list[6]}</code>\n'
-                             f'<code>Weather: {weather}</code>',
-                        parse_mode=ParseMode.HTML)
-
-                # Result is a string (means plant is dead)
-                else:
-                    message.edit_text(
-                        text=f'{result["result"]}',
-                        parse_mode=ParseMode.HTML)
-
-        # ------ EVERYTHING ELSE ------
         else:
-            update.message.reply_photo(
-                photo=open(os.path.join(self.get_res_path(), "plant.png"), "rb"),
-                caption=self.get_resource("plant.md"),
-                parse_mode=ParseMode.MARKDOWN)
-            return
+            if len(context.args) > 1:
+                second_argument = context.args[1].lower()
+
+                # ------ STATS ------
+                if second_argument == "stats":
+                    blockservice = self.config.get("blockservice") + f"current/all/{contract}/"
+
+                    with requests.get(blockservice + f"collection_nfts/{first_argument}") as bs:
+                        res = bs.json()[contract]['collection_nfts'][first_argument]
+
+                        plant_generation = res[1]
+                        plant_number = res[1]
+                        plant_name = f'Gen_{plant_generation}_{plant_number}'
+
+                    with requests.get(blockservice + f"collection_nfts/{plant_name}") as bs:
+                        plant_data = bs.json()[contract]['collection_nfts'][plant_name]
+                        ipfs_url = plant_data["__hash_self__"]["ipfs_image_url"]
+
+                        meta = bs.json()[contract]['collection_nfts'][plant_name]['nft_metadata']
+
+                        if meta['current_weather'] == 1:
+                            weather = "sunny"
+                        elif meta['current_weather'] == 2:
+                            weather = "cloudy"
+                        elif meta['current_weather'] == 3:
+                            weather = "rainy"
+                        else:
+                            weather = meta['current_weather']
+
+                        alve = meta['alive']
+                        burn = meta['burn_amount']
+                        bugs = meta['current_bugs']
+                        nutr = meta['current_nutrients']
+                        phto = meta['current_photosynthesis']
+                        toxi = meta['current_toxicity']
+                        watr = meta['current_water']
+                        weed = meta['current_weeds']
+
+                        lc = meta['last_calc']['__time__']
+                        ld = meta['last_daily']['__time__']
+                        lgl = meta['last_grow_light']['__time__']
+                        li = meta['last_interaction']['__time__']
+                        lsw = meta['last_squash_weed']['__time__']
+
+                    update.message.reply_text(
+                        text=f"<code>Alive: {alve}</code>\n"
+                             f"<code>Burn amount: {burn}</code>\n"
+                             f"<code>Bugs: {bugs}</code>\n"
+                             f"<code>Nutrients: {nutr}</code>\n"
+                             f"<code>Photosynthesis: {phto}</code>\n"
+                             f"<code>Toxicity: {toxi}</code>\n"
+                             f"<code>Water: {watr}</code>\n"
+                             f"<code>Weather: {weather}</code>\n"
+                             f"<code>Weeds: {weed}</code>\n\n"
+                             f"<code>Last calculation: {lc[0]}-{lc[1]}-{lc[2]} at {lc[3]}:{lc[4]}:{lc[5]}</code>\n"
+                             f"<code>Last daily      : {ld[0]}-{ld[1]}-{ld[2]} at {ld[3]}:{ld[4]}:{ld[5]}</code>\n"
+                             f"<code>Last grow light : {lgl[0]}-{lgl[1]}-{lgl[2]} at {lgl[3]}:{lgl[4]}:{lgl[5]}</code>\n"
+                             f"<code>Last interaction: {li[0]}-{li[1]}-{li[2]} at {li[3]}:{li[4]}:{li[5]}</code>\n"
+                             f"<code>Last squash weed: {lsw[0]}-{lsw[1]}-{lsw[2]} at {lsw[3]}:{lsw[4]}:{lsw[5]}</code>\n\n"
+                             f"<code>{ipfs_url}</code>",
+                        parse_mode=ParseMode.HTML)
+
+                # ------ INTERACT WITH PLANT BY NAME ------
+                else:
+
+                    action_types = [
+                        "water",
+                        "squash",
+                        "spraybugs",
+                        "growlights",
+                        "shade",
+                        "fertilize",
+                        "pullweeds",
+                        "sprayweeds",
+                        "finalize",
+                        "sellberries"
+                    ]
+
+                    if second_argument not in action_types:
+                        update.message.reply_text(
+                            f'{emo.ERROR} you can only use following actions: {", ".join(action_types)}',
+                            parse_mode=ParseMode.HTML,
+                            disable_web_page_preview=True)
+                        return
+
+                    message = update.message.reply_text(f"{emo.HOURGLASS} Working in the garden...")
+
+                    try:
+                        interact = lamden.post_transaction(
+                            stamps=150,
+                            contract=contract,
+                            function="nickname_interaction",
+                            kwargs={
+                                "nickname": first_argument,
+                                "function_name": second_argument
+                            })
+
+                    except Exception as e:
+                        logging.error(f"Error calling nickname_interaction() from {contract} contract: {e}")
+                        message.edit_text(f"{emo.ERROR} {e}")
+                        return
+
+                    if "error" in interact:
+                        logging.error(f"nickname_interaction() from {contract} contract returned error: {interact['error']}")
+                        message.edit_text(f"{emo.ERROR} {interact['error']}")
+                        return
+
+                    tx_hash = interact["hash"]
+
+                    success, result = lamden.tx_succeeded(tx_hash)
+
+                    if not success:
+                        logging.error(f"Transaction not successful: {result}")
+                        msg = f"{emo.ERROR} {result}"
+                        message.edit_text(msg)
+                        return
+
+                    # Result is a list with properties
+                    if str(result["result"]).startswith("["):
+                        result_list = ast.literal_eval(result['result'])
+
+                        if result_list[7] == 1:
+                            weather = "sunny"
+                        elif result_list[7] == 2:
+                            weather = "cloudy"
+                        elif result_list[7] == 3:
+                            weather = "rainy"
+                        else:
+                            weather = result_list[7]
+
+                        message.edit_text(
+                            text=f'<code>Water: {result_list[0]}</code>\n'
+                                 f'<code>Photosynthesis: {result_list[1]}</code>\n'
+                                 f'<code>Bugs: {result_list[2]}</code>\n'
+                                 f'<code>Nutrients: {result_list[3]}</code>\n'
+                                 f'<code>Weeds: {result_list[4]}</code>\n'
+                                 f'<code>Toxicity: {result_list[5]}</code>\n'
+                                 f'<code>Burn amount: {result_list[6]}</code>\n'
+                                 f'<code>Weather: {weather}</code>',
+                            parse_mode=ParseMode.HTML)
+
+                    # Result is a string (means plant is dead)
+                    else:
+                        message.edit_text(
+                            text=f'{result["result"]}',
+                            parse_mode=ParseMode.HTML)
+
+            # ------ EVERYTHING ELSE ------
+            else:
+                update.message.reply_photo(
+                    photo=open(os.path.join(self.get_res_path(), "plant.jpg"), "rb"),
+                    caption=self.get_resource("plant.md"),
+                    parse_mode=ParseMode.MARKDOWN)
+                return

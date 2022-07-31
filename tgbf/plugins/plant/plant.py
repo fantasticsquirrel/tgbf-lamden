@@ -45,13 +45,15 @@ class Plant(TGBFPlugin):
                 ed = response[contract]['plants']['growing_season_end_time']['__time__']
                 generation = response[contract]['plants']['active_generation']
                 reward_pool = response[contract]['plants'][str(generation)]['total_tau']
+                plant_count = response[contract]['plants']['count']
                 if isinstance(reward_pool, dict):
                     reward_pool = reward_pool['__fixed__']
 
             update.message.reply_text(
                 f"<code>Season End: {ed[0]}-{ed[1]}-{ed[2]} at {ed[3]}:{ed[4]}:{ed[5]}</code>\n"
                 f"<code>Active Generation: {generation}</code>\n"
-                f"<code>Total Reward Pool: {reward_pool}</code>",
+                f"<code>Total Reward Pool: {reward_pool}</code>\n"
+                f"<code>Plant Count: {plant_count}</code>",
                 parse_mode=ParseMode.HTML)
 
         # ------ SCORING ------

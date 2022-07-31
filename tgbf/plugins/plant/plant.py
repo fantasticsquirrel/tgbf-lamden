@@ -192,8 +192,7 @@ class Plant(TGBFPlugin):
                              f"<code>{ipfs_url}</code>",
                         parse_mode=ParseMode.HTML)
 
-                    
-                        # ------ score ------
+                # ------ SCORE ------
                 elif second_argument == "score":
                     blockservice = self.config.get("blockservice") + f"current/all/{contract}/"
 
@@ -205,8 +204,6 @@ class Plant(TGBFPlugin):
                         plant_name = f'Gen_{plant_generation}_{plant_number}'
 
                     with requests.get(blockservice + f"collection_nfts/{plant_name}") as bs:
-                        plant_data = bs.json()[contract]['collection_nfts'][plant_name]
-
                         meta = bs.json()[contract]['collection_nfts'][plant_name]['nft_metadata']
                         burn = meta['burn_amount']
                         toxi = meta['current_toxicity']
@@ -223,8 +220,9 @@ class Plant(TGBFPlugin):
                         berries = (bonus + (1000 * ((watr*bugs*nutr*weed)/(14**4))*(1-toxi/100)*(phto/100)*(1-burn/100)))
 
                     update.message.reply_text(
-                    f"<code>Current Score: {berries}</code>",
-                    parse_mode=ParseMode.HTML)
+                        f"<code>Current Score: {berries}</code>",
+                        parse_mode=ParseMode.HTML)
+
                 # ------ INTERACT WITH PLANT BY NAME ------
                 else:
 

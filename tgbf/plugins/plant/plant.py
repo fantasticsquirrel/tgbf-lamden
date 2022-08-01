@@ -215,9 +215,7 @@ class Plant(TGBFPlugin):
                         watr = calc['total_water']
                         weed = calc['total_weeds']
 
-                        bonus = bs.json()[contract]['collection_nfts'][plant_name]['bonus_berries']
-
-                        berries = (bonus + (1000 * ((watr*bugs*nutr*weed)/(14**4))*(1-toxi/100)*(phto/100)*(1-burn/100)))
+                        berries = (1000 * ((watr*bugs*nutr*weed)/(14**4))*(1-toxi/100)*(phto/100)*(1-burn/100))
 
                     update.message.reply_text(
                         f"<code>Current Score: {berries}</code>",

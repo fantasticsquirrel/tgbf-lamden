@@ -173,6 +173,8 @@ class Plant(TGBFPlugin):
                         lgl = meta['last_grow_light']['__time__']
                         li = meta['last_interaction']['__time__']
                         lsw = meta['last_squash_weed']['__time__']
+                        
+                        pet = meta['plant_end_time']['__time__']
 
                     update.message.reply_text(
                         text=f"<code>Alive: {alve}</code>\n"
@@ -188,7 +190,8 @@ class Plant(TGBFPlugin):
                              f"<code>Last daily      : {ld[0]}-{ld[1]}-{ld[2]} at {ld[3]}:{ld[4]}:{ld[5]}</code>\n"
                              f"<code>Last grow light : {lgl[0]}-{lgl[1]}-{lgl[2]} at {lgl[3]}:{lgl[4]}:{lgl[5]}</code>\n"
                              f"<code>Last interaction: {li[0]}-{li[1]}-{li[2]} at {li[3]}:{li[4]}:{li[5]}</code>\n"
-                             f"<code>Last squash weed: {lsw[0]}-{lsw[1]}-{lsw[2]} at {lsw[3]}:{lsw[4]}:{lsw[5]}</code>\n\n"
+                             f"<code>Last squash weed: {lsw[0]}-{lsw[1]}-{lsw[2]} at {lsw[3]}:{lsw[4]}:{lsw[5]}</code>\n"
+                             f"<code>Plant end time: {pet[0]}-{pet[1]}-{pet[2]} at {pet[3]}:{pet[4]}:{pet[5]}</code>\n\n"
                              f"<code>{ipfs_url}</code>",
                         parse_mode=ParseMode.HTML)
 
